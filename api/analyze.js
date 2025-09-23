@@ -167,7 +167,6 @@ Response Format:
   },
   "overallAssessment": {
     "tier": "mass market/diffusion/premium/luxury/haute couture",
-    "estimatedRetail": "$X,XXX - $X,XXX",
     "estimatedAge": "new/recent/vintage estimate",
     "condition": "pristine/excellent/good/fair/poor",
     "authenticityConfidence": "high/medium/low with reasoning"
