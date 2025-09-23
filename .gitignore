@@ -1,3 +1,5 @@
 node_modules
 .env.local
 
+api/simple_api_test.js
+api/test-claude.js
