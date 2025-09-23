@@ -1,5 +1,3 @@
-// App.js - Updated with automatic database saving
-
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
@@ -14,34 +12,6 @@ function App() {
   const [isProcessingInspiration, setIsProcessingInspiration] = useState(false);
   const [uploadingItems, setUploadingItems] = useState([]);
   const [currentAnalysisStep, setCurrentAnalysisStep] = useState('');
-
-  // Helper function to save analysis results to database
-  const saveToDatabase = async (analysisResult, imageData, category = 'wardrobe') => {
-    try {
-      const response = await fetch('/api/save-item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          analysisResult,
-          imageData,
-          category
-        })
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        console.log('Successfully saved to database:', result.itemId);
-        return result.itemId;
-      } else {
-        console.warn('Failed to save to database:', result.error);
-        return null;
-      }
-    } catch (error) {
-      console.warn('Database save failed (analysis still works):', error);
-      return null;
-    }
-  };
 
   // Handle wardrobe image uploads
   const handleWardrobeUpload = async (e) => {
@@ -112,7 +82,6 @@ function App() {
           throw new Error(analysis.error);
         }
         
-        // Create the item object
         const item = {
           id: Date.now() + Math.random(),
           imageUrl: `data:image/jpeg;base64,${base64}`,
@@ -122,22 +91,6 @@ function App() {
         };
         
         newItems.push(item);
-        
-        // Save to database in background (don't wait for it)
-        setUploadingItems(prev => prev.map((item, index) => 
-          index === i ? { ...item, loadingMessage: 'Saving to wardrobe...' } : item
-        ));
-        
-        saveToDatabase(analysis, base64, 'wardrobe').then(itemId => {
-          if (itemId) {
-            // Update the item with database ID if saved successfully
-            setWardrobe(prev => prev.map(wardrobeItem => 
-              wardrobeItem.id === item.id 
-                ? { ...wardrobeItem, databaseId: itemId }
-                : wardrobeItem
-            ));
-          }
-        });
         
         // Remove processed placeholder
         setUploadingItems(prev => prev.filter((_, index) => index !== i));
@@ -205,14 +158,6 @@ function App() {
       }
       
       setInspirationAnalysis(analysis);
-      
-      // Save inspiration to database in background
-      setCurrentAnalysisStep('Saving inspiration...');
-      saveToDatabase(analysis, base64, 'inspiration').then(itemId => {
-        if (itemId) {
-          console.log('Inspiration saved to database:', itemId);
-        }
-      });
       
       // Update loading message
       setCurrentAnalysisStep('Matching with your wardrobe...');
@@ -423,11 +368,6 @@ function App() {
                       {item.analysis.overallAssessment.tier}
                     </div>
                   )}
-                  {/* Database save indicator */}
-                  {item.databaseId && (
-                    <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
-                         title="Saved to database"/>
-                  )}
                   <p className="text-xs text-center mt-1 truncate">{item.name}</p>
                 </div>
               ))}
@@ -435,7 +375,6 @@ function App() {
           )}
         </div>
 
-        {/* Rest of your existing code remains unchanged */}
         {/* Inspiration Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -533,7 +472,7 @@ function App() {
           </div>
         )}
 
-        {/* Enhanced Item Details Modal with Luxury Analysis - keeping your existing modal code */}
+        {/* Enhanced Item Details Modal with Luxury Analysis */}
         {selectedItem && (
           <div 
             className="fixed inset-0 bg-black z-50 overflow-y-auto"
@@ -565,7 +504,6 @@ function App() {
                         <p className="text-red-500">Analysis failed: {selectedItem.analysis.error}</p>
                       ) : (
                         <>
-                          {/* Keep all your existing modal content - it's perfect */}
                           {/* Overall Assessment */}
                           {selectedItem.analysis?.overallAssessment && (
                             <div className="bg-purple-50 p-3 rounded">
