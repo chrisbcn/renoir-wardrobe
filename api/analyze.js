@@ -1,4 +1,4 @@
-// src/pages/api/analyze.js - v14 with Enhanced Luxury Fashion Analysis
+// api/analyze.js - Vercel Serverless Function for Luxury Fashion Analysis
 
 const LUXURY_FASHION_ANALYSIS_PROMPT = `
 Analyze this luxury fashion item with collector-grade precision. Focus on authentication markers and construction details that distinguish high-end pieces from mass market alternatives.
@@ -176,7 +176,23 @@ Response Format:
 
 Respond ONLY with valid JSON. Be extremely detailed and specific in your analysis, noting exact measurements where visible, specific materials identified, and all construction details that indicate quality tier and potential authenticity.`;
 
+// Vercel Serverless Function Handler
 export default async function handler(req, res) {
+  // Add CORS headers for React app
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -209,8 +225,8 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229', // Verified working model
-        max_tokens: 2000, // Increased for detailed analysis
+        model: 'claude-3-5-sonnet-20241022', // Updated to latest model
+        max_tokens: 2000,
         messages: [
           {
             role: 'user',
