@@ -475,7 +475,7 @@ function App() {
         {/* Enhanced Item Details Modal with Luxury Analysis */}
         {selectedItem && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto"
+            className="fixed inset-0 bg-black z-50 overflow-y-auto"
             onClick={() => setSelectedItem(null)}
           >
             <div 
