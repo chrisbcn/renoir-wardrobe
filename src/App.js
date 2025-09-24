@@ -322,3 +322,6 @@ function App() {
           animation: shimmer 1.5s infinite;
         }
       `}</style>
+    </div>
+  );
+}
