@@ -147,66 +147,171 @@ function App() {
 // DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`;
 
 
+// const DETAILED_WARDROBE_PROMPT = `Analyze this luxury fashion garment image with expert-level detail.
+
+// **CRITICAL: Focus heavily on buttons, lapels, and hardware for brand identification:**
+
+// **BUTTON ANALYSIS (Priority):**
+// - Material: Horn (natural grain), mother-of-pearl (iridescence), metal, plastic, wood, covered fabric
+// - Style: Shank vs flat, number of holes, size in ligne if possible, shape
+// - Logo engravings: ANY text, symbols, or brand markers on buttons
+// - Placement: Functional vs decorative, spacing, alignment
+// - Quality indicators: Hand-sewn (irregular stitching), machine-sewn, button thread quality
+
+// **LAPEL & COLLAR ANALYSIS (Priority):**
+// - Style: Notched, peak, shawl, mandarin, crew neck, band collar, etc.
+// - Construction: Hand-padded, machine-padded, fused, canvassed
+// - Stitching: Hand-finished edges, pick-stitching, decorative elements
+// - Brand signatures: Distinctive lapel shapes, buttonhole styles, gorge height
+// - Hardware: Collar stays, pins, brand-specific details
+
+// **LOGO & BRAND IDENTIFICATION:**
+// - Visible logos: Text, symbols, monograms anywhere on garment
+// - Hardware logos: Zippers (YKK/RiRi/Lampo), buckles, snaps, rivets, clasps
+// - Fabric patterns: Brand-specific prints, weaves, textures
+// - Construction signatures: Distinctive seaming, dart placement, shoulder style
+// - Label glimpses: Any visible brand tags or labels
+
+// **LUXURY QUALITY MARKERS:**
+// - Stitching quality: Hand-finished vs machine, stitch density (SPI)
+// - Pattern matching: Alignment at seams, pockets, plackets
+// - Fabric drape and weight: Natural fall, recovery, structure
+// - Construction methods: Canvassed vs fused, seam types (French/flat-felled)
+// - Hardware quality: Metal finish, weight, precision
+// - Edge finishing: Serged, bound, hand-rolled, Hong Kong finish
+
+// Provide structured analysis:
+// {
+//   "type": "specific garment type",
+//   "colors": ["primary color", "secondary color if any"],
+//   "pattern": "solid/stripe/plaid/etc",
+//   "material": "wool/cotton/silk/synthetic with blend estimate",
+//   "style": "design category", 
+//   "fit": "slim/regular/relaxed/oversized",
+//   "details": {
+//     "buttons": {
+//       "material": "specific material",
+//       "style": "technical description", 
+//       "logo_text": "any text/symbols on buttons",
+//       "quality": "hand-sewn/machine-sewn with details"
+//     },
+//     "lapels": {
+//       "style": "notched/peak/shawl/etc",
+//       "construction": "hand-padded/fused/etc",
+//       "stitching": "hand-finished/machine/pick-stitched"
+//     },
+//     "hardware": {
+//       "zippers": "brand/style/quality if visible",
+//       "other": "buckles, snaps, etc with any logos"
+//     },
+//     "collar": "style and construction",
+//     "sleeves": "details and cuff style",
+//     "closure": "type and quality"
+//   },
+//   "brand_indicators": {
+//     "visible_logos": "any text, symbols, or brand marks seen",
+//     "hardware_logos": "logos on zippers, buttons, buckles",
+//     "construction_signatures": "distinctive brand construction elements",
+//     "confidence": "high/medium/low confidence in brand identification"
+//   },
+//   "luxury_markers": ["specific quality indicators observed"],
+//   "construction_quality": {
+//     "seam_type": "observed seam construction",
+//     "pattern_matching": "excellent/good/poor/NA",
+//     "hand_work_evidence": "any visible hand stitching"
+//   },
+//   "confidence": 0.0,
+//   "suggested_name": "Color + Type + Notable Detail",
+//   "overallAssessment": {
+//     "tier": "Luxury/Premium/Contemporary/Fast Fashion",
+//     "estimatedRetail": "$XXX-$XXXX",
+//     "condition": "New/Excellent/Good/Fair",
+//     "authenticityConfidence": "percentage"
+//   },
+//   "brandIdentifiers": {
+//     "likelyBrand": "brand name or null",
+//     "confidence": 0-100,
+//     "constructionHouse": "Italian/French/British/American/Asian"
+//   },
+//   "fabricAnalysis": {
+//     "weaveStructure": "plain/twill/satin/knit",
+//     "yarnQuality": "superior/high/standard",
+//     "weight": "lightweight/midweight/heavy",
+//     "colors": ["primary", "secondary"]
+//   },
+//   "lapelCollarArchitecture": {
+//     "style": "specific style name",
+//     "construction": "construction details"
+//   }
+// }
+
+// DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`;
 const DETAILED_WARDROBE_PROMPT = `Analyze this luxury fashion garment image with expert-level detail.
 
 **CRITICAL: Focus heavily on buttons, lapels, and hardware for brand identification:**
 
 **BUTTON ANALYSIS (Priority):**
-- Material: Horn (natural grain), mother-of-pearl (iridescence), metal, plastic, wood, covered fabric
-- Style: Shank vs flat, number of holes, size in ligne if possible, shape
+- Material: Horn, mother-of-pearl, metal, plastic, wood, covered fabric
+- Style: Shank vs flat, number of holes, size, shape
 - Logo engravings: ANY text, symbols, or brand markers on buttons
 - Placement: Functional vs decorative, spacing, alignment
-- Quality indicators: Hand-sewn (irregular stitching), machine-sewn, button thread quality
+- Quality indicators: Hand-sewn, machine-sewn, button thread quality
 
 **LAPEL & COLLAR ANALYSIS (Priority):**
-- Style: Notched, peak, shawl, mandarin, crew neck, band collar, etc.
+- Style: Notched, peak, shawl, mandarin, crew neck, etc.
 - Construction: Hand-padded, machine-padded, fused, canvassed
 - Stitching: Hand-finished edges, pick-stitching, decorative elements
-- Brand signatures: Distinctive lapel shapes, buttonhole styles, gorge height
+- Brand signatures: Distinctive lapel shapes, buttonhole styles
 - Hardware: Collar stays, pins, brand-specific details
 
 **LOGO & BRAND IDENTIFICATION:**
 - Visible logos: Text, symbols, monograms anywhere on garment
-- Hardware logos: Zippers (YKK/RiRi/Lampo), buckles, snaps, rivets, clasps
+- Hardware logos: Zippers, buckles, snaps, rivets, clasps
 - Fabric patterns: Brand-specific prints, weaves, textures
-- Construction signatures: Distinctive seaming, dart placement, shoulder style
+- Construction signatures: Distinctive seaming, dart placement
 - Label glimpses: Any visible brand tags or labels
 
 **LUXURY QUALITY MARKERS:**
-- Stitching quality: Hand-finished vs machine, stitch density (SPI)
-- Pattern matching: Alignment at seams, pockets, plackets
-- Fabric drape and weight: Natural fall, recovery, structure
-- Construction methods: Canvassed vs fused, seam types (French/flat-felled)
+- Stitching quality: Hand-finished vs machine, stitch density
+- Fabric drape and weight: Heavy wool, silk lining, cashmere
+- Construction methods: Canvassed vs fused, dart placement
 - Hardware quality: Metal finish, weight, precision
-- Edge finishing: Serged, bound, hand-rolled, Hong Kong finish
+- Edge finishing: Serged, bound, hand-rolled, raw edges
+
+**SPECIFIC DETAILS:**
+- Hem type and finish (ribbed, rolled, straight)
+- Cuff style and construction
+- Any unique construction details
 
 Provide structured analysis:
 {
-  "type": "specific garment type",
+  "type": "string",
   "colors": ["primary color", "secondary color if any"],
-  "pattern": "solid/stripe/plaid/etc",
-  "material": "wool/cotton/silk/synthetic with blend estimate",
-  "style": "design category", 
-  "fit": "slim/regular/relaxed/oversized",
+  "pattern": "string",
+  "material": "string",
+  "style": "string", 
+  "fit": "string",
+  "match_description": "Natural language description of the garment in 2-3 sentences",
+  "specific_details": ["ribbed hem", "cuffs style", "other notable features"],
   "details": {
     "buttons": {
-      "material": "specific material",
-      "style": "technical description", 
+      "material": "string",
+      "style": "string", 
       "logo_text": "any text/symbols on buttons",
-      "quality": "hand-sewn/machine-sewn with details"
+      "quality": "hand-sewn/machine-sewn/quality indicators"
     },
     "lapels": {
       "style": "notched/peak/shawl/etc",
       "construction": "hand-padded/fused/etc",
-      "stitching": "hand-finished/machine/pick-stitched"
+      "stitching": "hand-finished/machine/etc"
     },
     "hardware": {
-      "zippers": "brand/style/quality if visible",
+      "zippers": "brand/style/quality",
       "other": "buckles, snaps, etc with any logos"
     },
-    "collar": "style and construction",
-    "sleeves": "details and cuff style",
-    "closure": "type and quality"
+    "collar": "string",
+    "sleeves": "string",
+    "closure": "string"
   },
   "brand_indicators": {
     "visible_logos": "any text, symbols, or brand marks seen",
@@ -214,39 +319,34 @@ Provide structured analysis:
     "construction_signatures": "distinctive brand construction elements",
     "confidence": "high/medium/low confidence in brand identification"
   },
-  "luxury_markers": ["specific quality indicators observed"],
-  "construction_quality": {
-    "seam_type": "observed seam construction",
-    "pattern_matching": "excellent/good/poor/NA",
-    "hand_work_evidence": "any visible hand stitching"
-  },
+  "luxury_markers": ["array of specific quality indicators"],
   "confidence": 0.0,
-  "suggested_name": "Color + Type + Notable Detail",
+  "suggested_name": "descriptive name for this item",
   "overallAssessment": {
     "tier": "Luxury/Premium/Contemporary/Fast Fashion",
     "estimatedRetail": "$XXX-$XXXX",
     "condition": "New/Excellent/Good/Fair",
-    "authenticityConfidence": "percentage"
+    "authenticityConfidence": "95-100%"
   },
   "brandIdentifiers": {
     "likelyBrand": "brand name or null",
-    "confidence": 0-100,
+    "confidence": 90,
     "constructionHouse": "Italian/French/British/American/Asian"
   },
   "fabricAnalysis": {
-    "weaveStructure": "plain/twill/satin/knit",
+    "weaveStructure": "plain/twill/satin/jacquard/knit",
     "yarnQuality": "superior/high/standard",
     "weight": "lightweight/midweight/heavy",
+    "texture": "smooth/ribbed/cable/textured",
     "colors": ["primary", "secondary"]
   },
   "lapelCollarArchitecture": {
-    "style": "specific style name",
-    "construction": "construction details"
+    "style": "notched/peak/shawl/etc",
+    "construction": "details"
   }
 }
 
 DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`;
-
 
         // Call API with detailed prompt
         const response = await fetch('/api/analyze', {
