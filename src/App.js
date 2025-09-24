@@ -4,11 +4,6 @@ import './App.css';
 function App() {
   const [wardrobe, setWardrobe] = useState([]);
   const [testMessage, setTestMessage] = useState('App is loading...');
-  
-  // rest of your code...
-
-function App() {
-  const [wardrobe, setWardrobe] = useState([]);
   const [inspirationImage, setInspirationImage] = useState(null);
   const [inspirationAnalysis, setInspirationAnalysis] = useState(null);
   const [matchingResults, setMatchingResults] = useState(null);
