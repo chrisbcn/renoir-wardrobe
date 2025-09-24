@@ -1,518 +1,458 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API_URL = process.env.REACT_APP_API_URL || '';
-
 function App() {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [wardrobe, setWardrobe] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [currentAnalysisStep, setCurrentAnalysisStep] = useState('');
 
+  // Load saved items on startup
   useEffect(() => {
-    loadWardrobe();
+    fetch('/api/get-wardrobe')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.items?.length > 0) {
+          const formattedItems = data.items.map(item => ({
+            id: item.id,
+            name: item.item_name || 'Item',
+            imageUrl: item.image_url,
+            analysis: item.analysis_data,
+            isSaved: true
+          }));
+          setWardrobe(formattedItems);
+          console.log(`Loaded ${formattedItems.length} saved items`);
+        }
+      })
+      .catch(err => console.log('Could not load saved items:', err));
   }, []);
 
-  const loadWardrobe = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/get-wardrobe`);
-      if (response.ok) {
-        const data = await response.json();
-        setWardrobe(data || []);
+  const handleWardrobeUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+      setCurrentAnalysisStep(`Analyzing item ${i + 1} of ${files.length}: ${file.name}`);
+      
+      try {
+        // Convert to base64
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64String = reader.result.split(',')[1];
+            resolve(base64String);
+          };
+          reader.readAsDataURL(file);
+        });
+
+        // Create the detailed analysis prompt
+        const DETAILED_WARDROBE_PROMPT = `Analyze this luxury fashion garment image with expert-level detail.
+
+**CRITICAL: Focus heavily on buttons, lapels, and hardware for brand identification:**
+
+**BUTTON ANALYSIS (Priority):**
+- Material: Horn, mother-of-pearl, metal, plastic, wood, covered fabric
+- Style: Shank vs flat, number of holes, size, shape
+- Logo engravings: ANY text, symbols, or brand markers on buttons
+- Placement: Functional vs decorative, spacing, alignment
+- Quality indicators: Hand-sewn, machine-sewn, button thread quality
+
+**LAPEL & COLLAR ANALYSIS (Priority):**
+- Style: Notched, peak, shawl, mandarin, crew neck, etc.
+- Construction: Hand-padded, machine-padded, fused, canvassed
+- Stitching: Hand-finished edges, pick-stitching, decorative elements
+- Brand signatures: Distinctive lapel shapes, buttonhole styles
+- Hardware: Collar stays, pins, brand-specific details
+
+**LOGO & BRAND IDENTIFICATION:**
+- Visible logos: Text, symbols, monograms anywhere on garment
+- Hardware logos: Zippers, buckles, snaps, rivets, clasps
+- Fabric patterns: Brand-specific prints, weaves, textures
+- Construction signatures: Distinctive seaming, dart placement
+- Label glimpses: Any visible brand tags or labels
+
+**LUXURY QUALITY MARKERS:**
+- Stitching quality: Hand-finished vs machine, stitch density
+- Fabric drape and weight: Heavy wool, silk lining, cashmere
+- Construction methods: Canvassed vs fused, dart placement
+- Hardware quality: Metal finish, weight, precision
+- Edge finishing: Serged, bound, hand-rolled, raw edges
+
+Provide structured analysis:
+{
+  "type": "string",
+  "colors": ["primary color", "secondary color if any"],
+  "pattern": "string",
+  "material": "string",
+  "style": "string", 
+  "fit": "string",
+  "details": {
+    "buttons": {
+      "material": "string",
+      "style": "string", 
+      "logo_text": "any text/symbols on buttons",
+      "quality": "hand-sewn/machine-sewn/quality indicators"
+    },
+    "lapels": {
+      "style": "notched/peak/shawl/etc",
+      "construction": "hand-padded/fused/etc",
+      "stitching": "hand-finished/machine/etc"
+    },
+    "hardware": {
+      "zippers": "brand/style/quality",
+      "other": "buckles, snaps, etc with any logos"
+    },
+    "collar": "string",
+    "sleeves": "string",
+    "closure": "string"
+  },
+  "brand_indicators": {
+    "visible_logos": "any text, symbols, or brand marks seen",
+    "hardware_logos": "logos on zippers, buttons, buckles",
+    "construction_signatures": "distinctive brand construction elements",
+    "confidence": "high/medium/low confidence in brand identification"
+  },
+  "luxury_markers": ["array of specific quality indicators"],
+  "confidence": 0.0,
+  "suggested_name": "descriptive name for this item",
+  "overallAssessment": {
+    "tier": "Luxury/Premium/Contemporary/Fast Fashion",
+    "estimatedRetail": "$XXX-$XXXX",
+    "condition": "New/Excellent/Good/Fair",
+    "authenticityConfidence": "95-100%"
+  },
+  "brandIdentifiers": {
+    "likelyBrand": "brand name or null",
+    "confidence": 90,
+    "constructionHouse": "Italian/French/British/American/Asian"
+  },
+  "fabricAnalysis": {
+    "weaveStructure": "plain/twill/satin/jacquard",
+    "yarnQuality": "superior/high/standard",
+    "weight": "lightweight/midweight/heavy",
+    "colors": ["primary", "secondary"]
+  },
+  "lapelCollarArchitecture": {
+    "style": "notched/peak/shawl/etc",
+    "construction": "details"
+  }
+}
+
+DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`;
+
+        // Call API with detailed prompt
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            image: base64,
+            type: 'wardrobe',
+            prompt: DETAILED_WARDROBE_PROMPT
+          })
+        });
+
+        const { analysis } = await response.json();
+        
+        const item = {
+          id: Date.now() + Math.random(),
+          imageUrl: `data:image/jpeg;base64,${base64}`,
+          name: analysis.suggested_name || analysis.name || `Item ${i + 1}`,
+          analysis: analysis,
+          isSaved: false
+        };
+        
+        setWardrobe(prev => [...prev, item]);
+
+        // Save to database in background
+        fetch('/api/save-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            analysisResult: analysis,
+            imageData: base64,
+            category: 'wardrobe'
+          })
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            console.log('Saved to database:', result.itemId);
+            setWardrobe(prev => prev.map(w => 
+              w.id === item.id ? { ...w, isSaved: true } : w
+            ));
+          }
+        })
+        .catch(err => console.log('Save failed:', err));
+        
+      } catch (error) {
+        console.error(`Failed to analyze ${file.name}:`, error);
       }
-    } catch (error) {
-      console.error('Error loading wardrobe:', error);
     }
-  };
-
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const analyzeImage = async () => {
-    if (!preview) return;
-
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
-
-    try {
-      // Enhanced prompt with detailed garment analysis
-      const DETAILED_WARDROBE_PROMPT = `Analyze this luxury fashion garment image with expert-level detail.
-
-      **CRITICAL: Focus heavily on buttons, lapels, and hardware for brand identification:**
-      
-      **BUTTON ANALYSIS (Priority):**
-      - Material: Horn (natural grain visible), mother-of-pearl (iridescence), metal (brass/silver/gold tone), plastic (uniform appearance), wood, covered fabric
-      - Style: Shank vs flat (2-hole/4-hole), size (ligne measurement if possible), shape (round/square/novelty)
-      - Logo engravings: ANY text, symbols, or brand markers on buttons (check center and edges)
-      - Placement: Functional vs decorative, spacing (measure if asymmetric), alignment
-      - Quality indicators: Hand-sewn (slight irregularity in thread tension), machine-sewn (uniform stitching), button thread quality (silk/poly), shank attachment method
-      
-      **LAPEL & COLLAR ANALYSIS (Priority):**
-      - Style: Notched (angle of notch), peak (height of peak), shawl, mandarin, crew neck, etc.
-      - Width: Narrow (<3"), Standard (3-3.5"), Wide (>3.5")
-      - Gorge height: High (modern), medium (classic), low (vintage)
-      - Construction: Hand-padded (visible pad stitching), machine-padded, fused (flat appearance), canvassed (natural roll)
-      - Stitching: Hand-finished edges (slight irregularity), pick-stitching (spacing and depth), AMF stitching presence
-      - Buttonhole: Hand-finished (keyhole/straight), machine-made, gimp reinforcement visible
-      - Brand signatures: Distinctive lapel shapes, buttonhole styles, roll characteristics
-      
-      **LOGO & BRAND IDENTIFICATION:**
-      - Visible logos: Text, symbols, monograms anywhere on garment
-      - Hardware logos: Zippers (YKK/RiRi/Lampo), buckles, snaps, rivets, clasps
-      - Fabric patterns: Brand-specific prints (check/plaid registry), weaves, textures
-      - Construction signatures: Distinctive seaming (curved/straight), dart placement, shoulder expression
-      - Label glimpses: Any visible brand tags, care labels, "Made in" tags
-      - Button stance: Height relative to natural waist (brand-specific)
-      
-      **LUXURY QUALITY MARKERS:**
-      - Stitching quality: Stitch density (8-14 SPI for luxury), hand-finished vs machine, thread luster
-      - Pattern matching: Check alignment at seams (chest, back, sleeves)
-      - Fabric drape: Natural fall, recovery from manipulation, wrinkle resistance
-      - Edge finishing: French seams, Hong Kong finish, serged, bound, hand-rolled, pinked edges
-      - Interior construction: Visible canvas structure, half/full lining, seam taping
-      - Shoulder construction: Natural (soft), roped (raised ridge), built-up, pagoda, spalla camicia
-      - Sleeve attachment: Set-in precision, pitch, ease distribution
-      
-      **FABRIC ASSESSMENT:**
-      - Apparent fiber: Wool (matte/worsted), cotton (oxford/poplin/twill), silk (charmeuse/twill), linen, synthetic blend
-      - Weave structure: Plain, twill (angle visible), herringbone, houndstooth, birdseye, basketweave
-      - Weight indicators: Drape stiffness (light/medium/heavy), transparency, structure retention
-      - Surface texture: Smooth, napped, brushed, textured, slubbed
-      - Special finishes: Mercerized (high luster cotton), calendered (pressed smooth), water-resistant coating
-      
-      **CONSTRUCTION DETAILS:**
-      - Pocket types: Jetted/besom (most formal), flap, ticket pocket presence, patch (casual), barchetta curve
-      - Pocket alignment: Pattern matching across pocket opening
-      - Vent style: Center, side, ventless - check stitching quality
-      - Trouser details: Break type (no/slight/medium/full), cuff presence (height), crease sharpness
-      - Hem finish: Blind stitched (invisible), hand-rolled, machine hemmed, original length indicators
-      
-      **FIT & SILHOUETTE MARKERS:**
-      - Cut indicators: British (structured/nipped waist), Italian (soft/natural shoulder), American (sack/relaxed)
-      - Silhouette: Slim, tailored, regular, relaxed, oversized - note intentionality
-      - Proportion: Jacket length relative to body, button stance height, lapel-to-shoulder ratio
-      - Drape: Clean lines vs intentional rumpling, fabric memory, structure retention
-      
-      Provide structured analysis:
-      {
-        "type": "specific garment type",
-        "colors": ["primary color with tone (warm/cool)", "secondary colors"],
-        "pattern": "specific pattern name from glossary",
-        "material": "fiber content estimate with weight descriptor",
-        "style": "design era/influence", 
-        "fit": "silhouette type with fit intention",
-        "details": {
-          "buttons": {
-            "material": "specific material with quality grade",
-            "style": "technical description with ligne size estimate", 
-            "logo_text": "exact text/symbols on buttons",
-            "quality": "hand-sewn/machine with thread type",
-            "spacing": "measurement or regular/irregular"
-          },
-          "lapels": {
-            "style": "specific type with measurements",
-            "width": "narrow/standard/wide with estimate",
-            "gorge_height": "high/medium/low position",
-            "construction": "canvas/fused with roll quality",
-            "stitching": "hand-finished/AMF/machine with SPI",
-            "buttonhole": "hand/machine with style details"
-          },
-          "hardware": {
-            "zippers": "brand/type/tooth material/quality",
-            "other": "specific hardware with any markings",
-            "quality_grade": "luxury/premium/standard"
-          },
-          "collar": "style with construction details",
-          "sleeves": "button functionality, pitch, finish",
-          "pockets": "types, alignment, construction quality",
-          "shoulder": "construction type with padding details",
-          "closure": "type with spacing/alignment notes"
-        },
-        "brand_indicators": {
-          "visible_logos": "exact locations and descriptions",
-          "hardware_logos": "specific markings on all hardware",
-          "construction_signatures": "unique construction elements",
-          "button_stance": "height and spacing patterns",
-          "stitching_patterns": "distinctive stitch signatures",
-          "confidence": "percentage with reasoning"
-        },
-        "luxury_markers": [
-          "specific quality indicators with locations",
-          "hand-work evidence",
-          "pattern matching quality",
-          "construction precision details"
-        ],
-        "construction_analysis": {
-          "seam_types": "French/flat-felled/serged with locations",
-          "seam_allowances": "narrow/standard/generous estimate",
-          "pattern_matching": "excellent/good/poor with examples",
-          "hand_work_evidence": ["specific hand-stitching locations"],
-          "time_intensive_elements": ["elements requiring skilled labor"]
-        },
-        "confidence": 0.0,
-        "suggested_name": "Brand (if identified) + Color + Type",
-        "care_requirements": ["specific care based on materials"],
-        "styling_versatility": ["suggested outfit combinations"],
-        "overallAssessment": {
-          "tier": "Haute Couture/Luxury/Premium/Contemporary/Fast Fashion",
-          "estimatedRetail": "$XXX-$XXXX with reasoning",
-          "condition": "New/Excellent/Good/Fair with specific notes",
-          "authenticityConfidence": "percentage with indicators",
-          "craftsmanship_hours": "estimated labor hours"
-        },
-        "brandIdentifiers": {
-          "likelyBrand": "specific brand or 'Unidentified'",
-          "confidence": 0-100,
-          "supportingEvidence": ["list specific brand indicators"],
-          "constructionHouse": "Italian/French/British/American/Japanese/Other",
-          "factoryTier": "Artisanal/High-end/Standard/Mass-production"
-        },
-        "fabricAnalysis": {
-          "weaveStructure": "specific weave from glossary",
-          "yarnQuality": "superior/high/standard with micron estimate",
-          "weight": "specific GSM or oz estimate",
-          "handfeel": "crisp/soft/structured/fluid",
-          "colors": ["specific color names with undertones"],
-          "pattern_repeat": "measurement if applicable"
-        },
-        "lapelCollarArchitecture": {
-          "style": "specific cut name",
-          "construction": "detailed build method",
-          "roll_quality": "soft/medium/crisp",
-          "gorge_seam": "hand-finished/machine with quality"
-        },
-        "qualityScore": {
-          "materials": 0-10,
-          "construction": 0-10,
-          "finishing": 0-10,
-          "overall": 0-10
-        }
-      }
-      
-      DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`;
-//end of prompt
-
-      const response = await fetch(`${API_URL}/api/analyze`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: preview.split(',')[1],
-          prompt: DETAILED_PROMPT
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Analysis failed');
-      }
-
-      const result = await response.json();
-      console.log('Analysis result:', result);
-      
-      setAnalysisResult(result);
-      
-      // Save to wardrobe if analysis was successful
-      if (result.garment_type) {
-        await saveToWardrobe(result);
-      }
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-      setAnalysisResult({ error: 'Failed to analyze image. Please try again.' });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const saveToWardrobe = async (analysis) => {
-    try {
-      const response = await fetch(`${API_URL}/api/save-item`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...analysis,
-          image_url: preview
-        }),
-      });
-
-      if (response.ok) {
-        await loadWardrobe();
-      }
-    } catch (error) {
-      console.error('Error saving to wardrobe:', error);
-    }
-  };
-
-  const openItemModal = (item) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedItem(null);
-  };
-
-  const renderDetailSection = (title, content) => {
-    if (!content || (typeof content === 'object' && Object.keys(content).length === 0)) {
-      return null;
-    }
-
-    return (
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b pb-2">
-          {title}
-        </h3>
-        {typeof content === 'object' ? (
-          <div className="space-y-2">
-            {Object.entries(content).map(([key, value]) => (
-              <div key={key} className="flex justify-between items-start">
-                <span className="font-medium text-gray-700 capitalize">
-                  {key.replace(/_/g, ' ')}:
-                </span>
-                <span className="text-gray-600 text-right max-w-[60%]">
-                  {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : Array.isArray(content) ? (
-          <ul className="list-disc list-inside space-y-1">
-            {content.map((item, idx) => (
-              <li key={idx} className="text-gray-600">{item}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-600">{content}</p>
-        )}
-      </div>
-    );
+    
+    setIsUploading(false);
+    setUploadProgress(0);
+    setCurrentAnalysisStep('');
+    e.target.value = null;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-800 mb-4">
-            RENOIR
-          </h1>
-          <p className="text-gray-600 text-lg">
-            AI-Powered Luxury Fashion Analysis
-          </p>
-        </header>
-
-        <div className="max-w-4xl mx-auto mb-12">
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-semibold mb-6">Analyze Garment</h2>
-            
-            <div className="mb-6">
-              <label className="block mb-4">
-                <span className="text-gray-700 font-medium">Select Image</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="mt-2 block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-full file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100"
-                />
-              </label>
-
-              {preview && (
-                <div className="mt-6">
-                  <img
-                    src={preview}
-                    alt="Selected garment"
-                    className="w-full max-w-md mx-auto rounded-lg shadow-md"
-                  />
-                  
-                  <button
-                    onClick={analyzeImage}
-                    disabled={isAnalyzing}
-                    className="mt-6 w-full bg-blue-600 text-white py-3 px-6 rounded-lg 
-                      hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed
-                      transition-colors duration-200"
-                  >
-                    {isAnalyzing ? 'Analyzing...' : 'Analyze Garment'}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {analysisResult && !analysisResult.error && (
-              <div className="mt-8 p-6 bg-gray-50 rounded-lg">
-                <h3 className="text-xl font-semibold mb-4">Quick Analysis</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="font-medium">Type:</span> {analysisResult.garment_type}
-                  </div>
-                  <div>
-                    <span className="font-medium">Colors:</span> {analysisResult.colors?.join(', ')}
-                  </div>
-                  {analysisResult.brand_indicators?.probable_brand && (
-                    <div className="col-span-2">
-                      <span className="font-medium">Probable Brand:</span> {analysisResult.brand_indicators.probable_brand}
-                    </div>
-                  )}
-                  <div className="col-span-2">
-                    <span className="font-medium">Quality:</span> {analysisResult.quality_assessment?.overall_quality}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Renoir - Luxury Fashion Analysis</h1>
+          <p className="text-gray-600">Upload images to analyze garment details, construction, and brand indicators</p>
         </div>
 
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-semibold mb-8 text-center">Your Wardrobe</h2>
-          
-          {wardrobe.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {wardrobe.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => openItemModal(item)}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer
-                    transform transition-transform duration-200 hover:scale-105"
-                >
-                  <div className="aspect-w-3 aspect-h-4">
-                    <img
-                      src={item.image_url}
-                      alt={item.name || item.garment_type}
-                      className="w-full h-64 object-cover"
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Your Wardrobe</h2>
+            <div className="flex items-center gap-4">
+              {isUploading && (
+                <div className="flex items-center gap-2">
+                  <div className="text-sm text-gray-600">{currentAnalysisStep}</div>
+                  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-500 transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-800 truncate">
-                      {item.name || item.garment_type}
-                    </h3>
-                    <p className="text-sm text-gray-600">{item.colors}</p>
-                    {item.brand_indicators?.probable_brand && (
-                      <p className="text-sm font-medium text-blue-600 mt-1">
-                        {item.brand_indicators.probable_brand}
-                      </p>
-                    )}
-                  </div>
+                </div>
+              )}
+              <label className="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition">
+                <input 
+                  type="file" 
+                  multiple 
+                  accept="image/*"
+                  onChange={handleWardrobeUpload}
+                  className="hidden"
+                  disabled={isUploading}
+                />
+                {isUploading ? 'Processing...' : 'Add Images'}
+              </label>
+            </div>
+          </div>
+
+          {wardrobe.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">No items in wardrobe yet</p>
+              <p className="text-gray-400 text-sm mt-2">Upload garments to see detailed analysis</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              {wardrobe.map(item => (
+                <div 
+                  key={item.id}
+                  onClick={() => setSelectedItem(item)}
+                  className="cursor-pointer hover:opacity-80 relative group"
+                >
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name}
+                    className="w-full h-32 object-cover rounded-lg"
+                  />
+                  {item.isSaved && (
+                    <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
+                         title="Saved to database" />
+                  )}
+                  <p className="text-xs text-center mt-1 truncate px-1">{item.name}</p>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-12 bg-white rounded-lg">
-              <p className="text-gray-500 text-lg">Your wardrobe is empty</p>
-              <p className="text-gray-400 mt-2">Upload your first garment to get started</p>
-            </div>
           )}
         </div>
-      </div>
 
-      {isModalOpen && selectedItem && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          onClick={closeModal}
-        >
+        {/* Enhanced Modal for detailed item analysis */}
+        {selectedItem && (
           <div 
-            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedItem(null)}
           >
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {selectedItem.name || selectedItem.garment_type}
-                </h2>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-500 hover:text-gray-700"
+            <div 
+              className="bg-white rounded-lg max-w-5xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white flex justify-between items-center p-4 border-b z-10">
+                <h2 className="text-xl font-semibold">{selectedItem.name}</h2>
+                <button 
+                  onClick={() => setSelectedItem(null)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  ×
                 </button>
               </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <img
-                    src={selectedItem.image_url}
-                    alt={selectedItem.name}
-                    className="w-full rounded-lg shadow-md"
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  {renderDetailSection('Basic Information', {
-                    'Garment Type': selectedItem.garment_type,
-                    'Colors': selectedItem.colors,
-                    'Pattern': selectedItem.pattern,
-                    'Style': selectedItem.style,
-                    'Fit': selectedItem.fit,
-                    'Price Estimate': selectedItem.price_estimate,
-                    'Season': selectedItem.season
-                  })}
-
-                  {selectedItem.material && renderDetailSection('Material', selectedItem.material)}
+              
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <img 
+                      src={selectedItem.imageUrl} 
+                      alt={selectedItem.name}
+                      className="w-full rounded-lg shadow-md"
+                    />
+                  </div>
                   
-                  {selectedItem.brand_indicators && renderDetailSection('Brand Indicators', selectedItem.brand_indicators)}
-                  
-                  {selectedItem.quality_assessment && renderDetailSection('Quality Assessment', selectedItem.quality_assessment)}
+                  <div className="space-y-4 overflow-y-auto max-h-[600px]">
+                    {/* Overall Assessment */}
+                    {selectedItem.analysis?.overallAssessment && (
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-purple-900">Overall Assessment</h3>
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Tier:</span> {selectedItem.analysis.overallAssessment.tier}</p>
+                          <p><span className="font-medium">Est. Retail:</span> {selectedItem.analysis.overallAssessment.estimatedRetail}</p>
+                          <p><span className="font-medium">Condition:</span> {selectedItem.analysis.overallAssessment.condition}</p>
+                          <p><span className="font-medium">Authenticity:</span> {selectedItem.analysis.overallAssessment.authenticityConfidence}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Brand Identifiers */}
+                    {selectedItem.analysis?.brandIdentifiers && (
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-yellow-900">Brand Identifiers</h3>
+                        <div className="text-sm space-y-1">
+                          {selectedItem.analysis.brandIdentifiers.likelyBrand && (
+                            <p><span className="font-medium">Likely Brand:</span> {selectedItem.analysis.brandIdentifiers.likelyBrand} ({selectedItem.analysis.brandIdentifiers.confidence}%)</p>
+                          )}
+                          <p><span className="font-medium">Construction:</span> {selectedItem.analysis.brandIdentifiers.constructionHouse}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Brand Indicators (detailed) */}
+                    {selectedItem.analysis?.brand_indicators && (
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-blue-900">Brand & Logo Analysis</h3>
+                        <div className="text-sm space-y-1">
+                          {selectedItem.analysis.brand_indicators.visible_logos && (
+                            <p><span className="font-medium">Visible Logos:</span> {selectedItem.analysis.brand_indicators.visible_logos}</p>
+                          )}
+                          {selectedItem.analysis.brand_indicators.hardware_logos && (
+                            <p><span className="font-medium">Hardware Logos:</span> {selectedItem.analysis.brand_indicators.hardware_logos}</p>
+                          )}
+                          {selectedItem.analysis.brand_indicators.construction_signatures && (
+                            <p><span className="font-medium">Construction Signatures:</span> {selectedItem.analysis.brand_indicators.construction_signatures}</p>
+                          )}
+                          <p><span className="font-medium">Confidence:</span> {selectedItem.analysis.brand_indicators.confidence}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Button Details */}
+                    {selectedItem.analysis?.details?.buttons && (
+                      <div className="bg-indigo-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-indigo-900">Button Analysis</h3>
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Material:</span> {selectedItem.analysis.details.buttons.material}</p>
+                          <p><span className="font-medium">Style:</span> {selectedItem.analysis.details.buttons.style}</p>
+                          {selectedItem.analysis.details.buttons.logo_text && (
+                            <p><span className="font-medium">Logo/Text:</span> {selectedItem.analysis.details.buttons.logo_text}</p>
+                          )}
+                          <p><span className="font-medium">Quality:</span> {selectedItem.analysis.details.buttons.quality}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lapel Details */}
+                    {selectedItem.analysis?.details?.lapels && (
+                      <div className="bg-rose-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-rose-900">Lapel Construction</h3>
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Style:</span> {selectedItem.analysis.details.lapels.style}</p>
+                          <p><span className="font-medium">Construction:</span> {selectedItem.analysis.details.lapels.construction}</p>
+                          <p><span className="font-medium">Stitching:</span> {selectedItem.analysis.details.lapels.stitching}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Hardware Details */}
+                    {selectedItem.analysis?.details?.hardware && (
+                      <div className="bg-gray-100 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-gray-900">Hardware & Fastenings</h3>
+                        <div className="text-sm space-y-1">
+                          {selectedItem.analysis.details.hardware.zippers && (
+                            <p><span className="font-medium">Zippers:</span> {selectedItem.analysis.details.hardware.zippers}</p>
+                          )}
+                          {selectedItem.analysis.details.hardware.other && (
+                            <p><span className="font-medium">Other Hardware:</span> {selectedItem.analysis.details.hardware.other}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fabric Analysis */}
+                    {selectedItem.analysis?.fabricAnalysis && (
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-green-900">Fabric Analysis</h3>
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Weave:</span> {selectedItem.analysis.fabricAnalysis.weaveStructure}</p>
+                          <p><span className="font-medium">Quality:</span> {selectedItem.analysis.fabricAnalysis.yarnQuality}</p>
+                          <p><span className="font-medium">Weight:</span> {selectedItem.analysis.fabricAnalysis.weight}</p>
+                          {selectedItem.analysis.fabricAnalysis.colors && (
+                            <p><span className="font-medium">Colors:</span> {selectedItem.analysis.fabricAnalysis.colors.join(', ')}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Luxury Markers */}
+                    {selectedItem.analysis?.luxury_markers && selectedItem.analysis.luxury_markers.length > 0 && (
+                      <div className="bg-amber-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-amber-900">Luxury Quality Markers</h3>
+                        <ul className="text-sm space-y-1">
+                          {selectedItem.analysis.luxury_markers.map((marker, idx) => (
+                            <li key={idx} className="flex items-start">
+                              <span className="text-amber-600 mr-2">•</span>
+                              <span>{marker}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Basic Details */}
+                    <div className="bg-slate-50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-2 text-slate-900">Basic Information</h3>
+                      <div className="text-sm space-y-1">
+                        <p><span className="font-medium">Type:</span> {selectedItem.analysis?.type}</p>
+                        <p><span className="font-medium">Colors:</span> {selectedItem.analysis?.colors?.join(', ')}</p>
+                        <p><span className="font-medium">Pattern:</span> {selectedItem.analysis?.pattern}</p>
+                        <p><span className="font-medium">Material:</span> {selectedItem.analysis?.material}</p>
+                        <p><span className="font-medium">Style:</span> {selectedItem.analysis?.style}</p>
+                        <p><span className="font-medium">Fit:</span> {selectedItem.analysis?.fit}</p>
+                        <p><span className="font-medium">Confidence:</span> {(selectedItem.analysis?.confidence * 100).toFixed(0)}%</p>
+                      </div>
+                    </div>
+
+                    {/* Other Details */}
+                    {selectedItem.analysis?.details && (
+                      <div className="bg-cyan-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-cyan-900">Construction Details</h3>
+                        <div className="text-sm space-y-1">
+                          {selectedItem.analysis.details.collar && (
+                            <p><span className="font-medium">Collar:</span> {selectedItem.analysis.details.collar}</p>
+                          )}
+                          {selectedItem.analysis.details.sleeves && (
+                            <p><span className="font-medium">Sleeves:</span> {selectedItem.analysis.details.sleeves}</p>
+                          )}
+                          {selectedItem.analysis.details.closure && (
+                            <p><span className="font-medium">Closure:</span> {selectedItem.analysis.details.closure}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                {selectedItem.construction_details && (
-                  <>
-                    {selectedItem.construction_details.buttons && 
-                      renderDetailSection('Button Details', selectedItem.construction_details.buttons)}
-                    
-                    {selectedItem.construction_details.lapels && 
-                      renderDetailSection('Lapel Construction', selectedItem.construction_details.lapels)}
-                    
-                    {selectedItem.construction_details.collar && 
-                      renderDetailSection('Collar Details', selectedItem.construction_details.collar)}
-                    
-                    {selectedItem.construction_details.hardware && 
-                      renderDetailSection('Hardware & Fastenings', selectedItem.construction_details.hardware)}
-                    
-                    {selectedItem.construction_details.shoulders && 
-                      renderDetailSection('Shoulder Construction', selectedItem.construction_details.shoulders)}
-                    
-                    {selectedItem.construction_details.seams && 
-                      renderDetailSection('Seam Construction', selectedItem.construction_details.seams)}
-                    
-                    {selectedItem.construction_details.pockets && 
-                      renderDetailSection('Pocket Details', selectedItem.construction_details.pockets)}
-                  </>
-                )}
-
-                {selectedItem.luxury_markers && selectedItem.luxury_markers.length > 0 && 
-                  renderDetailSection('Luxury Markers', selectedItem.luxury_markers)}
-                
-                {selectedItem.care_instructions && 
-                  renderDetailSection('Care Instructions', selectedItem.care_instructions)}
-                
-                {selectedItem.occasion_suitability && 
-                  renderDetailSection('Suitable Occasions', selectedItem.occasion_suitability)}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
