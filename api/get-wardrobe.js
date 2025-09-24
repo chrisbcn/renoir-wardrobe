@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       success: true, 
       items: formattedItems,
       count: formattedItems.length
-    });
+    }); 
 
   } catch (error) {
     console.error('Fetch error:', error);
