@@ -301,70 +301,24 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <style>
-        {`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          
-          @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-          }
-          
-          .spinner {
-            animation: spin 1s linear infinite;
-          }
-          
-          .shimmer {
-            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-          }
-        `}
-      </style>
-      
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Renoir - Luxury Fashion Analysis</h1>
-          <p className="text-gray-600">Collector-grade garment analysis with authentication markers and construction details</p>
-        </div>
-
-        {/* Wardrobe Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Your Wardrobe</h2>
-            <label className="btn-primary">
-              <input 
-                type="file" 
-                multiple 
-                accept="image/*"
-                onChange={handleWardrobeUpload}
-                className="hidden"
-              />
-              {isUploading ? 'Processing...' : 'Add Images'}
-            </label>
-          </div>
-
-          {isUploading && (
-            <div className="mb-4">
-              <div className="bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-              <p className="text-sm text-gray-600 mt-1">
-                {currentAnalysisStep || `Analyzing with luxury detail... ${uploadProgress}%`}
-              </p>
-            </div>
-          )}
-
-          {wardrobe.length === 0 && uploadingItems.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">No items in wardrobe yet</p>
-              <p className="text-sm text-gray-400 mt-1">Upload clothing photos for detailed luxury analysis</p>
-            </div>
-          ) : (
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+        
+        .shimmer {
+          background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+        }
+      `}</style>
