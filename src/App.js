@@ -18,7 +18,7 @@ function App() {
   useEffect(() => {
     fetch('/api/get-wardrobe')
       .then(res => res.json())
-      .then(res => {
+      .then(data => {  // This names the parsed JSON as 'data'
         if (data.success && data.items?.length > 0) {
           const formattedItems = data.items.map(item => ({
             id: item.id,
@@ -32,7 +32,7 @@ function App() {
         }
       })
       .catch(err => console.log('Could not load saved items:', err));
-  }, []); // This closes the useEffect
+  }, []);// This closes the useEffect
 
   // Handle wardrobe image uploads
   const handleWardrobeUpload = async (e) => {
