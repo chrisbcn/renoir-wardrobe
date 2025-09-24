@@ -18,22 +18,21 @@ function App() {
   useEffect(() => {
     fetch('/api/get-wardrobe')
       .then(res => res.json())
-      .then(data => {
+      .then(res => {
         if (data.success && data.items?.length > 0) {
-          // Transform database items to match your app's format
           const formattedItems = data.items.map(item => ({
             id: item.id,
             name: item.item_name || 'Item',
-            imageUrl: item.image_url,  // This is the base64 image
+            imageUrl: item.image_url,
             analysis: item.analysis_data,
-            isSaved: true  // Mark as saved since it came from DB
+            isSaved: true
           }));
           setWardrobe(formattedItems);
           console.log(`Loaded ${formattedItems.length} saved items`);
         }
       })
       .catch(err => console.log('Could not load saved items:', err));
-  }, []);
+  }, []); // This closes the useEffect
 
   // Handle wardrobe image uploads
   const handleWardrobeUpload = async (e) => {
