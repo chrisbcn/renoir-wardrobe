@@ -12,35 +12,7 @@ function App() {
   const [isProcessingInspiration, setIsProcessingInspiration] = useState(false);
   const [uploadingItems, setUploadingItems] = useState([]);
   const [currentAnalysisStep, setCurrentAnalysisStep] = useState('');
-// Add this ONE useEffect right after your useState declarations
-useEffect(() => {
-  fetch('/api/get-wardrobe')
-    .then(res => res.json())
-    .then(data => {
-      if (data.success && data.items?.length > 0) {
-        setWardrobe(data.items);
-        console.log(`Loaded ${data.items.length} saved items`);
-      }
-    })
-    .catch(err => console.log('Could not load saved items:', err));
-}, []);
-// After you successfully add item to wardrobe, add this:
-fetch('/api/save-item', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    analysisResult: data.analysis || data,
-    imageData: base64,
-    category: 'wardrobe'
-  })
-})
-.then(res => res.json())
-.then(result => {
-  if (result.success) {
-    console.log('Saved to database:', result.itemId);
-  }
-})
-.catch(err => console.log('Save failed (but analysis worked):', err));
+
   // Handle wardrobe image uploads
   const handleWardrobeUpload = async (e) => {
     const files = Array.from(e.target.files);
