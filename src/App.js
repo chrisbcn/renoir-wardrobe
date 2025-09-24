@@ -18,8 +18,16 @@ useEffect(() => {
     .then(res => res.json())
     .then(data => {
       if (data.success && data.items?.length > 0) {
-        setWardrobe(data.items);
-        console.log(`Loaded ${data.items.length} saved items`);
+        // Transform database items to match your app's format
+        const formattedItems = data.items.map(item => ({
+          id: item.id,
+          name: item.item_name || 'Item',
+          image: item.image_url,  // This is the base64 image
+          analysis: item.analysis_data,
+          isSaved: true  // Mark as saved since it came from DB
+        }));
+        setWardrobe(formattedItems);
+        console.log(`Loaded ${formattedItems.length} saved items`);
       }
     })
     .catch(err => console.log('Could not load saved items:', err));
@@ -31,7 +39,26 @@ useEffect(() => {
 
     setIsUploading(true);
     setUploadProgress(0);
-    
+    // Find where you're saving to database and modify it slightly:
+fetch('/api/save-item', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    analysisResult: data.analysis || data,
+    imageData: base64,
+    category: 'wardrobe'
+  })
+})
+.then(res => res.json())
+.then(result => {
+  if (result.success) {
+    console.log('Saved to database:', result.itemId);
+    // ADD THIS: Mark the item as saved in your state
+    setWardrobe(prev => prev.map(item => 
+      item.id === newItem.id ? { ...item, isSaved: true } : item
+    ));
+  }
+})
     // Create placeholder items for loading state
     const placeholders = files.map((file, index) => ({
       id: `placeholder-${Date.now()}-${index}`,
