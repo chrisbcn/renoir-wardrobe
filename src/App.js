@@ -1,5 +1,3 @@
-// App.js - Updated with automatic database saving
-
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
@@ -14,6 +12,26 @@ function App() {
   const [isProcessingInspiration, setIsProcessingInspiration] = useState(false);
   const [uploadingItems, setUploadingItems] = useState([]);
   const [currentAnalysisStep, setCurrentAnalysisStep] = useState('');
+
+  // Load saved wardrobe items when app starts
+  useEffect(() => {
+    const loadSavedWardrobe = async () => {
+      try {
+        const response = await fetch('/api/get-wardrobe');
+        const result = await response.json();
+        
+        if (result.success && result.items.length > 0) {
+          setWardrobe(result.items);
+          console.log(`Loaded ${result.items.length} items from database`);
+        }
+      } catch (error) {
+        console.log('Could not load saved items:', error);
+        // Not a critical error - app works fine without saved data
+      }
+    };
+
+    loadSavedWardrobe();
+  }, []);
 
   // Helper function to save analysis results to database
   const saveToDatabase = async (analysisResult, imageData, category = 'wardrobe') => {
@@ -31,14 +49,14 @@ function App() {
       const result = await response.json();
       
       if (result.success) {
-        console.log('Successfully saved to database:', result.itemId);
+        console.log('✅ Successfully saved to database:', result.itemId);
         return result.itemId;
       } else {
-        console.warn('Failed to save to database:', result.error);
+        console.warn('❌ Failed to save to database:', result.error);
         return null;
       }
     } catch (error) {
-      console.warn('Database save failed (analysis still works):', error);
+      console.warn('⚠️ Database save failed (analysis still works):', error);
       return null;
     }
   };
@@ -123,9 +141,9 @@ function App() {
         
         newItems.push(item);
         
-        // Save to database in background (don't wait for it)
+        // Save to database in background
         setUploadingItems(prev => prev.map((item, index) => 
-          index === i ? { ...item, loadingMessage: 'Saving to wardrobe...' } : item
+          index === i ? { ...item, loadingMessage: '💾 Saving to wardrobe...' } : item
         ));
         
         saveToDatabase(analysis, base64, 'wardrobe').then(itemId => {
@@ -133,7 +151,7 @@ function App() {
             // Update the item with database ID if saved successfully
             setWardrobe(prev => prev.map(wardrobeItem => 
               wardrobeItem.id === item.id 
-                ? { ...wardrobeItem, databaseId: itemId }
+                ? { ...wardrobeItem, databaseId: itemId, saved: true }
                 : wardrobeItem
             ));
           }
@@ -207,10 +225,10 @@ function App() {
       setInspirationAnalysis(analysis);
       
       // Save inspiration to database in background
-      setCurrentAnalysisStep('Saving inspiration...');
+      setCurrentAnalysisStep('💾 Saving inspiration...');
       saveToDatabase(analysis, base64, 'inspiration').then(itemId => {
         if (itemId) {
-          console.log('Inspiration saved to database:', itemId);
+          console.log('✅ Inspiration saved to database:', itemId);
         }
       });
       
@@ -333,6 +351,32 @@ function App() {
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
           }
+          
+          .btn-primary {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+          }
+          
+          .btn-primary:hover {
+            background: #2563eb;
+          }
+          
+          .btn-secondary {
+            background: #6b7280;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+          }
+          
+          .btn-secondary:hover {
+            background: #4b5563;
+          }
         `}
       </style>
       
@@ -417,15 +461,15 @@ function App() {
                     <div className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded ${
                       item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
                       item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
-                      item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
+                      item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {item.analysis.overallAssessment.tier}
                     </div>
                   )}
                   {/* Database save indicator */}
-                  {item.databaseId && (
-                    <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
+                  {(item.databaseId || item.source === 'database') && (
+                    <div className="absolute top-1 left-1 w-3 h-3 bg-green-500 rounded-full border border-white" 
                          title="Saved to database"/>
                   )}
                   <p className="text-xs text-center mt-1 truncate">{item.name}</p>
@@ -435,7 +479,6 @@ function App() {
           )}
         </div>
 
-        {/* Rest of your existing code remains unchanged */}
         {/* Inspiration Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -533,10 +576,10 @@ function App() {
           </div>
         )}
 
-        {/* Enhanced Item Details Modal with Luxury Analysis - keeping your existing modal code */}
+        {/* Enhanced Item Details Modal with Luxury Analysis */}
         {selectedItem && (
           <div 
-            className="fixed inset-0 bg-black z-50 overflow-y-auto"
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto"
             onClick={() => setSelectedItem(null)}
           >
             <div 
@@ -565,13 +608,75 @@ function App() {
                         <p className="text-red-500">Analysis failed: {selectedItem.analysis.error}</p>
                       ) : (
                         <>
-                          {/* Keep all your existing modal content - it's perfect */}
                           {/* Overall Assessment */}
                           {selectedItem.analysis?.overallAssessment && (
                             <div className="bg-purple-50 p-3 rounded">
                               <h3 className="font-semibold mb-2">Overall Assessment</h3>
                               <div className="grid grid-cols-2 gap-2 text-sm">
-                                <p><span className="font-medium">Tier:</span> {selectedItem.analysis.overallAssessment.tier}</p>
+                                <p><span className="font-medium">Construction House:</span> {selectedItem.analysis.brandIdentifiers.constructionHouse}</p>
+                                {selectedItem.analysis.brandIdentifiers.visibleLogos && (
+                                  <p><span className="font-medium">Visible Logos:</span> {selectedItem.analysis.brandIdentifiers.visibleLogos}</p>
+                                )}
+                                {selectedItem.analysis.brandIdentifiers.hiddenSignatures && (
+                                  <p><span className="font-medium">Hidden Signatures:</span> {selectedItem.analysis.brandIdentifiers.hiddenSignatures}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Quality Indicators */}
+                          {selectedItem.analysis?.qualityIndicators && (
+                            <div className="bg-red-50 p-3 rounded">
+                              <h3 className="font-semibold mb-2">Quality Indicators</h3>
+                              <div className="text-sm">
+                                {selectedItem.analysis.qualityIndicators.handworkEvidence?.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="font-medium">Handwork Evidence:</p>
+                                    <ul className="ml-4 list-disc text-xs">
+                                      {selectedItem.analysis.qualityIndicators.handworkEvidence.map((evidence, idx) => (
+                                        <li key={idx}>{evidence}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {selectedItem.analysis.qualityIndicators.luxuryMarkers?.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="font-medium">Luxury Markers:</p>
+                                    <ul className="ml-4 list-disc text-xs">
+                                      {selectedItem.analysis.qualityIndicators.luxuryMarkers.map((marker, idx) => (
+                                        <li key={idx}>{marker}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {selectedItem.analysis.qualityIndicators.authenticityMarkers?.length > 0 && (
+                                  <div>
+                                    <p className="font-medium">Authenticity Markers:</p>
+                                    <ul className="ml-4 list-disc text-xs">
+                                      {selectedItem.analysis.qualityIndicators.authenticityMarkers.map((marker, idx) => (
+                                        <li key={idx}>{marker}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;<span className="font-medium">Tier:</span> {selectedItem.analysis.overallAssessment.tier}</p>
                                 <p><span className="font-medium">Est. Retail:</span> {selectedItem.analysis.overallAssessment.estimatedRetail}</p>
                                 <p><span className="font-medium">Condition:</span> {selectedItem.analysis.overallAssessment.condition}</p>
                                 <p><span className="font-medium">Age:</span> {selectedItem.analysis.overallAssessment.estimatedAge}</p>
@@ -649,67 +754,4 @@ function App() {
                                 {selectedItem.analysis.brandIdentifiers.likelyBrand && (
                                   <p><span className="font-medium">Likely Brand:</span> {selectedItem.analysis.brandIdentifiers.likelyBrand} ({selectedItem.analysis.brandIdentifiers.confidence}% confidence)</p>
                                 )}
-                                <p><span className="font-medium">Construction House:</span> {selectedItem.analysis.brandIdentifiers.constructionHouse}</p>
-                                {selectedItem.analysis.brandIdentifiers.visibleLogos && (
-                                  <p><span className="font-medium">Visible Logos:</span> {selectedItem.analysis.brandIdentifiers.visibleLogos}</p>
-                                )}
-                                {selectedItem.analysis.brandIdentifiers.hiddenSignatures && (
-                                  <p><span className="font-medium">Hidden Signatures:</span> {selectedItem.analysis.brandIdentifiers.hiddenSignatures}</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Quality Indicators */}
-                          {selectedItem.analysis?.qualityIndicators && (
-                            <div className="bg-red-50 p-3 rounded">
-                              <h3 className="font-semibold mb-2">Quality Indicators</h3>
-                              <div className="text-sm">
-                                {selectedItem.analysis.qualityIndicators.handworkEvidence?.length > 0 && (
-                                  <div className="mb-2">
-                                    <p className="font-medium">Handwork Evidence:</p>
-                                    <ul className="ml-4 list-disc text-xs">
-                                      {selectedItem.analysis.qualityIndicators.handworkEvidence.map((evidence, idx) => (
-                                        <li key={idx}>{evidence}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                                {selectedItem.analysis.qualityIndicators.luxuryMarkers?.length > 0 && (
-                                  <div className="mb-2">
-                                    <p className="font-medium">Luxury Markers:</p>
-                                    <ul className="ml-4 list-disc text-xs">
-                                      {selectedItem.analysis.qualityIndicators.luxuryMarkers.map((marker, idx) => (
-                                        <li key={idx}>{marker}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                                {selectedItem.analysis.qualityIndicators.authenticityMarkers?.length > 0 && (
-                                  <div>
-                                    <p className="font-medium">Authenticity Markers:</p>
-                                    <ul className="ml-4 list-disc text-xs">
-                                      {selectedItem.analysis.qualityIndicators.authenticityMarkers.map((marker, idx) => (
-                                        <li key={idx}>{marker}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default App;
+                                <p>
