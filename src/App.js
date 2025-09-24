@@ -326,12 +326,33 @@
 //   );
 // }
 // export default App;
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
   const [wardrobe, setWardrobe] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  // Load saved items on startup
+  useEffect(() => {
+    fetch('/api/get-wardrobe')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.items?.length > 0) {
+          const formattedItems = data.items.map(item => ({
+            id: item.id,
+            name: item.item_name || 'Item',
+            imageUrl: item.image_url,
+            analysis: item.analysis_data,
+            isSaved: true
+          }));
+          setWardrobe(formattedItems);
+          console.log(`Loaded ${formattedItems.length} saved items`);
+        }
+      })
+      .catch(err => console.log('Could not load saved items:', err));
+  }, []);
 
   const handleWardrobeUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -369,10 +390,32 @@ function App() {
           id: Date.now() + Math.random(),
           imageUrl: `data:image/jpeg;base64,${base64}`,
           name: analysis.name || `Item ${i + 1}`,
-          analysis: analysis
+          analysis: analysis,
+          isSaved: false
         };
         
         setWardrobe(prev => [...prev, item]);
+
+        // Save to database in background
+        fetch('/api/save-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            analysisResult: analysis,
+            imageData: base64,
+            category: 'wardrobe'
+          })
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            console.log('Saved to database:', result.itemId);
+            setWardrobe(prev => prev.map(w => 
+              w.id === item.id ? { ...w, isSaved: true } : w
+            ));
+          }
+        })
+        .catch(err => console.log('Save failed:', err));
         
       } catch (error) {
         console.error(`Failed to analyze ${file.name}:`, error);
@@ -411,20 +454,97 @@ function App() {
               <p className="text-gray-500">No items in wardrobe yet</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
               {wardrobe.map(item => (
-                <div key={item.id}>
+                <div 
+                  key={item.id}
+                  onClick={() => setSelectedItem(item)}
+                  className="cursor-pointer hover:opacity-80 relative"
+                >
                   <img 
                     src={item.imageUrl} 
                     alt={item.name}
                     className="w-full h-32 object-cover rounded-lg"
                   />
+                  {item.isSaved && (
+                    <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" />
+                  )}
                   <p className="text-xs text-center mt-1">{item.name}</p>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Modal for item details */}
+        {selectedItem && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedItem(null)}
+          >
+            <div 
+              className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center p-4 border-b">
+                <h2 className="text-xl font-semibold">{selectedItem.name}</h2>
+                <button 
+                  onClick={() => setSelectedItem(null)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <img 
+                    src={selectedItem.imageUrl} 
+                    alt={selectedItem.name}
+                    className="w-full rounded-lg"
+                  />
+                  
+                  <div className="space-y-4">
+                    {selectedItem.analysis?.overallAssessment && (
+                      <div className="bg-purple-50 p-3 rounded">
+                        <h3 className="font-semibold mb-2">Overall Assessment</h3>
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Tier:</span> {selectedItem.analysis.overallAssessment.tier}</p>
+                          <p><span className="font-medium">Est. Retail:</span> {selectedItem.analysis.overallAssessment.estimatedRetail}</p>
+                          <p><span className="font-medium">Condition:</span> {selectedItem.analysis.overallAssessment.condition}</p>
+                          <p><span className="font-medium">Authenticity:</span> {selectedItem.analysis.overallAssessment.authenticityConfidence}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {selectedItem.analysis?.brandIdentifiers && (
+                      <div className="bg-yellow-50 p-3 rounded">
+                        <h3 className="font-semibold mb-2">Brand Identifiers</h3>
+                        <div className="text-sm space-y-1">
+                          {selectedItem.analysis.brandIdentifiers.likelyBrand && (
+                            <p><span className="font-medium">Likely Brand:</span> {selectedItem.analysis.brandIdentifiers.likelyBrand} ({selectedItem.analysis.brandIdentifiers.confidence}%)</p>
+                          )}
+                          <p><span className="font-medium">Construction:</span> {selectedItem.analysis.brandIdentifiers.constructionHouse}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedItem.analysis?.fabricAnalysis && (
+                      <div className="bg-green-50 p-3 rounded">
+                        <h3 className="font-semibold mb-2">Fabric Analysis</h3>
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Weave:</span> {selectedItem.analysis.fabricAnalysis.weaveStructure}</p>
+                          <p><span className="font-medium">Quality:</span> {selectedItem.analysis.fabricAnalysis.yarnQuality}</p>
+                          <p><span className="font-medium">Weight:</span> {selectedItem.analysis.fabricAnalysis.weight}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
