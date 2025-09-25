@@ -119,14 +119,14 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Host Grotesk', sans-serif;
   font-size: calc(var(--grid-unit) * 1.75);
   font-weight: 500;
-  padding: calc(var(--grid-unit) * 1.5) calc(var(--grid-unit) * 3);
+  padding: calc(var(--grid-unit) * .5) calc(var(--grid-unit) * 3);
   border: 1px solid var(--color-black);
   background: var(--color-black);
   color: var(--color-white);
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: all 0.2s ease;
+  transition: all 0.5s ease;
   display: inline-block;
 }
 

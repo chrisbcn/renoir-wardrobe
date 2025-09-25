@@ -867,7 +867,7 @@ function App() {
         </div>
 
         {/* Wardrobe Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-white p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">
               Your Wardrobe
@@ -935,13 +935,13 @@ function App() {
                   <div 
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
-                    className="cursor-pointer hover:scale-105 transition-transform relative"
+                    className="cursor-pointer transition-transform relative wardrobe-item"
                     title="Click to view luxury analysis"
                   >
                     <img 
                       src={item.imageUrl} 
                       alt={item.name}
-                      className="w-full h-24 md:h-28 lg:h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-400"
+                      className="w-full h-24 md:h-28 lg:h-32 object-cover"
                     />
                     {/* Quality tier indicator */}
                     {item.analysis?.overallAssessment?.tier && (
