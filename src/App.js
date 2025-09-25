@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import './Maura.css'; // Import the luxury styles
 
 // Detailed luxury fashion analysis prompt
 const getLuxuryAnalysisPrompt = () => {
