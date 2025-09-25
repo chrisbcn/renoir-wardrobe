@@ -508,12 +508,296 @@ function App() {
   }, [selectedItem]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen" style={{ backgroundColor: '#FAFAF8' }}>
       <style>
         {`
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap');
+          
+          :root {
+            --grid-unit: 8px;
+            --color-bg: #FAFAF8;
+            --color-white: #FFFFFF;
+            --color-black: #1A1A1A;
+            --color-gray-dark: #404040;
+            --color-gray-medium: #808080;
+            --color-gray-light: #E5E5E5;
+            --color-border: #E0E0E0;
+            --color-accent: #000000;
+          }
+          
+          * {
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Host Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 400;
+            color: var(--color-black);
+            line-height: calc(var(--grid-unit) * 3);
+          }
+          
+          h1, h2, h3, h4, h5, h6 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+          }
+          
+          .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: calc(var(--grid-unit) * 6) calc(var(--grid-unit) * 4);
+          }
+          
+          @media (min-width: 768px) {
+            .container {
+              padding: calc(var(--grid-unit) * 8) calc(var(--grid-unit) * 6);
+            }
+          }
+          
+          @media (min-width: 1024px) {
+            .container {
+              padding: calc(var(--grid-unit) * 10) calc(var(--grid-unit) * 8);
+            }
+          }
+          
+          .header-section {
+            margin-bottom: calc(var(--grid-unit) * 8);
+            text-align: center;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: calc(var(--grid-unit) * 6);
+          }
+          
+          .main-title {
+            font-size: calc(var(--grid-unit) * 6);
+            margin-bottom: calc(var(--grid-unit) * 2);
+            font-weight: 400;
+            letter-spacing: -0.03em;
+          }
+          
+          .subtitle {
+            font-family: 'Host Grotesk', sans-serif;
+            font-size: calc(var(--grid-unit) * 2);
+            font-weight: 300;
+            color: var(--color-gray-dark);
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+          }
+          
+          .section {
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            margin-bottom: calc(var(--grid-unit) * 4);
+            padding: calc(var(--grid-unit) * 4);
+          }
+          
+          .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(var(--grid-unit) * 4);
+            padding-bottom: calc(var(--grid-unit) * 2);
+            border-bottom: 1px solid var(--color-border);
+          }
+          
+          .section-title {
+            font-size: calc(var(--grid-unit) * 3);
+            font-weight: 500;
+          }
+          
+          .item-count {
+            font-family: 'Host Grotesk', sans-serif;
+            font-size: calc(var(--grid-unit) * 1.75);
+            color: var(--color-gray-medium);
+            font-weight: 400;
+            margin-left: calc(var(--grid-unit) * 2);
+          }
+          
+          .btn-primary, .btn-secondary {
+            font-family: 'Host Grotesk', sans-serif;
+            font-size: calc(var(--grid-unit) * 1.75);
+            font-weight: 500;
+            padding: calc(var(--grid-unit) * 1.5) calc(var(--grid-unit) * 3);
+            border: 1px solid var(--color-black);
+            background: var(--color-black);
+            color: var(--color-white);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+            display: inline-block;
+          }
+          
+          .btn-primary:hover {
+            background: var(--color-white);
+            color: var(--color-black);
+          }
+          
+          .btn-secondary {
+            background: var(--color-white);
+            color: var(--color-black);
+          }
+          
+          .btn-secondary:hover {
+            background: var(--color-black);
+            color: var(--color-white);
+          }
+          
+          .wardrobe-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: calc(var(--grid-unit) * 3);
+            margin-bottom: calc(var(--grid-unit) * 4);
+          }
+          
+          @media (min-width: 768px) {
+            .wardrobe-grid {
+              grid-template-columns: repeat(4, 1fr);
+              gap: calc(var(--grid-unit) * 4);
+            }
+          }
+          
+          @media (min-width: 1280px) {
+            .wardrobe-grid {
+              grid-template-columns: repeat(4, 1fr);
+            }
+          }
+          
+          .wardrobe-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: var(--color-white);
+          }
+          
+          .wardrobe-item:hover {
+            transform: translateY(-2px);
+          }
+          
+          .wardrobe-item:hover .item-image {
+            opacity: 0.95;
+          }
+          
+          .item-image {
+            width: 100%;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            border: 1px solid var(--color-border);
+            background: #FAFAFA;
+            transition: opacity 0.3s ease;
+          }
+          
+          .item-name {
+            margin-top: calc(var(--grid-unit) * 1.5);
+            font-size: calc(var(--grid-unit) * 1.75);
+            font-weight: 400;
+            color: var(--color-black);
+            text-align: center;
+            line-height: 1.4;
+            padding: 0 calc(var(--grid-unit) * 1);
+          }
+          
+          .quality-badge {
+            position: absolute;
+            top: calc(var(--grid-unit) * 1);
+            right: calc(var(--grid-unit) * 1);
+            padding: calc(var(--grid-unit) * 0.5) calc(var(--grid-unit) * 1);
+            background: var(--color-white);
+            border: 1px solid var(--color-black);
+            font-size: calc(var(--grid-unit) * 1.5);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          }
+          
+          .status-indicator {
+            position: absolute;
+            top: calc(var(--grid-unit) * 1);
+            left: calc(var(--grid-unit) * 1);
+            width: calc(var(--grid-unit) * 1);
+            height: calc(var(--grid-unit) * 1);
+            border-radius: 50%;
+          }
+          
+          .status-saved {
+            background: #22C55E;
+          }
+          
+          .status-pending {
+            background: #FFC107;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+          
+          .empty-state {
+            text-align: center;
+            padding: calc(var(--grid-unit) * 10) calc(var(--grid-unit) * 4);
+          }
+          
+          .empty-state-text {
+            font-size: calc(var(--grid-unit) * 2.25);
+            color: var(--color-gray-medium);
+            margin-bottom: calc(var(--grid-unit) * 1);
+          }
+          
+          .empty-state-subtext {
+            font-size: calc(var(--grid-unit) * 1.75);
+            color: var(--color-gray-medium);
+            margin-bottom: calc(var(--grid-unit) * 4);
+          }
+          
+          .load-more-btn {
+            width: 100%;
+            text-align: center;
+            padding: calc(var(--grid-unit) * 2);
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            font-size: calc(var(--grid-unit) * 1.75);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: calc(var(--grid-unit) * 4);
+          }
+          
+          .load-more-btn:hover:not(:disabled) {
+            background: var(--color-black);
+            color: var(--color-white);
+            border-color: var(--color-black);
+          }
+          
+          .load-more-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+          
+          .progress-bar {
+            height: calc(var(--grid-unit) * 0.5);
+            background: var(--color-gray-light);
+            margin-bottom: calc(var(--grid-unit) * 1);
+          }
+          
+          .progress-fill {
+            height: 100%;
+            background: var(--color-black);
+            transition: width 0.3s ease;
+          }
+          
+          .progress-text {
+            font-size: calc(var(--grid-unit) * 1.75);
+            color: var(--color-gray-medium);
+            text-align: center;
+          }
+          
           @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+          }
+          
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
           }
           
           @keyframes shimmer {
@@ -526,22 +810,56 @@ function App() {
           }
           
           .shimmer {
-            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background: linear-gradient(90deg, #f8f8f8 25%, #f0f0f0 50%, #f8f8f8 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
+          }
+          
+          .loading-placeholder {
+            position: relative;
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            aspect-ratio: 3/4;
+          }
+          
+          .loading-content {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: calc(var(--grid-unit) * 2);
+          }
+          
+          .loading-spinner {
+            width: calc(var(--grid-unit) * 4);
+            height: calc(var(--grid-unit) * 4);
+            border: 2px solid var(--color-gray-light);
+            border-top-color: var(--color-black);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+          
+          .loading-text {
+            font-size: calc(var(--grid-unit) * 1.5);
+            color: var(--color-gray-medium);
+            margin-top: calc(var(--grid-unit) * 1);
+            text-align: center;
           }
         `}
       </style>
       
-      <div className="max-w-7xl mx-auto">
+      <div className="container">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Maura - Luxury Fashion Analysis</h1>
-          <p className="text-gray-600">
-            Collector-grade garment analysis with authentication markers and construction details
+        <div className="header-section">
+          <h1 className="main-title">Maura</h1>
+          <p className="subtitle">
+            Luxury Fashion Analysis
             {isAnalyzingInitial && (
-              <span className="ml-2 text-sm text-blue-600">
-                (Auto-analyzing first 5 items for better display...)
+              <span style={{ marginLeft: '16px', color: '#808080' }}>
+                — Analyzing items...
               </span>
             )}
           </p>
@@ -667,95 +985,110 @@ function App() {
         </div>
 
         {/* Inspiration Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Inspiration Look</h2>
+        <div className="section">
+          <div className="section-header">
+            <h2 className="section-title">Inspiration Look</h2>
             <label className="btn-secondary">
               <input 
                 type="file" 
                 accept="image/*"
                 onChange={handleInspirationUpload}
                 className="hidden"
+                style={{ display: 'none' }}
               />
               {isProcessingInspiration ? 'Analyzing...' : 'Upload Inspiration'}
             </label>
           </div>
 
           {inspirationImage ? (
-            <div className="flex gap-4">
-              <div className="relative">
+            <div style={{ display: 'flex', gap: 'calc(var(--grid-unit) * 4)' }}>
+              <div style={{ position: 'relative', flex: '0 0 300px' }}>
                 <img 
                   src={inspirationImage} 
                   alt="Inspiration"
-                  className={`w-48 h-48 object-cover rounded-lg transition-opacity ${
-                    isProcessingInspiration ? 'opacity-50' : 'opacity-100'
-                  }`}
+                  className="item-image"
+                  style={{ opacity: isProcessingInspiration ? 0.5 : 1 }}
                 />
                 {isProcessingInspiration && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 rounded-lg">
-                    <div className="w-12 h-12 border-3 border-gray-200 border-t-blue-500 rounded-full spinner" />
-                    <p className="text-sm text-gray-600 mt-2 text-center px-2">
+                  <div className="loading-content">
+                    <div className="loading-spinner" />
+                    <p className="loading-text">
                       {currentAnalysisStep || 'Processing...'}
                     </p>
                   </div>
                 )}
               </div>
               {inspirationAnalysis && !isProcessingInspiration && (
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-2">Luxury Analysis:</h3>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="font-medium">Type:</span> {inspirationAnalysis.type}</p>
-                    <p><span className="font-medium">Quality Tier:</span> {inspirationAnalysis.overallAssessment?.tier}</p>
-                    <p><span className="font-medium">Construction:</span> {inspirationAnalysis.brandIdentifiers?.constructionHouse}</p>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: 'calc(var(--grid-unit) * 2.5)', marginBottom: 'calc(var(--grid-unit) * 2)' }}>Luxury Analysis</h3>
+                  <div style={{ fontSize: 'calc(var(--grid-unit) * 1.75)', lineHeight: '1.8' }}>
+                    <p><span style={{ fontWeight: 500 }}>Type:</span> {inspirationAnalysis.type}</p>
+                    <p><span style={{ fontWeight: 500 }}>Quality Tier:</span> {inspirationAnalysis.overallAssessment?.tier}</p>
+                    <p><span style={{ fontWeight: 500 }}>Construction:</span> {inspirationAnalysis.brandIdentifiers?.constructionHouse}</p>
                     {inspirationAnalysis.brandIdentifiers?.likelyBrand && (
-                      <p><span className="font-medium">Likely Brand:</span> {inspirationAnalysis.brandIdentifiers.likelyBrand} ({inspirationAnalysis.brandIdentifiers.confidence}% confidence)</p>
+                      <p><span style={{ fontWeight: 500 }}>Likely Brand:</span> {inspirationAnalysis.brandIdentifiers.likelyBrand} ({inspirationAnalysis.brandIdentifiers.confidence}%)</p>
                     )}
                     {inspirationAnalysis.overallAssessment?.estimatedRetail && (
-                      <p><span className="font-medium">Est. Value:</span> {inspirationAnalysis.overallAssessment.estimatedRetail}</p>
+                      <p><span style={{ fontWeight: 500 }}>Est. Value:</span> {inspirationAnalysis.overallAssessment.estimatedRetail}</p>
                     )}
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">No inspiration image uploaded</p>
-              <p className="text-sm text-gray-400 mt-1">Upload a look for luxury-level matching</p>
+            <div className="empty-state">
+              <p className="empty-state-text">No inspiration image uploaded</p>
+              <p className="empty-state-subtext">Upload a look for luxury-level matching</p>
             </div>
           )}
         </div>
 
         {/* Matching Results */}
         {matchingResults && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Best Matches from Your Wardrobe</h2>
-            <div className="space-y-4">
+          <div className="section">
+            <h2 className="section-title" style={{ marginBottom: 'calc(var(--grid-unit) * 4)' }}>Best Matches from Your Wardrobe</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'calc(var(--grid-unit) * 2)' }}>
               {matchingResults.map((item, idx) => (
-                <div key={item.id} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
+                <div key={item.id} style={{ 
+                  display: 'flex', 
+                  gap: 'calc(var(--grid-unit) * 3)',
+                  padding: 'calc(var(--grid-unit) * 3)',
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-bg)'
+                }}>
                   <img 
                     src={item.imageUrl} 
                     alt={item.name}
-                    className="w-24 h-24 object-cover rounded-lg"
+                    style={{
+                      width: '120px',
+                      height: '160px',
+                      objectFit: 'cover',
+                      border: '1px solid var(--color-border)'
+                    }}
                   />
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'calc(var(--grid-unit) * 1)' }}>
                       <div>
-                        <h3 className="font-semibold">{item.name}</h3>
+                        <h3 style={{ fontSize: 'calc(var(--grid-unit) * 2.25)', fontWeight: 500, marginBottom: '4px' }}>{item.name}</h3>
                         {item.analysis?.brandIdentifiers?.likelyBrand && (
-                          <p className="text-sm text-gray-600">
+                          <p style={{ fontSize: 'calc(var(--grid-unit) * 1.75)', color: 'var(--color-gray-medium)' }}>
                             {item.analysis.brandIdentifiers.likelyBrand} • {item.analysis.overallAssessment?.tier}
                           </p>
                         )}
                       </div>
-                      <span className={`px-2 py-1 rounded text-sm font-medium ${
-                        item.similarity.score >= 70 ? 'bg-green-100 text-green-800' :
-                        item.similarity.score >= 50 ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
+                      <span style={{
+                        padding: 'calc(var(--grid-unit) * 0.5) calc(var(--grid-unit) * 1.5)',
+                        border: `1px solid ${item.similarity.score >= 70 ? '#22C55E' : item.similarity.score >= 50 ? '#FFC107' : '#EF4444'}`,
+                        fontSize: 'calc(var(--grid-unit) * 1.5)',
+                        fontWeight: 500,
+                        color: item.similarity.score >= 70 ? '#22C55E' : item.similarity.score >= 50 ? '#FFC107' : '#EF4444'
+                      }}>
                         {item.similarity.score}% Match
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{item.similarity.reasoning}</p>
+                    <p style={{ fontSize: 'calc(var(--grid-unit) * 1.75)', color: 'var(--color-gray-medium)', lineHeight: '1.6' }}>
+                      {item.similarity.reasoning}
+                    </p>
                   </div>
                 </div>
               ))}
