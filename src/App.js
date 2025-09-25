@@ -814,67 +814,6 @@ function App() {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
           
-          .empty-state {
-            text-align: center;
-            padding: calc(var(--grid-unit) * 10) calc(var(--grid-unit) * 4);
-          }
-          
-          .empty-state-text {
-            font-size: calc(var(--grid-unit) * 2.25);
-            color: var(--color-gray-medium);
-            margin-bottom: calc(var(--grid-unit) * 1);
-          }
-          
-          .empty-state-subtext {
-            font-size: calc(var(--grid-unit) * 1.75);
-            color: var(--color-gray-medium);
-            margin-bottom: calc(var(--grid-unit) * 4);
-          }
-          
-          .load-more-btn {
-            width: 100%;
-            text-align: center;
-            padding: calc(var(--grid-unit) * 2);
-            background: var(--color-white);
-            border: 1px solid var(--color-border);
-            font-size: calc(var(--grid-unit) * 1.75);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-top: calc(var(--grid-unit) * 4);
-          }
-          
-          .load-more-btn:hover:not(:disabled) {
-            background: var(--color-black);
-            color: var(--color-white);
-            border-color: var(--color-black);
-          }
-          
-          .load-more-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-          }
-          
-          .progress-bar {
-            height: calc(var(--grid-unit) * 0.5);
-            background: var(--color-gray-light);
-            margin-bottom: calc(var(--grid-unit) * 1);
-          }
-          
-          .progress-fill {
-            height: 100%;
-            background: var(--color-black);
-            transition: width 0.3s ease;
-          }
-          
-          .progress-text {
-            font-size: calc(var(--grid-unit) * 1.75);
-            color: var(--color-gray-medium);
-            text-align: center;
-          }
-          
           @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -1083,7 +1022,179 @@ function App() {
           )}
         </div>
 
-        {/* Rest of the component continues with Inspiration Section and Modal... */}
+        {/* Enhanced Item Details Modal with Luxury Analysis */}
+        {selectedItem && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto"
+            onClick={() => setSelectedItem(null)}
+          >
+            <div 
+              className="min-h-screen px-4 py-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-white rounded-lg max-w-4xl mx-auto">
+                <div className="flex justify-between items-center p-4 border-b">
+                  <h2 className="text-xl font-semibold">{selectedItem.name}</h2>
+                  <button 
+                    onClick={() => setSelectedItem(null)}
+                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="p-6 max-h-[80vh] overflow-y-auto">
+                  <div className="grid grid-cols-3 gap-6">
+                    <img 
+                      src={selectedItem.imageUrl} 
+                      alt={selectedItem.name}
+                      className="col-span-1 w-full h-auto rounded-lg sticky top-0"
+                    />
+                    <div className="col-span-2 space-y-4">
+                      {selectedItem.analysis?.error ? (
+                        <p className="text-red-500">Analysis failed: {selectedItem.analysis.error}</p>
+                      ) : (
+                        <>
+                          {/* Overall Assessment */}
+                          {selectedItem.analysis?.overallAssessment && (
+                            <div className="bg-purple-50 p-3 rounded">
+                              <h3 className="font-semibold mb-2">Overall Assessment</h3>
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                <p><span className="font-medium">Tier:</span> {selectedItem.analysis.overallAssessment.tier}</p>
+                                <p><span className="font-medium">Est. Retail:</span> {selectedItem.analysis.overallAssessment.estimatedRetail}</p>
+                                <p><span className="font-medium">Condition:</span> {selectedItem.analysis.overallAssessment.condition}</p>
+                                <p><span className="font-medium">Age:</span> {selectedItem.analysis.overallAssessment.estimatedAge}</p>
+                                <p className="col-span-2"><span className="font-medium">Authenticity:</span> {selectedItem.analysis.overallAssessment.authenticityConfidence}</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Hardware & Fastenings */}
+                          {selectedItem.analysis?.hardwareFastenings && (
+                            <div className="bg-gray-50 p-3 rounded">
+                              <h3 className="font-semibold mb-2">Hardware & Fastenings</h3>
+                              <div className="text-sm space-y-2">
+                                {selectedItem.analysis.hardwareFastenings.buttons && (
+                                  <div>
+                                    <p className="font-medium">Buttons:</p>
+                                    <ul className="ml-4 text-xs space-y-1">
+                                      <li>Material: {selectedItem.analysis.hardwareFastenings.buttons.material}</li>
+                                      {selectedItem.analysis.hardwareFastenings.buttons.logoEngraving && (
+                                        <li>Engraving: {selectedItem.analysis.hardwareFastenings.buttons.logoEngraving}</li>
+                                      )}
+                                      <li>Construction: {selectedItem.analysis.hardwareFastenings.buttons.construction}</li>
+                                    </ul>
+                                  </div>
+                                )}
+                                {selectedItem.analysis.hardwareFastenings.zippers && (
+                                  <div>
+                                    <p className="font-medium">Zippers:</p>
+                                    <ul className="ml-4 text-xs">
+                                      <li>Brand: {selectedItem.analysis.hardwareFastenings.zippers.brand}</li>
+                                      <li>Type: {selectedItem.analysis.hardwareFastenings.zippers.type}</li>
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Construction Signatures */}
+                          {selectedItem.analysis?.constructionSignatures && (
+                            <div className="bg-blue-50 p-3 rounded">
+                              <h3 className="font-semibold mb-2">Construction Signatures</h3>
+                              <div className="text-sm grid grid-cols-2 gap-2">
+                                {selectedItem.analysis.constructionSignatures.pickStitching && (
+                                  <p><span className="font-medium">Pick Stitching:</span> {selectedItem.analysis.constructionSignatures.pickStitching}</p>
+                                )}
+                                {selectedItem.analysis.constructionSignatures.shoulderConstruction && (
+                                  <p><span className="font-medium">Shoulder:</span> {selectedItem.analysis.constructionSignatures.shoulderConstruction}</p>
+                                )}
+                                {selectedItem.analysis.constructionSignatures.seamConstruction && (
+                                  <p><span className="font-medium">Seams:</span> {selectedItem.analysis.constructionSignatures.seamConstruction}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Fabric Analysis */}
+                          {selectedItem.analysis?.fabricAnalysis && (
+                            <div className="bg-green-50 p-3 rounded">
+                              <h3 className="font-semibold mb-2">Fabric Analysis</h3>
+                              <div className="text-sm grid grid-cols-2 gap-2">
+                                <p><span className="font-medium">Weave:</span> {selectedItem.analysis.fabricAnalysis.weaveStructure}</p>
+                                <p><span className="font-medium">Quality:</span> {selectedItem.analysis.fabricAnalysis.yarnQuality}</p>
+                                <p><span className="font-medium">Weight:</span> {selectedItem.analysis.fabricAnalysis.weight}</p>
+                                <p><span className="font-medium">Pattern Match:</span> {selectedItem.analysis.fabricAnalysis.patternMatching}</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Brand Identifiers */}
+                          {selectedItem.analysis?.brandIdentifiers && (
+                            <div className="bg-yellow-50 p-3 rounded">
+                              <h3 className="font-semibold mb-2">Brand Identifiers</h3>
+                              <div className="text-sm space-y-1">
+                                {selectedItem.analysis.brandIdentifiers.likelyBrand && (
+                                  <p><span className="font-medium">Likely Brand:</span> {selectedItem.analysis.brandIdentifiers.likelyBrand} ({selectedItem.analysis.brandIdentifiers.confidence}% confidence)</p>
+                                )}
+                                <p><span className="font-medium">Construction House:</span> {selectedItem.analysis.brandIdentifiers.constructionHouse}</p>
+                                {selectedItem.analysis.brandIdentifiers.visibleLogos && (
+                                  <p><span className="font-medium">Visible Logos:</span> {selectedItem.analysis.brandIdentifiers.visibleLogos}</p>
+                                )}
+                                {selectedItem.analysis.brandIdentifiers.hiddenSignatures && (
+                                  <p><span className="font-medium">Hidden Signatures:</span> {selectedItem.analysis.brandIdentifiers.hiddenSignatures}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Quality Indicators */}
+                          {selectedItem.analysis?.qualityIndicators && (
+                            <div className="bg-red-50 p-3 rounded">
+                              <h3 className="font-semibold mb-2">Quality Indicators</h3>
+                              <div className="text-sm">
+                                {selectedItem.analysis.qualityIndicators.handworkEvidence?.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="font-medium">Handwork Evidence:</p>
+                                    <ul className="ml-4 list-disc text-xs">
+                                      {selectedItem.analysis.qualityIndicators.handworkEvidence.map((evidence, idx) => (
+                                        <li key={idx}>{evidence}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {selectedItem.analysis.qualityIndicators.luxuryMarkers?.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="font-medium">Luxury Markers:</p>
+                                    <ul className="ml-4 list-disc text-xs">
+                                      {selectedItem.analysis.qualityIndicators.luxuryMarkers.map((marker, idx) => (
+                                        <li key={idx}>{marker}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {selectedItem.analysis.qualityIndicators.authenticityMarkers?.length > 0 && (
+                                  <div>
+                                    <p className="font-medium">Authenticity Markers:</p>
+                                    <ul className="ml-4 list-disc text-xs">
+                                      {selectedItem.analysis.qualityIndicators.authenticityMarkers.map((marker, idx) => (
+                                        <li key={idx}>{marker}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
