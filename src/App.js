@@ -658,14 +658,33 @@ setLookMatches(matches);
   };
 // ADD THESE NEW FUNCTIONS HERE
 const matchLookToWardrobe = (lookAnalysis, wardrobe) => {
+  // Add safety check
+  if (!lookAnalysis || !lookAnalysis.itemBreakdown || !lookAnalysis.itemBreakdown.visible_items) {
+    console.error('Invalid look analysis structure:', lookAnalysis);
+    return {
+      matches: {},
+      overallMatch: { percentage: 0, itemsMatched: 0, totalItems: 0 },
+      suggestions: ['Unable to analyze look - please try again']
+    };
+  }
+
   const lookItems = lookAnalysis.itemBreakdown.visible_items;
   const matches = {};
   
+  // Make sure lookItems is an array
+  if (!Array.isArray(lookItems)) {
+    console.error('visible_items is not an array:', lookItems);
+    return {
+      matches: {},
+      overallMatch: { percentage: 0, itemsMatched: 0, totalItems: 0 },
+      suggestions: ['Analysis format error']
+    };
+  }
+  
   lookItems.forEach(lookItem => {
-    // Find best matches for each item in the look
+    // Rest of your matching logic...
     const categoryMatches = wardrobe
       .filter(w => {
-        // Must be same category first
         return isSameCategory(lookItem.category, w.analysis?.type);
       })
       .map(w => {
@@ -673,10 +692,19 @@ const matchLookToWardrobe = (lookAnalysis, wardrobe) => {
         return { ...w, matchScore: score, matchDetails: score.details };
       })
       .sort((a, b) => b.matchScore.total - a.matchScore.total)
-      .slice(0, 3); // Top 3 alternatives for each piece
+      .slice(0, 3);
     
     matches[lookItem.category] = categoryMatches;
   });
+  
+  const overallMatch = calculateOverallLookMatch(matches, lookAnalysis);
+  
+  return {
+    matches,
+    overallMatch,
+    suggestions: generateStylingTips(matches, lookAnalysis)
+  };
+};
   
   // Calculate overall look match percentage
   const overallMatch = calculateOverallLookMatch(matches, lookAnalysis);
