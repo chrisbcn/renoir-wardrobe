@@ -672,9 +672,9 @@ function App() {
             background: var(--color-white);
           }
           
-          .wardrobe-item:hover {
-            transform: translateY(-2px);
-          }
+          // .wardrobe-item:hover {
+          //   transform: translateY(-2px);
+          // }
           
           .wardrobe-item:hover .item-image {
             opacity: 0.95;
@@ -922,7 +922,7 @@ function App() {
                       />
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-90 p-2">
                         <div className="w-8 h-8 border-3 border-gray-200 border-t-blue-500 rounded-full spinner" />
-                        <p className="text-xs text-gray-600 mt-1 text-center">
+                        <p className="text-s text-gray-600 mt-1">
                           {item.loadingMessage}
                         </p>
                       </div>
@@ -935,13 +935,13 @@ function App() {
                   <div 
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
-                    className="cursor-pointer transition-transform relative wardrobe-item"
+                    className="cursor-pointer relative wardrobe-item"
                     title="Click to view luxury analysis"
                   >
                     <img 
                       src={item.imageUrl} 
                       alt={item.name}
-                      className="w-full h-24 md:h-28 lg:h-32 object-cover"
+                      className="w-full object-cover"
                     />
                     {/* Quality tier indicator */}
                     {item.analysis?.overallAssessment?.tier && (
