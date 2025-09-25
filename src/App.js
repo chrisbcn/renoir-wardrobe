@@ -910,7 +910,7 @@ function App() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-10">
                 {/* Show loading placeholders */}
                 {uploadingItems.map(item => (
                   <div key={item.id} className="relative">
