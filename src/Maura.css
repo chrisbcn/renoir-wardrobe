@@ -7,7 +7,7 @@
 /* CSS Variables & 8pt Grid System */
 :root {
   --grid-unit: 8px;
-  --color-bg: #FAFAF8;
+  --color-bg: #f8f6f3;
   --color-white: #FFFFFF;
   --color-black: #1A1A1A;
   --color-gray-dark: #404040;
@@ -35,7 +35,7 @@ body {
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Playfair Display', Georgia, serif;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin: 0;
