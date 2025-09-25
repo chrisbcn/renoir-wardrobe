@@ -1,8 +1,4 @@
-// App.js - Complete version with pagination and detailed analysis
-
 import React, { useState, useEffect } from 'react';
-import './App.css';
-import './Maura.css'; // Import the luxury styles
 
 // Detailed luxury fashion analysis prompt
 const getLuxuryAnalysisPrompt = () => {
@@ -91,6 +87,8 @@ function App() {
   const [currentOffset, setCurrentOffset] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isAnalyzingInitial, setIsAnalyzingInitial] = useState(false);
+  const [analyzingItems, setAnalyzingItems] = useState(new Set());
+  const [isAnalyzingAll, setIsAnalyzingAll] = useState(false);
   const ITEMS_PER_PAGE = 10;
 
   // Load saved wardrobe items - now with pagination
@@ -117,8 +115,7 @@ function App() {
 
         if (offset === 0) {
           setWardrobe(formattedItems);
-          // Auto-analyze first 5 items if they need it
-          analyzeInitialItems(formattedItems.slice(0, 5));
+          // Don't auto-analyze database items - let user decide with the buttons
         } else {
           setWardrobe(prev => [...prev, ...formattedItems]);
         }
@@ -128,6 +125,12 @@ function App() {
         setCurrentOffset(offset);
         
         console.log(`Loaded ${formattedItems.length} items from offset ${offset}`);
+        
+        // Log how many need analysis
+        const needsAnalysisCount = formattedItems.filter(item => item.needsAnalysis).length;
+        if (needsAnalysisCount > 0) {
+          console.log(`${needsAnalysisCount} items need analysis - use "Analyze All" button or hover over individual items`);
+        }
       } else {
         setHasMoreItems(false);
       }
@@ -138,18 +141,102 @@ function App() {
     setIsLoadingMore(false);
   };
 
-  // New function to analyze initial items
-  const analyzeInitialItems = async (items) => {
-    const itemsNeedingAnalysis = items.filter(item => item.needsAnalysis);
+  // Function to analyze a single item
+  const analyzeSingleItem = async (item) => {
+    // Check if already analyzing this item
+    if (analyzingItems.has(item.id)) {
+      return;
+    }
+
+    // Add to analyzing set
+    setAnalyzingItems(prev => new Set([...prev, item.id]));
+
+    try {
+      let base64;
+      if (item.imageUrl.startsWith('data:')) {
+        base64 = item.imageUrl.split(',')[1];
+      } else {
+        // For Supabase URLs, fetch and convert
+        const response = await fetch(item.imageUrl);
+        const blob = await response.blob();
+        base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve(reader.result.split(',')[1]);
+          };
+          reader.readAsDataURL(blob);
+        });
+      }
+
+      // Call API with luxury prompt
+      const analysisResponse = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          image: base64,
+          type: 'wardrobe',
+          prompt: getLuxuryAnalysisPrompt()
+        })
+      });
+
+      const { analysis } = await analysisResponse.json();
+      
+      if (analysis && !analysis.error) {
+        // Update the item with analysis
+        setWardrobe(prev => prev.map(w => 
+          w.id === item.id ? { 
+            ...w, 
+            analysis, 
+            name: analysis.name || analysis.type || w.name,
+            needsAnalysis: false 
+          } : w
+        ));
+        
+        // Save to database
+        await saveToDatabase(analysis, base64, 'wardrobe', item.databaseId);
+        
+        console.log(`Successfully analyzed item ${item.id}`);
+      } else {
+        throw new Error(analysis?.error || 'Analysis failed');
+      }
+    } catch (error) {
+      console.error(`Failed to analyze item ${item.id}:`, error);
+      alert(`Failed to analyze item: ${error.message}`);
+    } finally {
+      // Remove from analyzing set
+      setAnalyzingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+    }
+  };
+
+  // Function to analyze all unanalyzed items
+  const analyzeAllUnanalyzedItems = async () => {
+    const itemsNeedingAnalysis = wardrobe.filter(item => item.needsAnalysis);
     
-    if (itemsNeedingAnalysis.length === 0) return;
+    if (itemsNeedingAnalysis.length === 0) {
+      alert('All items have already been analyzed!');
+      return;
+    }
     
-    setIsAnalyzingInitial(true);
-    console.log(`Auto-analyzing ${itemsNeedingAnalysis.length} items...`);
+    const confirmMsg = `This will analyze ${itemsNeedingAnalysis.length} items. This may take a while. Continue?`;
+    if (!confirm(confirmMsg)) {
+      return;
+    }
     
-    for (const item of itemsNeedingAnalysis) {
+    setIsAnalyzingAll(true);
+    setCurrentAnalysisStep(`Starting analysis of ${itemsNeedingAnalysis.length} items...`);
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (let i = 0; i < itemsNeedingAnalysis.length; i++) {
+      const item = itemsNeedingAnalysis[i];
+      setCurrentAnalysisStep(`Analyzing item ${i + 1} of ${itemsNeedingAnalysis.length}...`);
+      
       try {
-        // Extract base64 from URL or fetch if needed
         let base64;
         if (item.imageUrl.startsWith('data:')) {
           base64 = item.imageUrl.split(',')[1];
@@ -191,14 +278,22 @@ function App() {
           ));
           
           // Save to database
-          await saveToDatabase(analysis, base64, 'wardrobe', item.id);
+          await saveToDatabase(analysis, base64, 'wardrobe', item.databaseId);
+          successCount++;
+        } else {
+          throw new Error(analysis?.error || 'Analysis failed');
         }
       } catch (error) {
-        console.error(`Failed to auto-analyze item ${item.id}:`, error);
+        console.error(`Failed to analyze item ${item.id}:`, error);
+        failCount++;
       }
     }
     
-    setIsAnalyzingInitial(false);
+    setIsAnalyzingAll(false);
+    setCurrentAnalysisStep('');
+    
+    const message = `Analysis complete! Successfully analyzed ${successCount} items.${failCount > 0 ? ` Failed: ${failCount} items.` : ''}`;
+    alert(message);
   };
 
   // Load more button handler
@@ -239,7 +334,7 @@ function App() {
     }
   };
 
-  // Handle wardrobe image uploads - updated with luxury prompt
+  // Handle wardrobe image uploads - WITH auto-analysis
   const handleWardrobeUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -286,14 +381,14 @@ function App() {
           index === i ? { ...item, loadingMessage: 'AI analyzing construction & authenticity...' } : item
         ));
 
-        // Call backend API with luxury analysis
+        // Call backend API with luxury analysis - AUTO ANALYSIS FOR NEW UPLOADS
         const response = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             image: base64,
             type: 'wardrobe',
-            prompt: getLuxuryAnalysisPrompt() // Use detailed prompt
+            prompt: getLuxuryAnalysisPrompt()
           })
         });
 
@@ -309,22 +404,24 @@ function App() {
           throw new Error(analysis.error);
         }
         
-        // Create the item object
+        // Create the item object - already analyzed!
         const item = {
           id: Date.now() + Math.random(),
           imageUrl: `data:image/jpeg;base64,${base64}`,
           name: analysis.name || `${analysis.type || 'Item'} ${i + 1}`,
           source: 'uploaded',
-          analysis: analysis
+          analysis: analysis,
+          needsAnalysis: false // Set to false since we just analyzed it
         };
         
         newItems.push(item);
         
-        // Save to database in background (don't wait for it)
+        // Update loading message
         setUploadingItems(prev => prev.map((item, index) => 
           index === i ? { ...item, loadingMessage: 'Saving to wardrobe...' } : item
         ));
         
+        // Save to database in background
         saveToDatabase(analysis, base64, 'wardrobe').then(itemId => {
           if (itemId) {
             // Update the item with database ID if saved successfully
@@ -495,58 +592,6 @@ function App() {
       score: Math.min(score, 95),
       reasoning: factors.join(', ') || 'No significant matches'
     };
-  };
-
-  // Function to analyze a single item
-  const analyzeSingleItem = async (item) => {
-    try {
-      let base64;
-      if (item.imageUrl.startsWith('data:')) {
-        base64 = item.imageUrl.split(',')[1];
-      } else {
-        // For Supabase URLs, fetch and convert
-        const response = await fetch(item.imageUrl);
-        const blob = await response.blob();
-        base64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            resolve(reader.result.split(',')[1]);
-          };
-          reader.readAsDataURL(blob);
-        });
-      }
-
-      // Call API with luxury prompt
-      const analysisResponse = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          image: base64,
-          type: 'wardrobe',
-          prompt: getLuxuryAnalysisPrompt()
-        })
-      });
-
-      const { analysis } = await analysisResponse.json();
-      
-      if (analysis && !analysis.error) {
-        // Update the item with analysis
-        setWardrobe(prev => prev.map(w => 
-          w.id === item.id ? { 
-            ...w, 
-            analysis, 
-            name: analysis.name || analysis.type || w.name,
-            needsAnalysis: false 
-          } : w
-        ));
-        
-        // Save to database
-        await saveToDatabase(analysis, base64, 'wardrobe', item.id);
-      }
-    } catch (error) {
-      console.error(`Failed to analyze item ${item.id}:`, error);
-      alert('Failed to analyze item. Please try again.');
-    }
   };
 
   // Add ESC key handler for modal
@@ -767,6 +812,10 @@ function App() {
             transition: all 0.3s ease;
             white-space: nowrap;
             font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
           }
           
           .analyze-button:hover {
@@ -895,32 +944,46 @@ function App() {
               Your Wardrobe
               {wardrobe.length > 0 && (
                 <span className="text-sm text-gray-500 ml-2">
-                  ({wardrobe.length} items loaded)
+                  ({wardrobe.length} items loaded{wardrobe.filter(item => item.needsAnalysis).length > 0 && 
+                    `, ${wardrobe.filter(item => item.needsAnalysis).length} need analysis`})
                 </span>
               )}
             </h2>
-            <label className="btn-primary">
-              <input 
-                type="file" 
-                multiple 
-                accept="image/*"
-                onChange={handleWardrobeUpload}
-                className="hidden"
-              />
-              {isUploading ? 'Processing...' : 'Add Images'}
-            </label>
+            <div className="flex gap-2">
+              {wardrobe.filter(item => item.needsAnalysis).length > 0 && (
+                <button 
+                  onClick={analyzeAllUnanalyzedItems}
+                  disabled={isAnalyzingAll}
+                  className="btn-secondary"
+                >
+                  {isAnalyzingAll ? 'Analyzing...' : `Analyze All (${wardrobe.filter(item => item.needsAnalysis).length})`}
+                </button>
+              )}
+              <label className="btn-primary">
+                <input 
+                  type="file" 
+                  multiple 
+                  accept="image/*"
+                  onChange={handleWardrobeUpload}
+                  className="hidden"
+                />
+                {isUploading ? 'Processing...' : 'Add Images'}
+              </label>
+            </div>
           </div>
 
-          {isUploading && (
+          {(isUploading || isAnalyzingAll) && (
             <div className="mb-4">
-              <div className="bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-              <p className="text-sm text-gray-600 mt-1">
-                {currentAnalysisStep || `Analyzing with luxury detail... ${uploadProgress}%`}
+              {isUploading && (
+                <div className="bg-gray-200 rounded-full h-2 mb-1">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full transition-all"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+              <p className="text-sm text-gray-600">
+                {currentAnalysisStep || (isUploading ? `Analyzing with luxury detail... ${uploadProgress}%` : '')}
               </p>
             </div>
           )}
@@ -958,17 +1021,18 @@ function App() {
                   <div 
                     key={item.id}
                     className="cursor-pointer relative wardrobe-item"
-                    title="Click to view luxury analysis"
+                    title={item.needsAnalysis ? "Click button to analyze" : "Click to view luxury analysis"}
                   >
                     <div className="item-image-container">
                       <img 
                         src={item.imageUrl} 
                         alt={item.name}
                         className="item-image"
-                        onClick={() => setSelectedItem(item)}
+                        onClick={() => !item.needsAnalysis && setSelectedItem(item)}
+                        style={{ cursor: item.needsAnalysis ? 'default' : 'pointer' }}
                       />
                       {/* Run Analysis button for items that need it */}
-                      {item.needsAnalysis && (
+                      {item.needsAnalysis && !analyzingItems.has(item.id) && (
                         <button
                           className="analyze-button"
                           onClick={(e) => {
@@ -976,8 +1040,15 @@ function App() {
                             analyzeSingleItem(item);
                           }}
                         >
-                          Run Analysis
+                          Analyze Item
                         </button>
+                      )}
+                      {/* Show analyzing state */}
+                      {analyzingItems.has(item.id) && (
+                        <div className="analyze-button" style={{ opacity: 1, visibility: 'visible' }}>
+                          <div className="loading-spinner" style={{ width: '16px', height: '16px', margin: '0 auto' }} />
+                          <span style={{ fontSize: '10px', marginTop: '4px' }}>Analyzing...</span>
+                        </div>
                       )}
                     </div>
                     {/* Quality tier indicator */}
@@ -992,14 +1063,14 @@ function App() {
                       </div>
                     )}
                     {/* Database save indicator */}
-                    {item.databaseId && (
+                    {item.databaseId && !item.needsAnalysis && (
                       <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
-                           title="Saved to database"/>
+                           title="Saved and analyzed"/>
                     )}
                     {/* Needs analysis indicator */}
-                    {item.needsAnalysis && (
+                    {item.needsAnalysis && !analyzingItems.has(item.id) && (
                       <div className="absolute top-1 left-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" 
-                           title="Analysis pending"/>
+                           title="Analysis needed"/>
                     )}
                     <p className="text-s mt-1">{item.name}</p>
                   </div>
@@ -1025,7 +1096,7 @@ function App() {
         {/* Enhanced Item Details Modal with Luxury Analysis */}
         {selectedItem && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto"
+            className="fixed inset-0 bg-black z-50 overflow-y-auto"
             onClick={() => setSelectedItem(null)}
           >
             <div 
