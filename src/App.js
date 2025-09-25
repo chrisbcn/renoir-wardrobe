@@ -574,7 +574,58 @@ function App() {
     
     setIsProcessingInspiration(false);
   };
-
+// Handle look upload for outfit matching
+const handleLookUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  setIsProcessingLook(true);
+  setLookMatches(null);
+  
+  try {
+    // Convert to base64
+    const base64 = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result.split(',')[1];
+        resolve(base64String);
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    const imageUrl = `data:image/jpeg;base64,${base64}`;
+    setLookImage(imageUrl);
+    
+    // Analyze the look
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        image: base64,
+        type: 'look',
+        prompt: getLookAnalysisPrompt()
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    const { analysis } = await response.json();
+    setLookAnalysis(analysis);
+    
+    // Match against wardrobe
+    const matches = matchLookToWardrobe(analysis, wardrobe);
+    setLookMatches(matches);
+    
+  } catch (error) {
+    console.error('Failed to process look:', error);
+    alert('Failed to analyze look. Please try again.');
+  }
+  
+  setIsProcessingLook(false);
+  e.target.value = null;
+};
   // Generate matching results with enhanced luxury matching
   const generateMatches = (inspirationData) => {
     const matches = wardrobe.map(item => {
@@ -673,7 +724,36 @@ const matchLookToWardrobe = (lookAnalysis, wardrobe) => {
     suggestions: generateStylingTips(matches, lookAnalysis)
   };
 };
+const calculateOverallLookMatch = (matches, lookAnalysis) => {
+  let totalScore = 0;
+  let itemCount = 0;
+  
+  Object.values(matches).forEach(categoryMatches => {
+    if (categoryMatches && categoryMatches[0]) {
+      totalScore += categoryMatches[0].matchScore?.total || 0;
+      itemCount++;
+    }
+  });
+  
+  return {
+    percentage: itemCount > 0 ? totalScore / itemCount : 0,
+    itemsMatched: itemCount,
+    totalItems: lookAnalysis.itemBreakdown?.visible_items?.length || 0
+  };
+};
 
+const generateStylingTips = (matches, lookAnalysis) => {
+  const tips = [];
+  
+  // Check what's missing
+  Object.entries(matches).forEach(([category, items]) => {
+    if (!items || items.length === 0) {
+      tips.push(`Consider adding a ${category} to complete this look`);
+    }
+  });
+  
+  return tips;
+};
 const calculateItemMatchScore = (lookItem, wardrobeItem) => {
   // ... matching logic
 };
@@ -1192,8 +1272,100 @@ const isSameCategory = (lookCategory, wardrobeType) => {
               )}
             </>
           )}
+        
         </div>
+{/* Add this NEW SECTION after the Wardrobe Section closes (after </div>) */}
+{/* Look Matching Section */}
+<div className="bg-white p-6 mb-6">
+  <div className="flex justify-between items-center mb-4">
+    <h2 className="text-xl font-semibold">
+      Look Matcher
+      <span className="text-sm text-gray-500 ml-2">
+        Upload a complete outfit to find matches
+      </span>
+    </h2>
+    <label className="btn-primary">
+      <input 
+        type="file" 
+        accept="image/*"
+        onChange={handleLookUpload}
+        className="hidden"
+      />
+      {isProcessingLook ? 'Analyzing Look...' : 'Upload Look'}
+    </label>
+  </div>
 
+  {/* Show uploaded look and matches */}
+  {lookImage && (
+    <div className="grid grid-cols-2 gap-6">
+      {/* Original Look */}
+      <div>
+        <h3 className="font-semibold mb-2">Target Look</h3>
+        <img 
+          src={lookImage} 
+          alt="Target look" 
+          className="w-full rounded-lg border"
+        />
+        {lookAnalysis && (
+          <div className="mt-2 p-3 bg-gray-50 rounded text-sm">
+            <p><strong>Style:</strong> {lookAnalysis.overallLook?.style}</p>
+            <p><strong>Occasion:</strong> {lookAnalysis.overallLook?.occasion}</p>
+            <p><strong>Season:</strong> {lookAnalysis.overallLook?.seasonality}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Wardrobe Matches */}
+      <div>
+        <h3 className="font-semibold mb-2">Your Wardrobe Matches</h3>
+        {lookMatches ? (
+          <div className="space-y-3">
+            <div className="text-lg font-medium text-green-600">
+              Overall Match: {Math.round(lookMatches.overallMatch?.percentage || 0)}%
+            </div>
+            {Object.entries(lookMatches.matches).map(([category, items]) => (
+              <div key={category} className="border rounded p-2">
+                <p className="font-medium capitalize">{category}</p>
+                {items && items[0] ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <img 
+                      src={items[0].imageUrl} 
+                      alt={items[0].name}
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                    <div className="text-sm">
+                      <p>{items[0].name}</p>
+                      <p className="text-green-600">
+                        {Math.round(items[0].matchScore?.total || 0)}% match
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-sm">No match found</p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : isProcessingLook ? (
+          <div className="flex justify-center py-8">
+            <div className="loading-spinner" />
+          </div>
+        ) : lookAnalysis ? (
+          <p className="text-gray-500">Processing matches...</p>
+        ) : null}
+      </div>
+    </div>
+  )}
+
+  {!lookImage && (
+    <div className="text-center py-12 bg-gray-50 rounded-lg">
+      <p className="text-gray-500">No look uploaded yet</p>
+      <p className="text-sm text-gray-400 mt-1">
+        Upload a full outfit photo to find matching items from your wardrobe
+      </p>
+    </div>
+  )}
+</div>
         {/* Enhanced Item Details Modal with Luxury Analysis */}
         {selectedItem && (
           <div 
