@@ -575,6 +575,7 @@ function App() {
     setIsProcessingInspiration(false);
   };
 // Handle look upload for outfit matching
+// Handle look upload for outfit matching
 const handleLookUpload = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -596,14 +597,53 @@ const handleLookUpload = async (e) => {
     const imageUrl = `data:image/jpeg;base64,${base64}`;
     setLookImage(imageUrl);
     
-    // Analyze the look
+    // ADD THIS TEXT PROMPT HERE
+    const lookPromptText = `Analyze this complete outfit/look and return a JSON object with the following structure:
+    {
+      "overallLook": {
+        "style": "Description of overall aesthetic",
+        "occasion": "When/where this would be worn",
+        "seasonality": "Fall/Winter/Spring/Summer/Trans-seasonal",
+        "keyPieces": "List the hero/statement pieces"
+      },
+      "itemBreakdown": {
+        "visible_items": [
+          {
+            "category": "top/bottom/outerwear/shoes/bag/accessories",
+            "type": "Specific item type",
+            "color": "Precise color description",
+            "material": "Visible fabric/material",
+            "styling": "How it's worn",
+            "distinctiveFeatures": "Unique details"
+          }
+        ]
+      },
+      "colorPalette": {
+        "primary": "Main color",
+        "secondary": "Supporting colors",
+        "accents": "Pop colors or metallic accents",
+        "neutrals": "Base neutral colors"
+      },
+      "proportionsAndFit": {
+        "silhouette": "Overall shape",
+        "proportions": "How pieces relate to each other",
+        "lengths": "Hem lengths, sleeve lengths"
+      },
+      "essentialElements": {
+        "mustHaves": "Elements crucial to recreating this look",
+        "niceToHaves": "Elements that enhance but aren't essential",
+        "avoidables": "What would break this look"
+      }
+    }`;
+    
+    // MODIFY THE API CALL TO USE THE TEXT PROMPT
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         image: base64,
         type: 'look',
-        prompt: getLookAnalysisPrompt()
+        prompt: lookPromptText  // Now using the text version
       })
     });
     
