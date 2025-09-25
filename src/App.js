@@ -755,7 +755,50 @@ const generateStylingTips = (matches, lookAnalysis) => {
   return tips;
 };
 const calculateItemMatchScore = (lookItem, wardrobeItem) => {
-  // ... matching logic
+  if (!wardrobeItem) return { total: 0, details: {} };
+  
+  const scores = {
+    typeMatch: 0,
+    colorMatch: 0,
+    materialMatch: 0,
+    styleMatch: 0
+  };
+  
+  // Type matching (40% weight)
+  if (lookItem.type && wardrobeItem.type) {
+    if (lookItem.type.toLowerCase() === wardrobeItem.type?.toLowerCase()) {
+      scores.typeMatch = 40;
+    } else if (lookItem.type.toLowerCase().includes(wardrobeItem.type?.toLowerCase()) || 
+               wardrobeItem.type?.toLowerCase().includes(lookItem.type.toLowerCase())) {
+      scores.typeMatch = 25;
+    }
+  }
+  
+  // Color matching (30% weight) 
+  if (lookItem.color && wardrobeItem.fabricAnalysis?.colors) {
+    const lookColor = lookItem.color.toLowerCase();
+    const matchingColor = wardrobeItem.fabricAnalysis.colors.some(c => 
+      c.toLowerCase().includes(lookColor) || lookColor.includes(c.toLowerCase())
+    );
+    if (matchingColor) {
+      scores.colorMatch = 30;
+    }
+  }
+  
+  // Material matching (15% weight)
+  if (lookItem.material && wardrobeItem.fabricAnalysis?.weaveStructure) {
+    if (lookItem.material.toLowerCase().includes(wardrobeItem.fabricAnalysis.weaveStructure.toLowerCase())) {
+      scores.materialMatch = 15;
+    }
+  }
+  
+  // Style compatibility (15% weight)
+  scores.styleMatch = 10; // Base score for same category
+  
+  return {
+    total: Object.values(scores).reduce((a, b) => a + b, 0),
+    details: scores
+  };
 };
 
 // Helper functions
