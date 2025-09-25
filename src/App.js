@@ -271,7 +271,7 @@ function App() {
     }
     
     const confirmMsg = `This will analyze ${itemsNeedingAnalysis.length} items. This may take a while. Continue?`;
-    if (!confirm(confirmMsg)) {
+    if (!window.confirm(confirmMsg)) {
       return;
     }
     
