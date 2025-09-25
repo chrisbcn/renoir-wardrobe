@@ -69,7 +69,51 @@ const getLuxuryAnalysisPrompt = () => {
     }
   };
 };
-
+// Analysis prompt for complete looks/outfits
+const getLookAnalysisPrompt = () => {
+  return {
+    type: "Analyze complete outfit/look",
+    
+    overallLook: {
+      style: "Describe the overall aesthetic (e.g., 'casual chic', 'business formal', 'street luxe')",
+      occasion: "When/where this would be worn",
+      seasonality: "Fall/Winter/Spring/Summer/Trans-seasonal",
+      keyPieces: "List the hero/statement pieces"
+    },
+    
+    itemBreakdown: {
+      visible_items: [
+        {
+          category: "top/bottom/outerwear/shoes/bag/accessories",
+          type: "Specific item type (e.g., 'crew neck sweater')",
+          color: "Precise color description",
+          material: "Visible fabric/material",
+          styling: "How it's worn (tucked, layered, cuffed, etc.)",
+          distinctiveFeatures: "Unique details that matter for matching"
+        }
+      ]
+    },
+    
+    colorPalette: {
+      primary: "Main color",
+      secondary: "Supporting colors",
+      accents: "Pop colors or metallic accents",
+      neutrals: "Base neutral colors"
+    },
+    
+    proportionsAndFit: {
+      silhouette: "Overall shape (oversized, fitted, balanced)",
+      proportions: "How pieces relate to each other",
+      lengths: "Hem lengths, sleeve lengths that matter"
+    },
+    
+    essentialElements: {
+      mustHaves: "Elements crucial to recreating this look",
+      niceToHaves: "Elements that enhance but aren't essential",
+      avoidables: "What would break this look"
+    }
+  };
+};
 function App() {
   const [wardrobe, setWardrobe] = useState([]);
   const [inspirationImage, setInspirationImage] = useState(null);
@@ -90,6 +134,11 @@ function App() {
   const [analyzingItems, setAnalyzingItems] = useState(new Set());
   const [isAnalyzingAll, setIsAnalyzingAll] = useState(false);
   const ITEMS_PER_PAGE = 10;
+
+  const [lookImage, setLookImage] = useState(null);
+  const [lookAnalysis, setLookAnalysis] = useState(null);
+  const [lookMatches, setLookMatches] = useState(null);
+  const [isProcessingLook, setIsProcessingLook] = useState(false);
 
   // Load saved wardrobe items - now with pagination
   useEffect(() => {
@@ -593,7 +642,59 @@ function App() {
       reasoning: factors.join(', ') || 'No significant matches'
     };
   };
+// ADD THESE NEW FUNCTIONS HERE
+const matchLookToWardrobe = (lookAnalysis, wardrobe) => {
+  const lookItems = lookAnalysis.itemBreakdown.visible_items;
+  const matches = {};
+  
+  lookItems.forEach(lookItem => {
+    // Find best matches for each item in the look
+    const categoryMatches = wardrobe
+      .filter(w => {
+        // Must be same category first
+        return isSameCategory(lookItem.category, w.analysis?.type);
+      })
+      .map(w => {
+        const score = calculateItemMatchScore(lookItem, w.analysis);
+        return { ...w, matchScore: score, matchDetails: score.details };
+      })
+      .sort((a, b) => b.matchScore.total - a.matchScore.total)
+      .slice(0, 3); // Top 3 alternatives for each piece
+    
+    matches[lookItem.category] = categoryMatches;
+  });
+  
+  // Calculate overall look match percentage
+  const overallMatch = calculateOverallLookMatch(matches, lookAnalysis);
+  
+  return {
+    matches,
+    overallMatch,
+    suggestions: generateStylingTips(matches, lookAnalysis)
+  };
+};
 
+const calculateItemMatchScore = (lookItem, wardrobeItem) => {
+  // ... matching logic
+};
+
+// Helper functions
+const isSameCategory = (lookCategory, wardrobeType) => {
+  // Map categories - this is a simplified version
+  const categoryMap = {
+    'top': ['shirt', 'blouse', 'sweater', 'turtleneck', 't-shirt'],
+    'bottom': ['trouser', 'pant', 'skirt', 'jean'],
+    'outerwear': ['coat', 'jacket', 'blazer'],
+    'shoes': ['shoe', 'boot', 'sneaker', 'heel'],
+    'bag': ['bag', 'purse', 'clutch'],
+    'accessories': ['scarf', 'belt', 'jewelry', 'watch']
+  };
+  
+  // Check if wardrobeType matches the lookCategory
+  return categoryMap[lookCategory]?.some(type => 
+    wardrobeType?.toLowerCase().includes(type)
+  );
+};
   // Add ESC key handler for modal
   useEffect(() => {
     const handleEsc = (e) => {
