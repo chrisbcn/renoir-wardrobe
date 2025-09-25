@@ -1,7 +1,77 @@
-// App.js - Updated with automatic database saving
+// App.js - Complete version with pagination and detailed analysis
 
 import React, { useState, useEffect } from 'react';
 import './App.css';
+
+// Detailed luxury fashion analysis prompt
+const getLuxuryAnalysisPrompt = () => {
+  return {
+    type: "Analyze as luxury fashion expert",
+    name: "Item name (e.g., 'Double-breasted blazer', 'Silk dress')",
+    
+    hardwareFastenings: {
+      buttons: {
+        material: "mother of pearl/corozo/horn/brass/plastic/covered",
+        logoEngraving: "any text or logo visible",
+        construction: "sewn through/shanked",
+        threadColor: "matching or contrasting"
+      },
+      zippers: {
+        brand: "YKK/Lampo/RiRi/Raccagni",
+        type: "metal/plastic/invisible",
+        pulls: "logo presence or custom pulls"
+      }
+    },
+    
+    lapelCollarArchitecture: {
+      style: "notch/peak/shawl for lapels, spread/point/club for collars",
+      width: "narrow/standard/wide",
+      construction: "fused/floating canvas",
+      pickStitching: "present/absent",
+      rollQuality: "soft/structured"
+    },
+    
+    constructionSignatures: {
+      pickStitching: "edges with visible pick stitching",
+      shoulderConstruction: "natural/structured/roped",
+      sleeveHeads: "gathered/smooth",
+      lining: "fully/half/butterfly lined",
+      seamConstruction: "French/flat-fell/pinked/serged",
+      handwork: "areas showing hand stitching"
+    },
+    
+    fabricAnalysis: {
+      weaveStructure: "plain/twill/satin/herringbone/houndstooth",
+      yarnQuality: "Super 120s-180s for wool",
+      weight: "light/medium/heavy",
+      pattern: "solid/striped/checked/plaid",
+      patternMatching: "matched at seams yes/no",
+      colors: ["primary color", "secondary colors"]
+    },
+    
+    brandIdentifiers: {
+      likelyBrand: "brand name if identifiable",
+      confidence: 0-100,
+      visibleLogos: "locations of any logos",
+      constructionHouse: "Italian/French/British/Japanese styling",
+      hiddenSignatures: "internal stamps, tags, serial numbers"
+    },
+    
+    qualityIndicators: {
+      handworkEvidence: ["hand-rolled edges", "hand-sewn buttonholes", "pick stitching"],
+      luxuryMarkers: ["functional buttonholes", "surgeon's cuffs", "reinforced stress points"],
+      authenticityMarkers: ["consistent stitching", "quality control stamps", "proper labeling"]
+    },
+    
+    overallAssessment: {
+      tier: "haute couture/luxury/premium/contemporary/fast fashion",
+      estimatedRetail: "$X,XXX-$X,XXX range",
+      authenticityConfidence: "high/medium/low with reasoning",
+      condition: "new/excellent/good/fair/poor",
+      estimatedAge: "current season/1-2 years/vintage"
+    }
+  };
+};
 
 function App() {
   const [wardrobe, setWardrobe] = useState([]);
@@ -13,15 +83,140 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isProcessingInspiration, setIsProcessingInspiration] = useState(false);
   const [uploadingItems, setUploadingItems] = useState([]);
-  const [currentAnalysisStep, setCurrentAnalysisStep] = useState(''); 
+  const [currentAnalysisStep, setCurrentAnalysisStep] = useState('');
+  
+  // New states for pagination and auto-analysis
+  const [hasMoreItems, setHasMoreItems] = useState(true);
+  const [currentOffset, setCurrentOffset] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isAnalyzingInitial, setIsAnalyzingInitial] = useState(false);
+  const ITEMS_PER_PAGE = 10;
 
-  // Helper function to save analysis results to database
-  const saveToDatabase = async (analysisResult, imageData, category = 'wardrobe') => {
+  // Load saved wardrobe items - now with pagination
+  useEffect(() => {
+    loadWardrobeItems(0);
+  }, []);
+
+  // New function to load items with pagination
+  const loadWardrobeItems = async (offset) => {
     try {
-      const response = await fetch('/api/save-item', {
+      const response = await fetch(`/api/get-wardrobe?limit=${ITEMS_PER_PAGE}&offset=${offset}`);
+      const data = await response.json();
+      
+      if (data.success && data.items?.length > 0) {
+        const formattedItems = data.items.map(item => ({
+          id: item.id,
+          imageUrl: item.image_url,
+          name: item.item_name || item.garment_type || 'Item',
+          source: 'database',
+          analysis: item.analysis_data || {},
+          databaseId: item.id,
+          needsAnalysis: !item.analysis_data || Object.keys(item.analysis_data).length === 0
+        }));
+
+        if (offset === 0) {
+          setWardrobe(formattedItems);
+          // Auto-analyze first 5 items if they need it
+          analyzeInitialItems(formattedItems.slice(0, 5));
+        } else {
+          setWardrobe(prev => [...prev, ...formattedItems]);
+        }
+        
+        // Check if there are more items
+        setHasMoreItems(data.items.length === ITEMS_PER_PAGE);
+        setCurrentOffset(offset);
+        
+        console.log(`Loaded ${formattedItems.length} items from offset ${offset}`);
+      } else {
+        setHasMoreItems(false);
+      }
+    } catch (err) {
+      console.log('Could not load items:', err);
+      setHasMoreItems(false);
+    }
+    setIsLoadingMore(false);
+  };
+
+  // New function to analyze initial items
+  const analyzeInitialItems = async (items) => {
+    const itemsNeedingAnalysis = items.filter(item => item.needsAnalysis);
+    
+    if (itemsNeedingAnalysis.length === 0) return;
+    
+    setIsAnalyzingInitial(true);
+    console.log(`Auto-analyzing ${itemsNeedingAnalysis.length} items...`);
+    
+    for (const item of itemsNeedingAnalysis) {
+      try {
+        // Extract base64 from URL or fetch if needed
+        let base64;
+        if (item.imageUrl.startsWith('data:')) {
+          base64 = item.imageUrl.split(',')[1];
+        } else {
+          // For Supabase URLs, fetch and convert
+          const response = await fetch(item.imageUrl);
+          const blob = await response.blob();
+          base64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              resolve(reader.result.split(',')[1]);
+            };
+            reader.readAsDataURL(blob);
+          });
+        }
+
+        // Call API with luxury prompt
+        const analysisResponse = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            image: base64,
+            type: 'wardrobe',
+            prompt: getLuxuryAnalysisPrompt()
+          })
+        });
+
+        const { analysis } = await analysisResponse.json();
+        
+        if (analysis && !analysis.error) {
+          // Update the item with analysis
+          setWardrobe(prev => prev.map(w => 
+            w.id === item.id ? { 
+              ...w, 
+              analysis, 
+              name: analysis.name || analysis.type || w.name,
+              needsAnalysis: false 
+            } : w
+          ));
+          
+          // Save to database
+          await saveToDatabase(analysis, base64, 'wardrobe', item.id);
+        }
+      } catch (error) {
+        console.error(`Failed to auto-analyze item ${item.id}:`, error);
+      }
+    }
+    
+    setIsAnalyzingInitial(false);
+  };
+
+  // Load more button handler
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMoreItems) {
+      setIsLoadingMore(true);
+      loadWardrobeItems(currentOffset + ITEMS_PER_PAGE);
+    }
+  };
+
+  // Updated saveToDatabase to handle updates
+  const saveToDatabase = async (analysisResult, imageData, category = 'wardrobe', itemId = null) => {
+    try {
+      const endpoint = itemId ? '/api/update-item' : '/api/save-item';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          itemId,
           analysisResult,
           imageData,
           category
@@ -31,8 +226,8 @@ function App() {
       const result = await response.json();
       
       if (result.success) {
-        console.log('Successfully saved to database:', result.itemId);
-        return result.itemId;
+        console.log(`Successfully ${itemId ? 'updated' : 'saved'} to database:`, result.itemId || itemId);
+        return result.itemId || itemId;
       } else {
         console.warn('Failed to save to database:', result.error);
         return null;
@@ -43,7 +238,7 @@ function App() {
     }
   };
 
-  // Handle wardrobe image uploads
+  // Handle wardrobe image uploads - updated with luxury prompt
   const handleWardrobeUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -96,7 +291,8 @@ function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             image: base64,
-            type: 'wardrobe'
+            type: 'wardrobe',
+            prompt: getLuxuryAnalysisPrompt() // Use detailed prompt
           })
         });
 
@@ -189,7 +385,8 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           image: base64,
-          type: 'inspiration'
+          type: 'inspiration',
+          prompt: getLuxuryAnalysisPrompt() // Use detailed prompt
         })
       });
 
@@ -339,14 +536,28 @@ function App() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Renoir - Luxury Fashion Analysis</h1>
-          <p className="text-gray-600">Collector-grade garment analysis with authentication markers and construction details</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Maura - Luxury Fashion Analysis</h1>
+          <p className="text-gray-600">
+            Collector-grade garment analysis with authentication markers and construction details
+            {isAnalyzingInitial && (
+              <span className="ml-2 text-sm text-blue-600">
+                (Auto-analyzing first 5 items for better display...)
+              </span>
+            )}
+          </p>
         </div>
 
         {/* Wardrobe Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Your Wardrobe</h2>
+            <h2 className="text-xl font-semibold">
+              Your Wardrobe
+              {wardrobe.length > 0 && (
+                <span className="text-sm text-gray-500 ml-2">
+                  ({wardrobe.length} items loaded)
+                </span>
+              )}
+            </h2>
             <label className="btn-primary">
               <input 
                 type="file" 
@@ -379,63 +590,82 @@ function App() {
               <p className="text-sm text-gray-400 mt-1">Upload clothing photos for detailed luxury analysis</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-              {/* Show loading placeholders */}
-              {uploadingItems.map(item => (
-                <div key={item.id} className="relative">
-                  <div className="w-full h-24 md:h-28 lg:h-32 rounded-lg border-2 border-gray-200 overflow-hidden relative shimmer">
+            <>
+              <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+                {/* Show loading placeholders */}
+                {uploadingItems.map(item => (
+                  <div key={item.id} className="relative">
+                    <div className="w-full h-24 md:h-28 lg:h-32 rounded-lg border-2 border-gray-200 overflow-hidden relative shimmer">
+                      <img 
+                        src={item.imageUrl} 
+                        alt={item.name}
+                        className="w-full h-full object-cover opacity-30"
+                      />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-90 p-2">
+                        <div className="w-8 h-8 border-3 border-gray-200 border-t-blue-500 rounded-full spinner" />
+                        <p className="text-xs text-gray-600 mt-1 text-center">
+                          {item.loadingMessage}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Show existing wardrobe items with quality indicators */}
+                {wardrobe.map(item => (
+                  <div 
+                    key={item.id}
+                    onClick={() => setSelectedItem(item)}
+                    className="cursor-pointer hover:scale-105 transition-transform relative"
+                    title="Click to view luxury analysis"
+                  >
                     <img 
                       src={item.imageUrl} 
                       alt={item.name}
-                      className="w-full h-full object-cover opacity-30"
+                      className="w-full h-24 md:h-28 lg:h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-400"
                     />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-90 p-2">
-                      <div className="w-8 h-8 border-3 border-gray-200 border-t-blue-500 rounded-full spinner" />
-                      <p className="text-xs text-gray-600 mt-1 text-center">
-                        {item.loadingMessage}
-                      </p>
-                    </div>
+                    {/* Quality tier indicator */}
+                    {item.analysis?.overallAssessment?.tier && (
+                      <div className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded ${
+                        item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
+                        item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
+                        item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {item.analysis.overallAssessment.tier}
+                      </div>
+                    )}
+                    {/* Database save indicator */}
+                    {item.databaseId && (
+                      <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
+                           title="Saved to database"/>
+                    )}
+                    {/* Needs analysis indicator */}
+                    {item.needsAnalysis && (
+                      <div className="absolute top-1 left-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" 
+                           title="Analysis pending"/>
+                    )}
+                    <p className="text-xs text-center mt-1 truncate">{item.name}</p>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
               
-              {/* Show existing wardrobe items with quality indicators */}
-              {wardrobe.map(item => (
-                <div 
-                  key={item.id}
-                  onClick={() => setSelectedItem(item)}
-                  className="cursor-pointer hover:scale-105 transition-transform relative"
-                  title="Click to view luxury analysis"
-                >
-                  <img 
-                    src={item.imageUrl} 
-                    alt={item.name}
-                    className="w-full h-24 md:h-28 lg:h-32 object-cover rounded-lg border-2 border-gray-200 hover:border-blue-400"
-                  />
-                  {/* Quality tier indicator */}
-                  {item.analysis?.overallAssessment?.tier && (
-                    <div className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded ${
-                      item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
-                      item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
-                      item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {item.analysis.overallAssessment.tier}
-                    </div>
-                  )}
-                  {/* Database save indicator */}
-                  {item.databaseId && (
-                    <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
-                         title="Saved to database"/>
-                  )}
-                  <p className="text-xs text-center mt-1 truncate">{item.name}</p>
+              {/* Load More Button */}
+              {hasMoreItems && (
+                <div className="mt-4 text-center">
+                  <button 
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    className="px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg disabled:opacity-50"
+                  >
+                    {isLoadingMore ? 'Loading...' : 'Load More Items'}
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
 
-        {/* Rest of your existing code remains unchanged */}
         {/* Inspiration Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -533,7 +763,7 @@ function App() {
           </div>
         )}
 
-        {/* Enhanced Item Details Modal with Luxury Analysis - keeping your existing modal code */}
+        {/* Enhanced Item Details Modal with Luxury Analysis */}
         {selectedItem && (
           <div 
             className="fixed inset-0 bg-black z-50 overflow-y-auto"
@@ -565,7 +795,6 @@ function App() {
                         <p className="text-red-500">Analysis failed: {selectedItem.analysis.error}</p>
                       ) : (
                         <>
-                          {/* Keep all your existing modal content - it's perfect */}
                           {/* Overall Assessment */}
                           {selectedItem.analysis?.overallAssessment && (
                             <div className="bg-purple-50 p-3 rounded">
