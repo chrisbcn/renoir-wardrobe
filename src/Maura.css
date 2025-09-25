@@ -118,7 +118,7 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primary, .btn-secondary {
   font-family: 'Host Grotesk', sans-serif;
   font-size: calc(var(--grid-unit) * 1.75);
-  font-weight: 500;
+  font-weight: 400;
   padding: calc(var(--grid-unit) * .5) calc(var(--grid-unit) * 3);
   border: 1px solid var(--color-black);
   background: var(--color-black);
