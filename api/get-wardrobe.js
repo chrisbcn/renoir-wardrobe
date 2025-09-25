@@ -1,3 +1,4 @@
+// api/get-wardrobe.js
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -7,22 +8,22 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
   try {
+    // Get pagination parameters from query string
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = parseInt(req.query.offset) || 0;
+    
+    // Fetch items with pagination
     const { data: items, error } = await supabase
       .from('wardrobe_items')
       .select('*')
+      .range(offset, offset + limit - 1)  // This is how Supabase does pagination
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Supabase error:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
-    app.get('/api/get-wardrobe', async (req, res) => {
-      const limit = parseInt(req.query.limit) || 10;
-      const offset = parseInt(req.query.offset) || 0;
-      
-      // Your database query with limit and offset
-      // Example for SQL: SELECT * FROM wardrobe_items LIMIT ${limit} OFFSET ${offset}
-    });
+
     // Format items to match what the app expects
     const formattedItems = items?.map(item => ({
       id: item.id,
