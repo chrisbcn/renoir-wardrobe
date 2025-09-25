@@ -575,97 +575,20 @@ function App() {
     setIsProcessingInspiration(false);
   };
 // Handle look upload for outfit matching
-// Handle look upload for outfit matching
-const handleLookUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  setIsProcessingLook(true);
-  setLookMatches(null);
-  
-  try {
-    // Convert to base64
-    const base64 = await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result.split(',')[1];
-        resolve(base64String);
-      };
-      reader.readAsDataURL(file);
-    });
-    
-    const imageUrl = `data:image/jpeg;base64,${base64}`;
-    setLookImage(imageUrl);
-    
-    // ADD THIS TEXT PROMPT HERE
-    const lookPromptText = `Analyze this complete outfit/look and return a JSON object with the following structure:
-    {
-      "overallLook": {
-        "style": "Description of overall aesthetic",
-        "occasion": "When/where this would be worn",
-        "seasonality": "Fall/Winter/Spring/Summer/Trans-seasonal",
-        "keyPieces": "List the hero/statement pieces"
-      },
-      "itemBreakdown": {
-        "visible_items": [
-          {
-            "category": "top/bottom/outerwear/shoes/bag/accessories",
-            "type": "Specific item type",
-            "color": "Precise color description",
-            "material": "Visible fabric/material",
-            "styling": "How it's worn",
-            "distinctiveFeatures": "Unique details"
-          }
-        ]
-      },
-      "colorPalette": {
-        "primary": "Main color",
-        "secondary": "Supporting colors",
-        "accents": "Pop colors or metallic accents",
-        "neutrals": "Base neutral colors"
-      },
-      "proportionsAndFit": {
-        "silhouette": "Overall shape",
-        "proportions": "How pieces relate to each other",
-        "lengths": "Hem lengths, sleeve lengths"
-      },
-      "essentialElements": {
-        "mustHaves": "Elements crucial to recreating this look",
-        "niceToHaves": "Elements that enhance but aren't essential",
-        "avoidables": "What would break this look"
-      }
-    }`;
-    
-    // MODIFY THE API CALL TO USE THE TEXT PROMPT
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        image: base64,
-        type: 'look',
-        prompt: lookPromptText  // Now using the text version
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-    
-    const { analysis } = await response.json();
-    setLookAnalysis(analysis);
-    
-    // Match against wardrobe
-    const matches = matchLookToWardrobe(analysis, wardrobe);
-    setLookMatches(matches);
-    
-  } catch (error) {
-    console.error('Failed to process look:', error);
-    alert('Failed to analyze look. Please try again.');
-  }
-  
-  setIsProcessingLook(false);
-  e.target.value = null;
-};
+const { analysis } = await response.json();
+console.log('Look analysis response:', analysis); // ADD THIS LINE
+setLookAnalysis(analysis);
+
+// Check if the response has the expected structure
+if (!analysis.itemBreakdown || !analysis.itemBreakdown.visible_items) {
+  console.error('Unexpected analysis structure:', analysis);
+  alert('Analysis completed but format was unexpected');
+  return;
+}
+
+// Match against wardrobe
+const matches = matchLookToWardrobe(analysis, wardrobe);
+setLookMatches(matches);
   // Generate matching results with enhanced luxury matching
   const generateMatches = (inspirationData) => {
     const matches = wardrobe.map(item => {
