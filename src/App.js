@@ -964,7 +964,7 @@ function App() {
                       <div className="absolute top-1 left-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" 
                            title="Analysis pending"/>
                     )}
-                    <p className="text-xs text-center mt-1 truncate">{item.name}</p>
+                    <p className="text-s mt-1">{item.name}</p>
                   </div>
                 ))}
               </div>
