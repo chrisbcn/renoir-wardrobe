@@ -1235,161 +1235,239 @@ const isSameCategory = (lookCategory, wardrobeType) => {
         </div>
 
         {/* Wardrobe Section */}
-        <div className="bg-white p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
-              Your Wardrobe
-              {wardrobe.length > 0 && (
-                <span className="text-sm text-gray-500 ml-2">
-                  ({wardrobe.length} items loaded{wardrobe.filter(item => item.needsAnalysis).length > 0 && 
-                    `, ${wardrobe.filter(item => item.needsAnalysis).length} need analysis`})
-                </span>
-              )}
-            </h2>
-            <div className="flex gap-2">
-              {wardrobe.filter(item => item.needsAnalysis).length > 0 && (
-                <button 
-                  onClick={analyzeAllUnanalyzedItems}
-                  disabled={isAnalyzingAll}
-                  className="btn-secondary"
-                >
-                  {isAnalyzingAll ? 'Analyzing...' : `Analyze All (${wardrobe.filter(item => item.needsAnalysis).length})`}
-                </button>
-              )}
-              <label className="btn-primary">
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*"
-                  onChange={handleWardrobeUpload}
-                  className="hidden"
-                />
-                {isUploading ? 'Processing...' : 'Add Images'}
-              </label>
-            </div>
-          </div>
-
-          {(isUploading || isAnalyzingAll) && (
-            <div className="mb-4">
-              {isUploading && (
-                <div className="bg-gray-200 rounded-full h-2 mb-1">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full transition-all"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-              )}
-              <p className="text-sm text-gray-600">
-                {currentAnalysisStep || (isUploading ? `Analyzing with luxury detail... ${uploadProgress}%` : '')}
-              </p>
-            </div>
+       {/* Wardrobe Section */}
+<div className="bg-white p-6 mb-6">
+  <div className="flex justify-between items-center mb-4">
+    <h2 className="text-xl font-semibold">
+      Your Wardrobe
+      {wardrobe.length > 0 && (
+        <span className="text-sm text-gray-500 ml-2">
+          ({wardrobe.length} items
+          {wardrobe.filter(item => item.needsAnalysis).length > 0 && 
+            ` • ${wardrobe.filter(item => item.needsAnalysis).length} need analysis`}
+          {wardrobe.filter(item => !item.needsAnalysis).length > 0 && 
+            ` • ${wardrobe.filter(item => !item.needsAnalysis).length} analyzed`})
+        </span>
+      )}
+    </h2>
+    <div className="flex gap-2">
+      {/* Analysis button - always visible when there are unanalyzed items */}
+      {wardrobe.length > 0 && wardrobe.filter(item => item.needsAnalysis).length > 0 && (
+        <button 
+          onClick={analyzeAllUnanalyzedItems}
+          disabled={isAnalyzingAll}
+          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          title={`Analyze ${wardrobe.filter(item => item.needsAnalysis).length} unanalyzed items`}
+        >
+          {isAnalyzingAll ? (
+            <span className="flex items-center gap-2">
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              Analyzing {wardrobe.filter(item => item.needsAnalysis).length} items...
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Analyze {wardrobe.filter(item => item.needsAnalysis).length} Items
+            </span>
           )}
-
-          {wardrobe.length === 0 && uploadingItems.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">No items in wardrobe yet</p>
-              <p className="text-sm text-gray-400 mt-1">Upload clothing photos for detailed luxury analysis</p>
-            </div>
+        </button>
+      )}
+      
+      {/* Check analysis status button - always visible when there are items */}
+      {wardrobe.length > 0 && (
+        <button 
+          onClick={() => {
+            const needsAnalysis = wardrobe.filter(item => item.needsAnalysis).length;
+            const analyzed = wardrobe.filter(item => !item.needsAnalysis).length;
+            alert(`Wardrobe Status:\n\nTotal Items: ${wardrobe.length}\n✅ Analyzed: ${analyzed}\n⚠️ Need Analysis: ${needsAnalysis}\n\n${needsAnalysis > 0 ? 'Click "Analyze Items" to process unanalyzed items.' : 'All items have been analyzed!'}`);
+          }}
+          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-all"
+          title="Check analysis status"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+      )}
+      
+      {/* Add images button */}
+      <label className="px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-lg font-medium cursor-pointer transition-all">
+        <input 
+          type="file" 
+          multiple 
+          accept="image/*"
+          onChange={handleWardrobeUpload}
+          className="hidden"
+        />
+        <span className="flex items-center gap-2">
+          {isUploading ? (
+            <>
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              Processing...
+            </>
           ) : (
             <>
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {/* Show loading placeholders */}
-                {uploadingItems.map(item => (
-                  <div key={item.id} className="relative">
-                    <div className="item-image-container shimmer">
-                      <img 
-                        src={item.imageUrl} 
-                        alt={item.name}
-                        className="item-image"
-                        style={{ opacity: 0.3 }}
-                      />
-                      <div className="loading-content">
-                        <div className="loading-spinner" />
-                        <p className="loading-text">
-                          {item.loadingMessage}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Show existing wardrobe items with quality indicators */}
-                {wardrobe.map(item => (
-                  <div 
-                    key={item.id}
-                    className="cursor-pointer relative wardrobe-item"
-                    title={item.needsAnalysis ? "Click button to analyze" : "Click to view luxury analysis"}
-                  >
-                    <div className="item-image-container">
-                      <img 
-                        src={item.imageUrl} 
-                        alt={item.name}
-                        className="item-image"
-                        onClick={() => !item.needsAnalysis && setSelectedItem(item)}
-                        style={{ cursor: item.needsAnalysis ? 'default' : 'pointer' }}
-                      />
-                      {/* Run Analysis button for items that need it */}
-                      {item.needsAnalysis && !analyzingItems.has(item.id) && (
-                        <button
-                          className="analyze-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            analyzeSingleItem(item);
-                          }}
-                        >
-                          Analyze Item
-                        </button>
-                      )}
-                      {/* Show analyzing state */}
-                      {analyzingItems.has(item.id) && (
-                        <div className="analyze-button" style={{ opacity: 1, visibility: 'visible' }}>
-                          <div className="loading-spinner" style={{ width: '16px', height: '16px', margin: '0 auto' }} />
-                          <span style={{ fontSize: '10px', marginTop: '4px' }}>Analyzing...</span>
-                        </div>
-                      )}
-                    </div>
-                    {/* Quality tier indicator */}
-                    {item.analysis?.overallAssessment?.tier && (
-                      <div className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded ${
-                        item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
-                        item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
-                        item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {item.analysis.overallAssessment.tier}
-                      </div>
-                    )}
-                    {/* Database save indicator */}
-                    {item.databaseId && !item.needsAnalysis && (
-                      <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
-                           title="Saved and analyzed"/>
-                    )}
-                    {/* Needs analysis indicator */}
-                    {item.needsAnalysis && !analyzingItems.has(item.id) && (
-                      <div className="absolute top-1 left-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" 
-                           title="Analysis needed"/>
-                    )}
-                    <p className="text-s mt-1">{item.name}</p>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Load More Button */}
-              {hasMoreItems && (
-                <div className="mt-4 text-center">
-                  <button 
-                    onClick={handleLoadMore}
-                    disabled={isLoadingMore}
-                    className="px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg disabled:opacity-50"
-                  >
-                    {isLoadingMore ? 'Loading...' : 'Load More Items'}
-                  </button>
-                </div>
-              )}
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Images
             </>
           )}
-        
+        </span>
+      </label>
+    </div>
+  </div>
+
+  {/* Progress indicators */}
+  {(isUploading || isAnalyzingAll) && (
+    <div className="mb-4">
+      {isUploading && (
+        <div className="bg-gray-200 rounded-full h-2 mb-2">
+          <div 
+            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${uploadProgress}%` }}
+          />
         </div>
+      )}
+      {currentAnalysisStep && (
+        <p className="text-sm text-gray-600 flex items-center gap-2">
+          <span className="inline-block w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+          {currentAnalysisStep}
+        </p>
+      )}
+    </div>
+  )}
+
+  {/* Empty state */}
+  {wardrobe.length === 0 && uploadingItems.length === 0 ? (
+    <div className="text-center py-12 bg-gray-50 rounded-lg">
+      <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+      <p className="text-gray-500 font-medium">Your wardrobe is empty</p>
+      <p className="text-sm text-gray-400 mt-1">Upload clothing photos for AI-powered luxury analysis</p>
+      <label className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-black hover:bg-gray-800 text-white rounded-lg font-medium cursor-pointer transition-all">
+        <input 
+          type="file" 
+          multiple 
+          accept="image/*"
+          onChange={handleWardrobeUpload}
+          className="hidden"
+        />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        Upload Your First Items
+      </label>
+    </div>
+  ) : (
+    <>
+      {/* Wardrobe grid - rest stays the same */}
+      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {/* Show loading placeholders */}
+        {uploadingItems.map(item => (
+          <div key={item.id} className="relative">
+            <div className="item-image-container shimmer">
+              <img 
+                src={item.imageUrl} 
+                alt={item.name}
+                className="item-image"
+                style={{ opacity: 0.3 }}
+              />
+              <div className="loading-content">
+                <div className="loading-spinner" />
+                <p className="loading-text">
+                  {item.loadingMessage}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+        
+        {/* Show existing wardrobe items with quality indicators */}
+        {wardrobe.map(item => (
+          <div 
+            key={item.id}
+            className="cursor-pointer relative wardrobe-item"
+            title={item.needsAnalysis ? "Click button to analyze" : "Click to view luxury analysis"}
+          >
+            <div className="item-image-container">
+              <img 
+                src={item.imageUrl} 
+                alt={item.name}
+                className="item-image"
+                onClick={() => !item.needsAnalysis && setSelectedItem(item)}
+                style={{ cursor: item.needsAnalysis ? 'default' : 'pointer' }}
+              />
+              {/* Run Analysis button for items that need it */}
+              {item.needsAnalysis && !analyzingItems.has(item.id) && (
+                <button
+                  className="analyze-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    analyzeSingleItem(item);
+                  }}
+                >
+                  Analyze Item
+                </button>
+              )}
+              {/* Show analyzing state */}
+              {analyzingItems.has(item.id) && (
+                <div className="analyze-button" style={{ opacity: 1, visibility: 'visible' }}>
+                  <div className="loading-spinner" style={{ width: '16px', height: '16px', margin: '0 auto' }} />
+                  <span style={{ fontSize: '10px', marginTop: '4px' }}>Analyzing...</span>
+                </div>
+              )}
+            </div>
+            {/* Quality tier indicator */}
+            {item.analysis?.overallAssessment?.tier && (
+              <div className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded ${
+                item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
+                item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
+                item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {item.analysis.overallAssessment.tier}
+              </div>
+            )}
+            {/* Status indicators */}
+            {item.databaseId && !item.needsAnalysis && (
+              <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
+                   title="Saved and analyzed"/>
+            )}
+            {item.needsAnalysis && !analyzingItems.has(item.id) && (
+              <div className="absolute top-1 left-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" 
+                   title="Analysis needed"/>
+            )}
+            <p className="text-s mt-1 text-center">{item.name}</p>
+          </div>
+        ))}
+      </div>
+      
+      {/* Load More Button */}
+      {hasMoreItems && (
+        <div className="mt-6 text-center">
+          <button 
+            onClick={handleLoadMore}
+            disabled={isLoadingMore}
+            className="px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg disabled:opacity-50 font-medium transition-all"
+          >
+            {isLoadingMore ? (
+              <span className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></span>
+                Loading...
+              </span>
+            ) : (
+              'Load More Items'
+            )}
+          </button>
+        </div>
+      )}
+    </>
+  )}
+</div>
 {/* Add this NEW SECTION after the Wardrobe Section closes (after </div>) */}
 {/* Look Matching Section */}
 <div className="bg-white p-6 mb-6">
