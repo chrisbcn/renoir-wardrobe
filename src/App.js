@@ -135,6 +135,7 @@ function App() {
   const [isAnalyzingInitial, setIsAnalyzingInitial] = useState(false);
   const [analyzingItems, setAnalyzingItems] = useState(new Set());
   const [isAnalyzingAll, setIsAnalyzingAll] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
   const ITEMS_PER_PAGE = 10;
 
   const [lookImage, setLookImage] = useState(null);
@@ -1725,88 +1726,175 @@ const isSameCategory = (lookCategory, wardrobeType) => {
           </div>
         ))}
         
-        {/* Show existing wardrobe items with quality indicators */}
-         {wardrobe.map(item => (
-           <div 
-             key={item.id}
-             className={`cursor-pointer relative border-2 transition-all ${
-               selectedItems.has(item.id) 
-                 ? 'border-blue-500 bg-blue-50' 
-                 : 'border-transparent hover:border-gray-300'
-             }`}
-             onClick={() => {
-               if (analyzingItems.has(item.id)) return;
-               toggleItemSelection(item.id);
-             }}
-             onDoubleClick={() => {
-               if (!analyzingItems.has(item.id)) {
-                 setSelectedItem(item);
-               }
-             }}
-             title="Click to select, double-click to view details"
-           >
-             <div className="item-image-container relative">
-               <img 
-                 src={item.imageUrl} 
-                 alt={item.name}
-                 className="item-image"
-                 style={{ cursor: 'pointer' }}
-               />
-               
-               {/* Selection indicator */}
-               {selectedItems.has(item.id) && (
-                 <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                   </svg>
-                 </div>
-               )}
-               
-               {/* Analyzing indicator */}
-               {analyzingItems.has(item.id) && (
-                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                   <div className="bg-white rounded-lg p-3 flex items-center gap-2">
-                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                     <span className="text-sm font-medium">Analyzing...</span>
-                   </div>
-                 </div>
-               )}
-             </div>
-             
-             {/* Quality tier indicator */}
-             {item.analysis?.overallAssessment?.tier && (
-               <div 
-                 className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded ${
-                   item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
-                   item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
-                   item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
-                   'bg-gray-100 text-gray-800'
-                 }`}
-                 style={{ zIndex: 10 }}
-               >
-                 {item.analysis.overallAssessment.tier}
-               </div>
-             )}
-             
-             {/* Status indicators */}
-             {item.databaseId && !item.needsAnalysis && (
-               <div 
-                 className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
-                 style={{ zIndex: 10 }}
-                 title="Saved and analyzed"
-               />
-             )}
-             {item.needsAnalysis && !analyzingItems.has(item.id) && (
-               <div 
-                 className="absolute top-1 left-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" 
-                 style={{ zIndex: 10 }}
-                 title="Analysis needed"
-               />
-             )}
-             
-             <p className="text-sm mt-1 text-center">{item.name}</p>
-           </div>
-         ))}
+        {/* Show existing wardrobe items with hover buttons */}
+        {wardrobe.map(item => (
+          <div 
+            key={item.id}
+            className="cursor-pointer relative"
+            onMouseEnter={() => setHoveredItem(item.id)}
+            onMouseLeave={() => setHoveredItem(null)}
+            title={item.needsAnalysis ? "Hover for options" : "Click image for details, hover for options"}
+          >
+            <div className="item-image-container relative">
+              <img 
+                src={item.imageUrl} 
+                alt={item.name}
+                className="item-image"
+                onClick={() => !analyzingItems.has(item.id) && setSelectedItem(item)}
+                style={{ cursor: 'pointer' }}
+              />
+              
+              {/* Hover overlay with buttons */}
+              {hoveredItem === item.id && (
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'center',
+                    paddingBottom: '8px',
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {/* Analyze/Re-analyze button */}
+                  <button
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: analyzingItems.has(item.id) ? '#9CA3AF' : '#10B981',
+                      color: 'white',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: analyzingItems.has(item.id) ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!analyzingItems.has(item.id)) {
+                        if (item.needsAnalysis) {
+                          analyzeSingleItem(item);
+                        } else {
+                          reanalyzeSingleItem(item);
+                        }
+                      }
+                    }}
+                    disabled={analyzingItems.has(item.id)}
+                    onMouseOver={(e) => {
+                      if (!analyzingItems.has(item.id)) {
+                        e.target.style.backgroundColor = '#059669';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (!analyzingItems.has(item.id)) {
+                        e.target.style.backgroundColor = '#10B981';
+                      }
+                    }}
+                  >
+                    {analyzingItems.has(item.id) ? (
+                      <>
+                        <span 
+                          style={{
+                            display: 'inline-block',
+                            width: '12px',
+                            height: '12px',
+                            border: '1px solid white',
+                            borderTopColor: 'transparent',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                          }}
+                        />
+                        Analyzing
+                      </>
+                    ) : (
+                      <>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        {item.needsAnalysis ? 'Analyze' : 'Re-analyze'}
+                      </>
+                    )}
+                  </button>
+                  
+                  {/* Delete button */}
+                  <button
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#EF4444',
+                      color: 'white',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteSingleItem(item);
+                    }}
+                    onMouseOver={(e) => {
+                      e.target.style.backgroundColor = '#DC2626';
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.backgroundColor = '#EF4444';
+                    }}
+                  >
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {/* Quality tier indicator */}
+            {item.analysis?.overallAssessment?.tier && (
+              <div 
+                className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded ${
+                  item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
+                  item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
+                  item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}
+                style={{ zIndex: 10 }}
+              >
+                {item.analysis.overallAssessment.tier}
+              </div>
+            )}
+            
+            {/* Status indicators */}
+            {item.databaseId && !item.needsAnalysis && (
+              <div 
+                className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
+                style={{ zIndex: 10 }}
+                title="Saved and analyzed"
+              />
+            )}
+            {item.needsAnalysis && !analyzingItems.has(item.id) && (
+              <div 
+                className="absolute top-1 left-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" 
+                style={{ zIndex: 10 }}
+                title="Analysis needed"
+              />
+            )}
+            
+            <p className="text-sm mt-1 text-center">{item.name}</p>
+          </div>
+        ))}
       </div>
       
       {/* Selection Action Bar */}
