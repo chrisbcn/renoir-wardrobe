@@ -283,15 +283,22 @@ function App() {
     try {
       // If item has a database ID, delete from database
       if (item.databaseId) {
+        console.log(`Deleting item ${item.databaseId} from database...`);
         const response = await fetch('/api/delete-item', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ itemId: item.databaseId })
         });
         
+        const result = await response.json();
+        
         if (!response.ok) {
-          console.log('Database delete failed, but removing from UI anyway');
+          console.error('Database delete failed:', result);
+          alert(`Failed to delete from database: ${result.error || 'Unknown error'}`);
+          return; // Don't remove from UI if database delete failed
         }
+        
+        console.log('Database delete successful:', result);
       }
       
       // Remove from local state
@@ -1632,7 +1639,12 @@ const isSameCategory = (lookCategory, wardrobeType) => {
              onMouseEnter={() => setHoveredItem(item.id)}
              onMouseLeave={() => setHoveredItem(null)}
              title={item.needsAnalysis ? "Hover for options" : "Click image for details, hover for options"}
-             onClick={() => !analyzingItems.has(item.id) && setSelectedItem(item)}
+             onClick={() => {
+               console.log('Item clicked:', item.id, 'analyzing:', analyzingItems.has(item.id));
+               if (!analyzingItems.has(item.id)) {
+                 setSelectedItem(item);
+               }
+             }}
            >
              <div className="item-image-container relative">
                <img 
