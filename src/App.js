@@ -158,6 +158,18 @@ function App() {
     
     try {
       const response = await fetch(`/api/get-wardrobe?limit=${ITEMS_PER_PAGE}&offset=${offset}`);
+      
+      if (!response.ok) {
+        console.error(`API error: ${response.status} ${response.statusText}`);
+        // If it's a 500 error, it might be a database issue - show empty state gracefully
+        if (response.status === 500) {
+          console.log('Database connection issue - showing empty state');
+          setHasMoreItems(false);
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       
       if (data.success && data.items?.length > 0) {
@@ -191,10 +203,14 @@ function App() {
         }
       } else {
         setHasMoreItems(false);
+        if (data.message) {
+          console.log('API message:', data.message);
+        }
       }
     } catch (err) {
-      console.log('Could not load items:', err);
+      console.error('Could not load items:', err);
       setHasMoreItems(false);
+      // Don't show error to user - just show empty state gracefully
     }
     setIsLoadingMore(false);
     if (offset === 0) {
@@ -682,7 +698,7 @@ const analyzeSelectedItems = async () => {
 
     setIsUploading(true);
     setUploadProgress(0);
-    
+
     // Create placeholder items for loading state
     const placeholders = files.map((file, index) => ({
       id: `placeholder-${Date.now()}-${index}`,
@@ -760,7 +776,7 @@ const analyzeSelectedItems = async () => {
         setUploadingItems(prev => prev.map((item, index) => 
           index === i ? { ...item, loadingMessage: 'Saving to wardrobe...' } : item
         ));
-        
+
         // Save to database in background
         saveToDatabase(analysis, base64, 'wardrobe').then(itemId => {
           if (itemId) {
@@ -1450,30 +1466,30 @@ const isSameCategory = (lookCategory, wardrobeType) => {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
           
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
           
           @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
           }
-          
-          @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-          }
-          
-          .spinner {
-            animation: spin 1s linear infinite;
-          }
-          
-          .shimmer {
+        
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+        
+        .shimmer {
             background: linear-gradient(90deg, #f8f8f8 25%, #f0f0f0 50%, #f8f8f8 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-          }
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+        }
           
           .loading-placeholder {
             position: relative;
