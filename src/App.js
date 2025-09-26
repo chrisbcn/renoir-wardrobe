@@ -574,9 +574,8 @@ function App() {
     
     setIsProcessingInspiration(false);
   };
-// Handle look upload for outfit matching
-// Replace the handleLookUpload function in App.js (around line 520)
-// This fixes the 400 error by using 'wardrobe' type and passing the prompt correctly
+
+// This version properly detects image format and handles errors better
 
 const handleLookUpload = async (e) => {
   const file = e.target.files[0];
@@ -597,7 +596,9 @@ const handleLookUpload = async (e) => {
       reader.readAsDataURL(file);
     });
 
-    const imageUrl = `data:image/jpeg;base64,${base64}`;
+    // Detect the actual mime type from the file
+    const mimeType = file.type || 'image/jpeg'; // fallback to jpeg if type not detected
+    const imageUrl = `data:${mimeType};base64,${base64}`;
     setLookImage(imageUrl);
     
     // Create the look analysis prompt as a text string
@@ -649,21 +650,22 @@ const handleLookUpload = async (e) => {
     Respond ONLY with valid JSON.
     `;
 
-    // Call API with 'wardrobe' type instead of 'look' - THIS IS THE KEY FIX
+    // Call API with proper parameters
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         image: base64,
-        type: 'wardrobe', // Changed from 'look' to 'wardrobe'
-        prompt: lookPromptText // Send as custom prompt
+        type: 'wardrobe', // Using 'wardrobe' type
+        prompt: lookPromptText, // Send custom prompt
+        mimeType: mimeType // Send the actual mime type
       })
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('API Error:', error);
-      throw new Error(`API error: ${response.status}`);
+      const errorData = await response.json().catch(() => null);
+      console.error('API Error:', errorData);
+      throw new Error(errorData?.error || `API error: ${response.status}`);
     }
 
     const { analysis } = await response.json();
@@ -672,9 +674,16 @@ const handleLookUpload = async (e) => {
       console.log('Look analysis received:', analysis);
       setLookAnalysis(analysis);
       
-      // Now match the look to wardrobe
-      const matches = matchLookToWardrobe(analysis, wardrobe);
-      setLookMatches(matches);
+      // Check if the response has the expected structure
+      if (analysis.itemBreakdown && analysis.itemBreakdown.visible_items) {
+        // Now match the look to wardrobe
+        const matches = matchLookToWardrobe(analysis, wardrobe);
+        setLookMatches(matches);
+      } else {
+        console.error('Analysis does not have expected structure:', analysis);
+        // Try to handle it as a standard wardrobe item analysis
+        alert('The analysis format was not as expected. Please try again.');
+      }
       
     } else {
       throw new Error(analysis?.error || 'Analysis failed');
