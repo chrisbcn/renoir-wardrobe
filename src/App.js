@@ -125,7 +125,7 @@ function App() {
   const [isProcessingInspiration, setIsProcessingInspiration] = useState(false);
   const [uploadingItems, setUploadingItems] = useState([]);
   const [currentAnalysisStep, setCurrentAnalysisStep] = useState('');
-  const [hoveredItem, setHoveredItem] = useState(null);
+  const [selectedItems, setSelectedItems] = useState(new Set());
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   
   // New states for pagination and auto-analysis
@@ -324,6 +324,59 @@ const reanalyzeSingleItem = async (item) => {
   
   // Use the existing analyzeSingleItem function
   await analyzeSingleItem(item);
+};
+
+// Selection functions
+const toggleItemSelection = (itemId) => {
+  setSelectedItems(prev => {
+    const newSet = new Set(prev);
+    if (newSet.has(itemId)) {
+      newSet.delete(itemId);
+    } else {
+      newSet.add(itemId);
+    }
+    return newSet;
+  });
+};
+
+const clearSelection = () => {
+  setSelectedItems(new Set());
+};
+
+const selectAll = () => {
+  setSelectedItems(new Set(wardrobe.map(item => item.id)));
+};
+
+// Bulk actions
+const deleteSelectedItems = async () => {
+  if (selectedItems.size === 0) return;
+  
+  const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)? This action cannot be undone.`);
+  if (!confirmDelete) return;
+  
+  const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
+  
+  for (const item of itemsToDelete) {
+    await deleteSingleItem(item);
+  }
+  
+  clearSelection();
+};
+
+const analyzeSelectedItems = async () => {
+  if (selectedItems.size === 0) return;
+  
+  const itemsToAnalyze = wardrobe.filter(item => selectedItems.has(item.id));
+  
+  for (const item of itemsToAnalyze) {
+    if (item.needsAnalysis) {
+      await analyzeSingleItem(item);
+    } else {
+      await reanalyzeSingleItem(item);
+    }
+  }
+  
+  clearSelection();
 };
 
 // Replace the wardrobe grid section in your JSX (around lines 1300-1350)
@@ -1609,7 +1662,32 @@ const isSameCategory = (lookCategory, wardrobeType) => {
     </div>
   ) : (
     <>
-      {/* Wardrobe grid - rest stays the same */}
+      {/* Wardrobe section header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">
+          Your Wardrobe ({wardrobe.length} items)
+        </h2>
+        {wardrobe.length > 0 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={selectAll}
+              className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all"
+            >
+              Select All
+            </button>
+            {selectedItems.size > 0 && (
+              <button
+                onClick={clearSelection}
+                className="px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all"
+              >
+                Clear Selection
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Wardrobe grid */}
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {/* Show loading placeholders */}
         {uploadingItems.map(item => (
@@ -1635,16 +1713,21 @@ const isSameCategory = (lookCategory, wardrobeType) => {
          {wardrobe.map(item => (
            <div 
              key={item.id}
-             className="cursor-pointer relative"
-             onMouseEnter={() => setHoveredItem(item.id)}
-             onMouseLeave={() => setHoveredItem(null)}
-             title={item.needsAnalysis ? "Hover for options" : "Click image for details, hover for options"}
+             className={`cursor-pointer relative border-2 transition-all ${
+               selectedItems.has(item.id) 
+                 ? 'border-blue-500 bg-blue-50' 
+                 : 'border-transparent hover:border-gray-300'
+             }`}
              onClick={() => {
-               console.log('Item clicked:', item.id, 'analyzing:', analyzingItems.has(item.id));
+               if (analyzingItems.has(item.id)) return;
+               toggleItemSelection(item.id);
+             }}
+             onDoubleClick={() => {
                if (!analyzingItems.has(item.id)) {
                  setSelectedItem(item);
                }
              }}
+             title="Click to select, double-click to view details"
            >
              <div className="item-image-container relative">
                <img 
@@ -1654,120 +1737,22 @@ const isSameCategory = (lookCategory, wardrobeType) => {
                  style={{ cursor: 'pointer' }}
                />
                
-               {/* Hover overlay with buttons */}
-               {hoveredItem === item.id && (
-                 <div 
-                   style={{
-                     position: 'absolute',
-                     top: 0,
-                     left: 0,
-                     right: 0,
-                     bottom: 0,
-                     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                     display: 'flex',
-                     alignItems: 'flex-end',
-                     justifyContent: 'center',
-                     paddingBottom: '8px',
-                     gap: '8px',
-                     transition: 'all 0.2s ease'
-                   }}
-                   onClick={(e) => e.stopPropagation()} // Prevent clicks on overlay from opening modal
-                 >
-                   {/* Analyze/Re-analyze button */}
-                   <button
-                     style={{
-                       padding: '6px 12px',
-                       backgroundColor: analyzingItems.has(item.id) ? '#9CA3AF' : '#10B981',
-                       color: 'white',
-                       fontSize: '12px',
-                       fontWeight: '500',
-                       borderRadius: '4px',
-                       border: 'none',
-                       cursor: analyzingItems.has(item.id) ? 'not-allowed' : 'pointer',
-                       display: 'flex',
-                       alignItems: 'center',
-                       gap: '4px',
-                       boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                     }}
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       if (!analyzingItems.has(item.id)) {
-                         if (item.needsAnalysis) {
-                           analyzeSingleItem(item);
-                         } else {
-                           reanalyzeSingleItem(item);
-                         }
-                       }
-                     }}
-                     disabled={analyzingItems.has(item.id)}
-                     onMouseOver={(e) => {
-                       if (!analyzingItems.has(item.id)) {
-                         e.target.style.backgroundColor = '#059669';
-                       }
-                     }}
-                     onMouseOut={(e) => {
-                       if (!analyzingItems.has(item.id)) {
-                         e.target.style.backgroundColor = '#10B981';
-                       }
-                     }}
-                   >
-                     {analyzingItems.has(item.id) ? (
-                       <>
-                         <span 
-                           style={{
-                             display: 'inline-block',
-                             width: '12px',
-                             height: '12px',
-                             border: '1px solid white',
-                             borderTopColor: 'transparent',
-                             borderRadius: '50%',
-                             animation: 'spin 1s linear infinite'
-                           }}
-                         />
-                         Analyzing
-                       </>
-                     ) : (
-                       <>
-                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                         </svg>
-                         {item.needsAnalysis ? 'Analyze' : 'Re-analyze'}
-                       </>
-                     )}
-                   </button>
-                   
-                   {/* Delete button */}
-                   <button
-                     style={{
-                       padding: '6px 12px',
-                       backgroundColor: '#EF4444',
-                       color: 'white',
-                       fontSize: '12px',
-                       fontWeight: '500',
-                       borderRadius: '4px',
-                       border: 'none',
-                       cursor: 'pointer',
-                       display: 'flex',
-                       alignItems: 'center',
-                       gap: '4px',
-                       boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                     }}
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       deleteSingleItem(item);
-                     }}
-                     onMouseOver={(e) => {
-                       e.target.style.backgroundColor = '#DC2626';
-                     }}
-                     onMouseOut={(e) => {
-                       e.target.style.backgroundColor = '#EF4444';
-                     }}
-                   >
-                     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                     </svg>
-                     Delete
-                   </button>
+               {/* Selection indicator */}
+               {selectedItems.has(item.id) && (
+                 <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                   </svg>
+                 </div>
+               )}
+               
+               {/* Analyzing indicator */}
+               {analyzingItems.has(item.id) && (
+                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                   <div className="bg-white rounded-lg p-3 flex items-center gap-2">
+                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                     <span className="text-sm font-medium">Analyzing...</span>
+                   </div>
                  </div>
                )}
              </div>
@@ -1807,6 +1792,48 @@ const isSameCategory = (lookCategory, wardrobeType) => {
            </div>
          ))}
       </div>
+      
+      {/* Selection Action Bar */}
+      {selectedItems.size > 0 && (
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} selected
+              </span>
+              <button
+                onClick={clearSelection}
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                Clear selection
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={analyzeSelectedItems}
+                disabled={Array.from(selectedItems).some(id => analyzingItems.has(id))}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                Analyze Selected
+              </button>
+              
+              <button
+                onClick={deleteSelectedItems}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Load More Button */}
       {hasMoreItems && (
