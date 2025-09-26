@@ -575,20 +575,121 @@ function App() {
     setIsProcessingInspiration(false);
   };
 // Handle look upload for outfit matching
-const { analysis } = await response.json();
-console.log('Look analysis response:', analysis); // ADD THIS LINE
-setLookAnalysis(analysis);
+// Replace the handleLookUpload function in App.js (around line 520)
+// This fixes the 400 error by using 'wardrobe' type and passing the prompt correctly
 
-// Check if the response has the expected structure
-if (!analysis.itemBreakdown || !analysis.itemBreakdown.visible_items) {
-  console.error('Unexpected analysis structure:', analysis);
-  alert('Analysis completed but format was unexpected');
-  return;
-}
+const handleLookUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-// Match against wardrobe
-const matches = matchLookToWardrobe(analysis, wardrobe);
-setLookMatches(matches);
+  setIsProcessingLook(true);
+  setLookAnalysis(null);
+  setLookMatches(null);
+  
+  try {
+    // Convert to base64
+    const base64 = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result.split(',')[1];
+        resolve(base64String);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    const imageUrl = `data:image/jpeg;base64,${base64}`;
+    setLookImage(imageUrl);
+    
+    // Create the look analysis prompt as a text string
+    const lookPromptText = `
+    Analyze this complete outfit/look and provide a detailed breakdown.
+    
+    Return a JSON object with this structure:
+    {
+      "overallLook": {
+        "style": "Describe the overall aesthetic (e.g., 'casual chic', 'business formal', 'street luxe')",
+        "occasion": "When/where this would be worn",
+        "seasonality": "Fall/Winter/Spring/Summer/Trans-seasonal",
+        "keyPieces": ["List the hero/statement pieces"]
+      },
+      
+      "itemBreakdown": {
+        "visible_items": [
+          {
+            "category": "top/bottom/outerwear/shoes/bag/accessories",
+            "type": "Specific item type (e.g., 'crew neck sweater')",
+            "color": "Precise color description",
+            "material": "Visible fabric/material",
+            "styling": "How it's worn (tucked, layered, cuffed, etc.)",
+            "distinctiveFeatures": "Unique details that matter for matching"
+          }
+        ]
+      },
+      
+      "colorPalette": {
+        "primary": "Main color",
+        "secondary": ["Supporting colors"],
+        "accents": ["Pop colors or metallic accents"],
+        "neutrals": ["Base neutral colors"]
+      },
+      
+      "proportionsAndFit": {
+        "silhouette": "Overall shape (oversized, fitted, balanced)",
+        "proportions": "How pieces relate to each other",
+        "lengths": "Hem lengths, sleeve lengths that matter"
+      },
+      
+      "essentialElements": {
+        "mustHaves": ["Elements crucial to recreating this look"],
+        "niceToHaves": ["Elements that enhance but aren't essential"],
+        "avoidables": ["What would break this look"]
+      }
+    }
+    
+    Respond ONLY with valid JSON.
+    `;
+
+    // Call API with 'wardrobe' type instead of 'look' - THIS IS THE KEY FIX
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        image: base64,
+        type: 'wardrobe', // Changed from 'look' to 'wardrobe'
+        prompt: lookPromptText // Send as custom prompt
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API Error:', error);
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const { analysis } = await response.json();
+    
+    if (analysis && !analysis.error) {
+      console.log('Look analysis received:', analysis);
+      setLookAnalysis(analysis);
+      
+      // Now match the look to wardrobe
+      const matches = matchLookToWardrobe(analysis, wardrobe);
+      setLookMatches(matches);
+      
+    } else {
+      throw new Error(analysis?.error || 'Analysis failed');
+    }
+    
+  } catch (error) {
+    console.error('Look upload failed:', error);
+    alert(`Failed to analyze look: ${error.message}`);
+    setLookAnalysis(null);
+    setLookMatches(null);
+  } finally {
+    setIsProcessingLook(false);
+    e.target.value = null; // Reset file input
+  }
+};
   // Generate matching results with enhanced luxury matching
   const generateMatches = (inspirationData) => {
     const matches = wardrobe.map(item => {
@@ -658,33 +759,14 @@ setLookMatches(matches);
   };
 // ADD THESE NEW FUNCTIONS HERE
 const matchLookToWardrobe = (lookAnalysis, wardrobe) => {
-  // Add safety check
-  if (!lookAnalysis || !lookAnalysis.itemBreakdown || !lookAnalysis.itemBreakdown.visible_items) {
-    console.error('Invalid look analysis structure:', lookAnalysis);
-    return {
-      matches: {},
-      overallMatch: { percentage: 0, itemsMatched: 0, totalItems: 0 },
-      suggestions: ['Unable to analyze look - please try again']
-    };
-  }
-
   const lookItems = lookAnalysis.itemBreakdown.visible_items;
   const matches = {};
   
-  // Make sure lookItems is an array
-  if (!Array.isArray(lookItems)) {
-    console.error('visible_items is not an array:', lookItems);
-    return {
-      matches: {},
-      overallMatch: { percentage: 0, itemsMatched: 0, totalItems: 0 },
-      suggestions: ['Analysis format error']
-    };
-  }
-  
   lookItems.forEach(lookItem => {
-    // Rest of your matching logic...
+    // Find best matches for each item in the look
     const categoryMatches = wardrobe
       .filter(w => {
+        // Must be same category first
         return isSameCategory(lookItem.category, w.analysis?.type);
       })
       .map(w => {
@@ -692,19 +774,10 @@ const matchLookToWardrobe = (lookAnalysis, wardrobe) => {
         return { ...w, matchScore: score, matchDetails: score.details };
       })
       .sort((a, b) => b.matchScore.total - a.matchScore.total)
-      .slice(0, 3);
+      .slice(0, 3); // Top 3 alternatives for each piece
     
     matches[lookItem.category] = categoryMatches;
   });
-  
-  const overallMatch = calculateOverallLookMatch(matches, lookAnalysis);
-  
-  return {
-    matches,
-    overallMatch,
-    suggestions: generateStylingTips(matches, lookAnalysis)
-  };
-};
   
   // Calculate overall look match percentage
   const overallMatch = calculateOverallLookMatch(matches, lookAnalysis);
