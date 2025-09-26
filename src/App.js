@@ -235,8 +235,7 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           image: base64,
-          type: 'wardrobe',
-          prompt: getLuxuryAnalysisPrompt()
+          type: 'wardrobe'
         })
       });
 
@@ -542,8 +541,7 @@ const reanalyzeSingleItem = async (item) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             image: base64,
-            type: 'wardrobe',
-            prompt: getLuxuryAnalysisPrompt()
+            type: 'wardrobe'
           })
         });
 
@@ -670,8 +668,7 @@ const reanalyzeSingleItem = async (item) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             image: base64,
-            type: 'wardrobe',
-            prompt: getLuxuryAnalysisPrompt()
+            type: 'wardrobe'
           })
         });
 
@@ -766,8 +763,7 @@ const reanalyzeSingleItem = async (item) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           image: base64,
-          type: 'inspiration',
-          prompt: getLuxuryAnalysisPrompt() // Use detailed prompt
+          type: 'inspiration'
         })
       });
 
