@@ -139,6 +139,7 @@ function App() {
   const [lookAnalysis, setLookAnalysis] = useState(null);
   const [lookMatches, setLookMatches] = useState(null);
   const [isProcessingLook, setIsProcessingLook] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
 
   // Load saved wardrobe items - now with pagination
   useEffect(() => {
@@ -260,42 +261,11 @@ function App() {
       });
     }
   };
+  
 // Add these new functions after your existing analyzeSingleItem function (around line 250)
 
 // Function to delete a single item
-const deleteSingleItem = async (item) => {
-  const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`);
-  
-  if (!confirmDelete) return;
-  
-  try {
-    // If item has a database ID, delete from database
-    if (item.databaseId) {
-      const response = await fetch('/api/delete-item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId: item.databaseId })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete from database');
-      }
-    }
-    
-    // Remove from local state
-    setWardrobe(prev => prev.filter(w => w.id !== item.id));
-    
-    // Close modal if this item was selected
-    if (selectedItem && selectedItem.id === item.id) {
-      setSelectedItem(null);
-    }
-    
-    console.log(`Successfully deleted item: ${item.name}`);
-  } catch (error) {
-    console.error(`Failed to delete item ${item.id}:`, error);
-    alert(`Failed to delete item: ${error.message}`);
-  }
-};
+
 
 // Function to re-analyze an already analyzed item
 const reanalyzeSingleItem = async (item) => {
@@ -311,89 +281,172 @@ const reanalyzeSingleItem = async (item) => {
 // This is the improved grid with delete and analyze buttons
 
 {/* Show existing wardrobe items with quality indicators */}
+// This version uses inline styles and state-based hover detection
+
+{/* Show existing wardrobe items with hover buttons */}
 {wardrobe.map(item => (
   <div 
     key={item.id}
-    className="cursor-pointer relative wardrobe-item group"
-    title={item.needsAnalysis ? "Click buttons to analyze or delete" : "Click image to view details, hover for options"}
+    className="cursor-pointer relative"
+    onMouseEnter={() => setHoveredItem(item.id)}
+    onMouseLeave={() => setHoveredItem(null)}
+    title={item.needsAnalysis ? "Hover for options" : "Click image for details, hover for options"}
   >
     <div className="item-image-container relative">
       <img 
         src={item.imageUrl} 
         alt={item.name}
         className="item-image"
-        onClick={() => !item.needsAnalysis && setSelectedItem(item)}
-        style={{ cursor: item.needsAnalysis ? 'default' : 'pointer' }}
+        onClick={() => !analyzingItems.has(item.id) && setSelectedItem(item)}
+        style={{ cursor: 'pointer' }}
       />
       
-      {/* Action buttons container - shows on hover */}
-      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-end justify-center pb-2 gap-2">
-        {/* Analyze/Re-analyze button */}
-        <button
-          className="opacity-0 group-hover:opacity-100 transition-all duration-200 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded shadow-lg transform translate-y-2 group-hover:translate-y-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (item.needsAnalysis) {
-              analyzeSingleItem(item);
-            } else {
-              reanalyzeSingleItem(item);
-            }
-          }}
-          disabled={analyzingItems.has(item.id)}
-        >
-          {analyzingItems.has(item.id) ? (
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></span>
-              Analyzing
-            </span>
-          ) : (
-            <span className="flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-              {item.needsAnalysis ? 'Analyze' : 'Re-analyze'}
-            </span>
-          )}
-        </button>
-        
-        {/* Delete button */}
-        <button
-          className="opacity-0 group-hover:opacity-100 transition-all duration-200 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded shadow-lg transform translate-y-2 group-hover:translate-y-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            deleteSingleItem(item);
+      {/* Hover overlay with buttons */}
+      {hoveredItem === item.id && (
+        <div 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            paddingBottom: '8px',
+            gap: '8px',
+            transition: 'all 0.2s ease'
           }}
         >
-          <span className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* Analyze/Re-analyze button */}
+          <button
+            style={{
+              padding: '6px 12px',
+              backgroundColor: analyzingItems.has(item.id) ? '#9CA3AF' : '#10B981',
+              color: 'white',
+              fontSize: '12px',
+              fontWeight: '500',
+              borderRadius: '4px',
+              border: 'none',
+              cursor: analyzingItems.has(item.id) ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!analyzingItems.has(item.id)) {
+                if (item.needsAnalysis) {
+                  analyzeSingleItem(item);
+                } else {
+                  reanalyzeSingleItem(item);
+                }
+              }
+            }}
+            disabled={analyzingItems.has(item.id)}
+            onMouseOver={(e) => {
+              if (!analyzingItems.has(item.id)) {
+                e.target.style.backgroundColor = '#059669';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (!analyzingItems.has(item.id)) {
+                e.target.style.backgroundColor = '#10B981';
+              }
+            }}
+          >
+            {analyzingItems.has(item.id) ? (
+              <>
+                <span 
+                  style={{
+                    display: 'inline-block',
+                    width: '12px',
+                    height: '12px',
+                    border: '1px solid white',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}
+                />
+                Analyzing
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                {item.needsAnalysis ? 'Analyze' : 'Re-analyze'}
+              </>
+            )}
+          </button>
+          
+          {/* Delete button */}
+          <button
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#EF4444',
+              color: 'white',
+              fontSize: '12px',
+              fontWeight: '500',
+              borderRadius: '4px',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteSingleItem(item);
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#DC2626';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#EF4444';
+            }}
+          >
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
             Delete
-          </span>
-        </button>
-      </div>
+          </button>
+        </div>
+      )}
     </div>
     
     {/* Quality tier indicator */}
     {item.analysis?.overallAssessment?.tier && (
-      <div className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded z-10 ${
-        item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
-        item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
-        item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
-        'bg-gray-100 text-gray-800'
-      }`}>
+      <div 
+        className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded ${
+          item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
+          item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
+          item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
+          'bg-gray-100 text-gray-800'
+        }`}
+        style={{ zIndex: 10 }}
+      >
         {item.analysis.overallAssessment.tier}
       </div>
     )}
     
     {/* Status indicators */}
     {item.databaseId && !item.needsAnalysis && (
-      <div className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full z-10" 
-           title="Saved and analyzed"/>
+      <div 
+        className="absolute top-1 left-1 w-2 h-2 bg-green-500 rounded-full" 
+        style={{ zIndex: 10 }}
+        title="Saved and analyzed"
+      />
     )}
     {item.needsAnalysis && !analyzingItems.has(item.id) && (
-      <div className="absolute top-1 left-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse z-10" 
-           title="Analysis needed"/>
+      <div 
+        className="absolute top-1 left-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" 
+        style={{ zIndex: 10 }}
+        title="Analysis needed"
+      />
     )}
     
     <p className="text-sm mt-1 text-center">{item.name}</p>
