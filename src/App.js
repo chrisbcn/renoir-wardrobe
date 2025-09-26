@@ -126,6 +126,7 @@ function App() {
   const [uploadingItems, setUploadingItems] = useState([]);
   const [currentAnalysisStep, setCurrentAnalysisStep] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   
   // New states for pagination and auto-analysis
   const [hasMoreItems, setHasMoreItems] = useState(true);
@@ -151,6 +152,9 @@ function App() {
     if (isLoadingMore) return;
     
     setIsLoadingMore(true);
+    if (offset === 0) {
+      setIsInitialLoading(true);
+    }
     
     try {
       const response = await fetch(`/api/get-wardrobe?limit=${ITEMS_PER_PAGE}&offset=${offset}`);
@@ -193,6 +197,9 @@ function App() {
       setHasMoreItems(false);
     }
     setIsLoadingMore(false);
+    if (offset === 0) {
+      setIsInitialLoading(false);
+    }
   };
 
   // Function to analyze a single item
@@ -1563,8 +1570,16 @@ const isSameCategory = (lookCategory, wardrobeType) => {
     </div>
   )}
 
-  {/* Empty state */}
-  {wardrobe.length === 0 && uploadingItems.length === 0 ? (
+  {/* Loading state */}
+  {isInitialLoading ? (
+    <div className="text-center py-12 bg-gray-50 rounded-lg">
+      <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
+      </div>
+      <p className="text-gray-500 font-medium">Refreshing your wardrobe</p>
+      <p className="text-sm text-gray-400 mt-1">Loading your saved items...</p>
+    </div>
+  ) : wardrobe.length === 0 && uploadingItems.length === 0 ? (
     <div className="text-center py-12 bg-gray-50 rounded-lg">
       <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -1617,13 +1632,13 @@ const isSameCategory = (lookCategory, wardrobeType) => {
              onMouseEnter={() => setHoveredItem(item.id)}
              onMouseLeave={() => setHoveredItem(null)}
              title={item.needsAnalysis ? "Hover for options" : "Click image for details, hover for options"}
+             onClick={() => !analyzingItems.has(item.id) && setSelectedItem(item)}
            >
              <div className="item-image-container relative">
                <img 
                  src={item.imageUrl} 
                  alt={item.name}
                  className="item-image"
-                 onClick={() => !analyzingItems.has(item.id) && setSelectedItem(item)}
                  style={{ cursor: 'pointer' }}
                />
                
@@ -1644,6 +1659,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
                      gap: '8px',
                      transition: 'all 0.2s ease'
                    }}
+                   onClick={(e) => e.stopPropagation()} // Prevent clicks on overlay from opening modal
                  >
                    {/* Analyze/Re-analyze button */}
                    <button
