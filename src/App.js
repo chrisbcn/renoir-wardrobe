@@ -414,7 +414,45 @@ const deleteSelectedItems = async () => {
         
         console.log(`Successfully deleted ${item.name} from database`);
       }
+      // Delete each item
+for (const item of itemsToDelete) {
+  console.log(`Deleting item: ${item.name} (databaseId: ${item.databaseId})`);
+  
+  try {
+    // Delete from database if it has a databaseId
+    if (item.databaseId) {
+      console.log('About to call /api/delete-item API...'); // 🔍 ADD THIS
       
+      const response = await fetch('/api/delete-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId: item.databaseId })
+      });
+      
+      console.log('API response received:', response.status, response.ok); // 🔍 ADD THIS
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API delete failed:', errorData);
+        alert(`Failed to delete ${item.name}: ${errorData.error}`);
+        continue;
+      }
+      
+      console.log(`Successfully deleted ${item.name} from database`);
+    } else {
+      console.log('No databaseId, skipping API call'); // 🔍 ADD THIS
+    }
+    
+    // Remove from UI
+    console.log('About to remove from UI...'); // 🔍 ADD THIS
+    setWardrobe(prev => prev.filter(w => w.id !== item.id));
+    console.log(`Removed ${item.name} from UI`);
+    
+  } catch (error) {
+    console.error(`Error deleting ${item.name}:`, error);
+    alert(`Error deleting ${item.name}: ${error.message}`);
+  }
+}
       // Remove from UI
       setWardrobe(prev => prev.filter(w => w.id !== item.id));
       console.log(`Removed ${item.name} from UI`);
