@@ -383,7 +383,7 @@ const deleteSelectedItems = async () => {
 
 // Simple analyze selected items  
 const analyzeSelectedItems = async () => {
-  console.log('ANALYZE SELECTED CLICKED!'); // Debug log
+  console.log('ANALYZE SELECTED CLICKED!');
   
   if (selectedItems.size === 0) {
     console.log('No items selected');
@@ -429,7 +429,7 @@ const analyzeSelectedItems = async () => {
       const { analysis } = await response.json();
       
       if (analysis && !analysis.error) {
-        // Update the item in wardrobe
+        // Update the item in wardrobe - just update locally for now
         setWardrobe(prev => prev.map(w => 
           w.id === item.id ? { 
             ...w, 
@@ -438,18 +438,6 @@ const analyzeSelectedItems = async () => {
             needsAnalysis: false 
           } : w
         ));
-        
-        // Save to database
-        if (item.databaseId) {
-          await fetch('/api/update-item', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              itemId: item.databaseId,
-              analysisResult: analysis
-            })
-          });
-        }
         
         console.log(`Successfully analyzed ${item.name}`);
       } else {
