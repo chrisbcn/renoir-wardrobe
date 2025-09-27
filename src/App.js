@@ -2099,9 +2099,9 @@ const isSameCategory = (lookCategory, wardrobeType) => {
                     <div className="col-span-2 space-y-4">
                       {selectedItem.analysis?.error ? (
                         <p className="text-red-500">Analysis failed: {selectedItem.analysis.error}</p>
-                      ) : (
+                      ) : selectedItem.analysis ? (
                         <>
-                          {/* Overall Assessment */}
+                          {/* Overall Assessment - Complex Structure */}
                           {selectedItem.analysis?.overallAssessment && (
                             <div className="bg-purple-50 p-3 rounded">
                               <h3 className="font-semibold mb-2">Overall Assessment</h3>
@@ -2112,6 +2112,38 @@ const isSameCategory = (lookCategory, wardrobeType) => {
                                 <p><span className="font-medium">Age:</span> {selectedItem.analysis.overallAssessment.estimatedAge}</p>
                                 <p className="col-span-2"><span className="font-medium">Authenticity:</span> {selectedItem.analysis.overallAssessment.authenticityConfidence}</p>
                               </div>
+                            </div>
+                          )}
+                          
+                          {/* Simple Analysis Structure Fallback */}
+                          {!selectedItem.analysis?.overallAssessment && (
+                            <div className="bg-purple-50 p-3 rounded">
+                              <h3 className="font-semibold mb-2">Analysis Results</h3>
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                <p><span className="font-medium">Type:</span> {selectedItem.analysis.type || 'Unknown'}</p>
+                                <p><span className="font-medium">Brand:</span> {selectedItem.analysis.brand || 'Unknown'}</p>
+                                <p><span className="font-medium">Tier:</span> {selectedItem.analysis.tier || 'Unknown'}</p>
+                                <p><span className="font-medium">Value:</span> {selectedItem.analysis.estimatedValue || 'Unknown'}</p>
+                                <p><span className="font-medium">Quality Score:</span> {selectedItem.analysis.qualityScore || 'N/A'}</p>
+                                <p><span className="font-medium">Condition:</span> {selectedItem.analysis.condition || 'Unknown'}</p>
+                                <p className="col-span-2"><span className="font-medium">Authenticity:</span> {selectedItem.analysis.authenticityConfidence || 'Unknown'}</p>
+                              </div>
+                              {selectedItem.analysis.summary && (
+                                <div className="mt-3">
+                                  <p className="font-medium">Summary:</p>
+                                  <p className="text-sm text-gray-700">{selectedItem.analysis.summary}</p>
+                                </div>
+                              )}
+                              {selectedItem.analysis.keyFeatures && selectedItem.analysis.keyFeatures.length > 0 && (
+                                <div className="mt-3">
+                                  <p className="font-medium">Key Features:</p>
+                                  <ul className="text-sm text-gray-700 list-disc list-inside">
+                                    {selectedItem.analysis.keyFeatures.map((feature, idx) => (
+                                      <li key={idx}>{feature}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
                           )}
                           
@@ -2234,6 +2266,11 @@ const isSameCategory = (lookCategory, wardrobeType) => {
                             </div>
                           )}
                         </>
+                      ) : (
+                        <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
+                          <p className="text-yellow-800">No analysis available for this item.</p>
+                          <p className="text-sm text-yellow-600 mt-1">Select this item in Edit Mode and click "Analyze Selected" to get a detailed analysis.</p>
+                        </div>
                       )}
                     </div>
                   </div>
