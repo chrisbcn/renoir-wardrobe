@@ -568,10 +568,10 @@ const analyzeSelectedItems = async () => {
               gap: '4px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
             }}
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteSingleItem(item);
-            }}
+            // onClick={(e) => {
+            //   e.stopPropagation();
+            //   deleteSingleItem(item);
+            // }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = '#DC2626';
             }}
