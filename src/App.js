@@ -339,13 +339,25 @@ function App() {
     if (!confirmDelete) return;
     
     try {
-      // Add to deleted items list in localStorage
-      const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
-      deletedItems.push(item.id);
-      localStorage.setItem('deleted-items', JSON.stringify(deletedItems));
-      
-      console.log('Added to deleted items:', item.id);
-      console.log('Current deleted items:', deletedItems);
+      // If item has a database ID, delete from database
+      if (item.databaseId) {
+        console.log(`Deleting item ${item.databaseId} from database...`);
+        const response = await fetch('/api/delete-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId: item.databaseId })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          console.error('Database delete failed:', result);
+          alert(`Failed to delete from database: ${result.error || 'Unknown error'}`);
+          return; // Don't remove from UI if database delete failed
+        }
+        
+        console.log('Database delete successful:', result);
+      }
       
       // Remove from local state
       setWardrobe(prev => prev.filter(w => w.id !== item.id));
@@ -355,8 +367,7 @@ function App() {
         setSelectedItem(null);
       }
       
-      console.log(`Successfully deleted item: ${item.name} (permanently removed)`);
-      
+      console.log(`Successfully deleted item: ${item.name}`);
     } catch (error) {
       console.error(`Failed to delete item ${item.id}:`, error);
       alert(`Failed to delete item: ${error.message}`);
@@ -403,23 +414,11 @@ const deleteSelectedItems = async () => {
   
   const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
   
-  // Add all selected items to deleted items list in localStorage
-  const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
-  const itemIdsToDelete = itemsToDelete.map(item => item.id);
-  deletedItems.push(...itemIdsToDelete);
-  localStorage.setItem('deleted-items', JSON.stringify(deletedItems));
-  
-  // Remove all selected items from local state
-  setWardrobe(prev => prev.filter(item => !selectedItems.has(item.id)));
-  
-  // Close modal if any selected item was being viewed
-  if (selectedItem && selectedItems.has(selectedItem.id)) {
-    setSelectedItem(null);
+  for (const item of itemsToDelete) {
+    await deleteSingleItem(item);
   }
   
   clearSelection();
-  
-  console.log(`Successfully deleted ${itemsToDelete.length} items (permanently removed)`);
 };
 
 const analyzeSelectedItems = async () => {
