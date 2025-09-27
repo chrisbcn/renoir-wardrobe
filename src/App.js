@@ -374,35 +374,146 @@ const selectAll = () => {
 };
 
 // Bulk actions
+// Simple delete selected items
 const deleteSelectedItems = async () => {
-  if (selectedItems.size === 0) return;
+  console.log('DELETE SELECTED CLICKED!'); // Debug log
   
-  const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)? This action cannot be undone.`);
-  if (!confirmDelete) return;
-  
-  const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
-  
-  for (const item of itemsToDelete) {
-    await deleteSingleItem(item);
+  if (selectedItems.size === 0) {
+    console.log('No items selected');
+    return;
   }
   
-  clearSelection();
-};
-
-const analyzeSelectedItems = async () => {
-  if (selectedItems.size === 0) return;
+  const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)?\n\nThis action cannot be undone.`);
+  if (!confirmDelete) return;
   
-  const itemsToAnalyze = wardrobe.filter(item => selectedItems.has(item.id));
+  console.log('Selected items to delete:', Array.from(selectedItems));
   
-  for (const item of itemsToAnalyze) {
-    if (item.needsAnalysis) {
-      await analyzeSingleItem(item);
-    } else {
-      await reanalyzeSingleItem(item);
+  // Get the actual items
+  const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
+  console.log('Items to delete:', itemsToDelete.map(i => ({id: i.id, databaseId: i.databaseId, name: i.name})));
+  
+  // Delete each item
+  for (const item of itemsToDelete) {
+    console.log(`Deleting item: ${item.name} (databaseId: ${item.databaseId})`);
+    
+    try {
+      // Delete from database if it has a databaseId
+      if (item.databaseId) {
+        const response = await fetch('/api/delete-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId: item.databaseId })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('API delete failed:', errorData);
+          alert(`Failed to delete ${item.name}: ${errorData.error}`);
+          continue; // Skip this item but continue with others
+        }
+        
+        console.log(`Successfully deleted ${item.name} from database`);
+      }
+      
+      // Remove from UI
+      setWardrobe(prev => prev.filter(w => w.id !== item.id));
+      console.log(`Removed ${item.name} from UI`);
+      
+    } catch (error) {
+      console.error(`Error deleting ${item.name}:`, error);
+      alert(`Error deleting ${item.name}: ${error.message}`);
     }
   }
   
+  // Clear selection
   clearSelection();
+  console.log('Cleared selection');
+};
+
+// Simple analyze selected items  
+const analyzeSelectedItems = async () => {
+  console.log('ANALYZE SELECTED CLICKED!'); // Debug log
+  
+  if (selectedItems.size === 0) {
+    console.log('No items selected');
+    return;
+  }
+  
+  console.log('Selected items to analyze:', Array.from(selectedItems));
+  
+  // Get the actual items
+  const itemsToAnalyze = wardrobe.filter(item => selectedItems.has(item.id));
+  console.log('Items to analyze:', itemsToAnalyze.map(i => ({id: i.id, name: i.name})));
+  
+  // Analyze each item
+  for (const item of itemsToAnalyze) {
+    console.log(`Analyzing item: ${item.name}`);
+    
+    try {
+      // Convert image to base64
+      let base64;
+      if (item.imageUrl.startsWith('data:')) {
+        base64 = item.imageUrl.split(',')[1];
+      } else {
+        const response = await fetch(item.imageUrl);
+        const blob = await response.blob();
+        base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.readAsDataURL(blob);
+        });
+      }
+      
+      // Call analysis API
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, type: 'wardrobe' })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Analysis API failed: ${response.status}`);
+      }
+      
+      const { analysis } = await response.json();
+      
+      if (analysis && !analysis.error) {
+        // Update the item in wardrobe
+        setWardrobe(prev => prev.map(w => 
+          w.id === item.id ? { 
+            ...w, 
+            analysis, 
+            name: analysis.name || analysis.type || w.name,
+            needsAnalysis: false 
+          } : w
+        ));
+        
+        // Save to database
+        if (item.databaseId) {
+          await fetch('/api/update-item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              itemId: item.databaseId,
+              analysisResult: analysis
+            })
+          });
+        }
+        
+        console.log(`Successfully analyzed ${item.name}`);
+      } else {
+        throw new Error(analysis?.error || 'Analysis failed');
+      }
+      
+    } catch (error) {
+      console.error(`Error analyzing ${item.name}:`, error);
+      alert(`Error analyzing ${item.name}: ${error.message}`);
+    }
+  }
+  
+  // Clear selection
+  clearSelection();
+  console.log('Cleared selection and finished analysis');
 };
 
 // Replace the wardrobe grid section in your JSX (around lines 1300-1350)
