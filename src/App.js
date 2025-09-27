@@ -290,9 +290,50 @@ function App() {
     }
   };
   
-// Add these new functions after your existing analyzeSingleItem function (around line 250)
-
-
+  // Add these new functions after your existing analyzeSingleItem function (around line 250)
+  
+  // Function to delete a single item
+  const deleteSingleItem = async (item) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`);
+    
+    if (!confirmDelete) return;
+    
+    try {
+      // If item has a database ID, delete from database
+      if (item.databaseId) {
+        console.log(`Deleting item ${item.databaseId} from database...`);
+        const response = await fetch('/api/delete-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId: item.databaseId })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          console.error('Database delete failed:', result);
+          alert(`Failed to delete from database: ${result.error || 'Unknown error'}`);
+          return; // Don't remove from UI if database delete failed
+        }
+        
+        console.log('Database delete successful:', result);
+      }
+      
+      // Remove from local state
+      setWardrobe(prev => prev.filter(w => w.id !== item.id));
+      
+      // Close modal if this item was selected
+      if (selectedItem && selectedItem.id === item.id) {
+        setSelectedItem(null);
+      }
+      
+      console.log(`Successfully deleted item: ${item.name}`);
+    } catch (error) {
+      console.error(`Failed to delete item ${item.id}:`, error);
+      alert(`Failed to delete item: ${error.message}`);
+    }
+  };
+  
   // Function to re-analyze an already analyzed item
 const reanalyzeSingleItem = async (item) => {
   const confirmReanalyze = window.confirm(`Re-analyze "${item.name}"? This will replace the existing analysis.`);
@@ -325,40 +366,19 @@ const selectAll = () => {
 };
 
 // Bulk actions
-// Simple delete selected items
 const deleteSelectedItems = async () => {
-  console.log('DELETE SELECTED CLICKED!');
-  console.log('selectedItems:', selectedItems);
-  console.log('selectedItems.size:', selectedItems.size);
+  if (selectedItems.size === 0) return;
   
-  if (selectedItems.size === 0) {
-    console.log('No items selected - returning');
-    return;
-  }
+  const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)? This action cannot be undone.`);
+  if (!confirmDelete) return;
   
-  console.log('Getting items to delete...');
   const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
-  console.log('itemsToDelete:', itemsToDelete);
   
-  console.log('About to confirm delete...');
-  const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)?`);
-  console.log('User confirmed:', confirmDelete);
-  
-  if (!confirmDelete) {
-    console.log('User cancelled - returning');
-    return;
+  for (const item of itemsToDelete) {
+    await deleteSingleItem(item);
   }
   
-  console.log('Starting delete process...');
-  
-  // Just remove from UI for now - skip API call to test
-  console.log('Removing from UI...');
-  setWardrobe(prev => prev.filter(w => !selectedItems.has(w.id)));
-  console.log('Removed from UI');
-  
-  console.log('Clearing selection...');
   clearSelection();
-  console.log('DONE!');
 };
 
 // Simple analyze selected items  
@@ -568,10 +588,10 @@ const analyzeSelectedItems = async () => {
               gap: '4px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
             }}
-            // onClick={(e) => {
-            //   e.stopPropagation();
-            //   deleteSingleItem(item);
-            // }}
+             onClick={(e) => {
+               e.stopPropagation();
+               deleteSingleItem(item);
+             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = '#DC2626';
             }}
