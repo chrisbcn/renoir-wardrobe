@@ -293,53 +293,64 @@ function App() {
 // Add these new functions after your existing analyzeSingleItem function (around line 250)
 
   // Function to delete a single item
-  const deleteSingleItem = async (item) => {
-    console.log('Delete button clicked. Item details:', {
-      id: item.id,
-      databaseId: item.databaseId,
-      name: item.name,
-      hasDatabaseId: !!item.databaseId
-    });
-  
-    const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"?\n\nThis action cannot be undone.`);
-    //const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`);
+  const deleteSelectedItems = async () => {
+    console.log('DELETE SELECTED CLICKED!');
     
+    if (selectedItems.size === 0) {
+      console.log('No items selected');
+      return;
+    }
+    
+    const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)?\n\nThis action cannot be undone.`);
     if (!confirmDelete) return;
     
-    try {
-      // If item has a database ID, delete from database
-      if (item.databaseId) {
-        console.log(`Deleting item ${item.databaseId} from database...`);
-        const response = await fetch('/api/delete-item', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemId: item.databaseId })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-          console.error('Database delete failed:', result);
-          alert(`Failed to delete from database: ${result.error || 'Unknown error'}`);
-          return; // Don't remove from UI if database delete failed
+    console.log('Starting delete process...');
+    
+    const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
+    console.log('Items to delete:', itemsToDelete.map(i => ({id: i.id, databaseId: i.databaseId, name: i.name})));
+    
+    for (const item of itemsToDelete) {
+      console.log(`Processing item: ${item.name} (databaseId: ${item.databaseId})`);
+      
+      try {
+        // Delete from database if it has a databaseId
+        if (item.databaseId) {
+          console.log(`Calling API to delete ${item.databaseId}...`);
+          
+          const response = await fetch('/api/delete-item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemId: item.databaseId })
+          });
+          
+          console.log(`API response: ${response.status} ${response.ok}`);
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('API delete failed:', errorData);
+            alert(`Failed to delete ${item.name}: ${errorData.error}`);
+            continue; // Skip this item
+          }
+          
+          console.log(`Successfully deleted ${item.name} from database`);
+        } else {
+          console.log(`No databaseId for ${item.name}, skipping API call`);
         }
         
-        console.log('Database delete successful:', result);
+      } catch (error) {
+        console.error(`Error deleting ${item.name}:`, error);
+        alert(`Error deleting ${item.name}: ${error.message}`);
+        continue; // Skip this item
       }
-      
-      // Remove from local state
-      setWardrobe(prev => prev.filter(w => w.id !== item.id));
-      
-      // Close modal if this item was selected
-      if (selectedItem && selectedItem.id === item.id) {
-        setSelectedItem(null);
-      }
-      
-      console.log(`Successfully deleted item: ${item.name}`);
-    } catch (error) {
-      console.error(`Failed to delete item ${item.id}:`, error);
-      alert(`Failed to delete item: ${error.message}`);
     }
+    
+    // Remove from UI (only items that were successfully processed)
+    console.log('Removing from UI...');
+    setWardrobe(prev => prev.filter(w => !selectedItems.has(w.id)));
+    
+    // Clear selection
+    clearSelection();
+    console.log('Delete process complete!');
   };
   
   // Function to re-analyze an already analyzed item
