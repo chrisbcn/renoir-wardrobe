@@ -293,65 +293,7 @@ function App() {
 // Add these new functions after your existing analyzeSingleItem function (around line 250)
 
   // Function to delete a single item
-  const deleteSelectedItems = async () => {
-    console.log('DELETE SELECTED CLICKED!');
-    
-    if (selectedItems.size === 0) {
-      console.log('No items selected');
-      return;
-    }
-    
-    const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)?\n\nThis action cannot be undone.`);
-    if (!confirmDelete) return;
-    
-    console.log('Starting delete process...');
-    
-    const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
-    console.log('Items to delete:', itemsToDelete.map(i => ({id: i.id, databaseId: i.databaseId, name: i.name})));
-    
-    for (const item of itemsToDelete) {
-      console.log(`Processing item: ${item.name} (databaseId: ${item.databaseId})`);
-      
-      try {
-        // Delete from database if it has a databaseId
-        if (item.databaseId) {
-          console.log(`Calling API to delete ${item.databaseId}...`);
-          
-          const response = await fetch('/api/delete-item', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itemId: item.databaseId })
-          });
-          
-          console.log(`API response: ${response.status} ${response.ok}`);
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error('API delete failed:', errorData);
-            alert(`Failed to delete ${item.name}: ${errorData.error}`);
-            continue; // Skip this item
-          }
-          
-          console.log(`Successfully deleted ${item.name} from database`);
-        } else {
-          console.log(`No databaseId for ${item.name}, skipping API call`);
-        }
-        
-      } catch (error) {
-        console.error(`Error deleting ${item.name}:`, error);
-        alert(`Error deleting ${item.name}: ${error.message}`);
-        continue; // Skip this item
-      }
-    }
-    
-    // Remove from UI (only items that were successfully processed)
-    console.log('Removing from UI...');
-    setWardrobe(prev => prev.filter(w => !selectedItems.has(w.id)));
-    
-    // Clear selection
-    clearSelection();
-    console.log('Delete process complete!');
-  };
+
   
   // Function to re-analyze an already analyzed item
 const reanalyzeSingleItem = async (item) => {
@@ -388,37 +330,62 @@ const selectAll = () => {
 // Simple delete selected items
 const deleteSelectedItems = async () => {
   console.log('DELETE SELECTED CLICKED!');
-  console.log('selectedItems:', selectedItems);
-  console.log('selectedItems.size:', selectedItems.size);
   
   if (selectedItems.size === 0) {
-    console.log('No items selected - returning');
+    console.log('No items selected');
     return;
   }
   
-  console.log('Getting items to delete...');
-  const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
-  console.log('itemsToDelete:', itemsToDelete);
-  
-  console.log('About to confirm delete...');
-  const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)?`);
-  console.log('User confirmed:', confirmDelete);
-  
-  if (!confirmDelete) {
-    console.log('User cancelled - returning');
-    return;
-  }
+  const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)?\n\nThis action cannot be undone.`);
+  if (!confirmDelete) return;
   
   console.log('Starting delete process...');
   
-  // Just remove from UI for now - skip API call to test
+  const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
+  console.log('Items to delete:', itemsToDelete.map(i => ({id: i.id, databaseId: i.databaseId, name: i.name})));
+  
+  for (const item of itemsToDelete) {
+    console.log(`Processing item: ${item.name} (databaseId: ${item.databaseId})`);
+    
+    try {
+      // Delete from database if it has a databaseId
+      if (item.databaseId) {
+        console.log(`Calling API to delete ${item.databaseId}...`);
+        
+        const response = await fetch('/api/delete-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId: item.databaseId })
+        });
+        
+        console.log(`API response: ${response.status} ${response.ok}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('API delete failed:', errorData);
+          alert(`Failed to delete ${item.name}: ${errorData.error}`);
+          continue; // Skip this item
+        }
+        
+        console.log(`Successfully deleted ${item.name} from database`);
+      } else {
+        console.log(`No databaseId for ${item.name}, skipping API call`);
+      }
+      
+    } catch (error) {
+      console.error(`Error deleting ${item.name}:`, error);
+      alert(`Error deleting ${item.name}: ${error.message}`);
+      continue; // Skip this item
+    }
+  }
+  
+  // Remove from UI (only items that were successfully processed)
   console.log('Removing from UI...');
   setWardrobe(prev => prev.filter(w => !selectedItems.has(w.id)));
-  console.log('Removed from UI');
   
-  console.log('Clearing selection...');
+  // Clear selection
   clearSelection();
-  console.log('DONE!');
+  console.log('Delete process complete!');
 };
 
 // Simple analyze selected items  
