@@ -136,6 +136,7 @@ function App() {
   const [analyzingItems, setAnalyzingItems] = useState(new Set());
   const [isAnalyzingAll, setIsAnalyzingAll] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   const ITEMS_PER_PAGE = 10;
 
   const [lookImage, setLookImage] = useState(null);
@@ -1557,6 +1558,28 @@ const isSameCategory = (lookCategory, wardrobeType) => {
       )}
     </h2>
     <div className="flex gap-2">
+      {/* Edit Mode Toggle */}
+      <button
+        onClick={() => {
+          setIsEditMode(!isEditMode);
+          if (isEditMode) {
+            clearSelection(); // Clear selection when exiting edit mode
+          }
+        }}
+        className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          isEditMode 
+            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          {isEditMode ? 'Exit Edit' : 'Edit Mode'}
+        </span>
+      </button>
+      
       {/* Add images button */}
       <label className="px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-lg font-medium cursor-pointer transition-all">
         <input 
@@ -1585,8 +1608,8 @@ const isSameCategory = (lookCategory, wardrobeType) => {
     </div>
   </div>
 
-  {/* Action Bar for Selected Items */}
-  {selectedItems.size > 0 && (
+  {/* Action Bar for Selected Items - only in edit mode */}
+  {isEditMode && selectedItems.size > 0 && (
     <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -1640,8 +1663,8 @@ const isSameCategory = (lookCategory, wardrobeType) => {
     </div>
   )}
 
-  {/* Bulk Actions Bar */}
-  {wardrobe.length > 0 && selectedItems.size === 0 && (
+  {/* Bulk Actions Bar - only in edit mode */}
+  {isEditMode && wardrobe.length > 0 && selectedItems.size === 0 && (
     <div className="mb-4 flex gap-2">
       {/* Select All button */}
       <button
@@ -1787,25 +1810,27 @@ const isSameCategory = (lookCategory, wardrobeType) => {
           </div>
         ))}
         
-        {/* Show existing wardrobe items with selection */}
+        {/* Show existing wardrobe items */}
         {wardrobe.map(item => (
           <div 
             key={item.id}
             className={`cursor-pointer relative border-2 transition-all ${
-              selectedItems.has(item.id) 
+              isEditMode && selectedItems.has(item.id) 
                 ? 'border-blue-500 bg-blue-50' 
                 : 'border-transparent hover:border-gray-300'
             }`}
             onClick={() => {
               if (analyzingItems.has(item.id)) return;
-              toggleItemSelection(item.id);
-            }}
-            onDoubleClick={() => {
-              if (!analyzingItems.has(item.id)) {
+              
+              if (isEditMode) {
+                // In edit mode: click to select/deselect
+                toggleItemSelection(item.id);
+              } else {
+                // In normal mode: click to view details
                 setSelectedItem(item);
               }
             }}
-            title="Click to select, double-click to view details"
+            title={isEditMode ? "Click to select/deselect" : "Click to view details"}
           >
             <div className="item-image-container relative">
               <img 
@@ -1815,8 +1840,8 @@ const isSameCategory = (lookCategory, wardrobeType) => {
                 style={{ cursor: 'pointer' }}
               />
               
-              {/* Selection indicator */}
-              {selectedItems.has(item.id) && (
+              {/* Selection indicator - only in edit mode */}
+              {isEditMode && selectedItems.has(item.id) && (
                 <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
