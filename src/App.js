@@ -176,7 +176,7 @@ function App() {
       
       if (data.success && data.items?.length > 0) {
         const formattedItems = data.items.map(item => ({
-          id: item.id,
+          id: `db-${item.id}`,  
           imageUrl: item.image_url,
           name: item.item_name || item.garment_type || 'Item',
           source: 'database',
@@ -294,7 +294,15 @@ function App() {
 
   // Function to delete a single item
   const deleteSingleItem = async (item) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`);
+    console.log('Delete button clicked. Item details:', {
+      id: item.id,
+      databaseId: item.databaseId,
+      name: item.name,
+      hasDatabaseId: !!item.databaseId
+    });
+  
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"?\n\nThis action cannot be undone.`);
+    //const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`);
     
     if (!confirmDelete) return;
     
