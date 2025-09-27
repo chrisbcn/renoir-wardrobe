@@ -288,6 +288,7 @@ function App() {
       }
 
       // Call API with luxury prompt
+      console.log('Calling analyze API...');
       const analysisResponse = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -297,7 +298,11 @@ function App() {
         })
       });
 
-      const { analysis } = await analysisResponse.json();
+      console.log('Analyze API response status:', analysisResponse.status);
+      const analysisResult = await analysisResponse.json();
+      console.log('Analyze API response:', analysisResult);
+      
+      const { analysis } = analysisResult;
       
       if (analysis && !analysis.error) {
         // Update the item with analysis
@@ -349,17 +354,21 @@ function App() {
             body: JSON.stringify({ itemId: item.databaseId })
           });
           
+          console.log('Delete API response status:', response.status);
           const result = await response.json();
+          console.log('Delete API response:', result);
           
           if (!response.ok) {
-            console.log('Database delete failed, using localStorage fallback:', result);
-            // Fall through to localStorage approach
+            console.error('Database delete failed:', result);
+            alert(`Delete failed: ${result.error || 'Unknown error'}`);
+            return; // Don't remove from UI if delete failed
           } else {
             console.log('Database delete successful:', result);
           }
         } catch (apiError) {
-          console.log('API not available, using localStorage fallback:', apiError);
-          // Fall through to localStorage approach
+          console.error('API delete error:', apiError);
+          alert(`Delete failed: ${apiError.message}`);
+          return; // Don't remove from UI if API call failed
         }
       }
       
