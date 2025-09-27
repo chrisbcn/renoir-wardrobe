@@ -1542,7 +1542,6 @@ const isSameCategory = (lookCategory, wardrobeType) => {
         </div>
 
         {/* Wardrobe Section */}
-       {/* Wardrobe Section */}
 <div className="bg-white p-6 mb-6">
   <div className="flex justify-between items-center mb-4">
     <h2 className="text-xl font-semibold">
@@ -1558,47 +1557,6 @@ const isSameCategory = (lookCategory, wardrobeType) => {
       )}
     </h2>
     <div className="flex gap-2">
-      {/* Analysis button - always visible when there are unanalyzed items */}
-      {wardrobe.length > 0 && wardrobe.filter(item => item.needsAnalysis).length > 0 && (
-        <button 
-          onClick={analyzeAllUnanalyzedItems}
-          disabled={isAnalyzingAll}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          title={`Analyze ${wardrobe.filter(item => item.needsAnalysis).length} unanalyzed items`}
-        >
-          {isAnalyzingAll ? (
-            <span className="flex items-center gap-2">
-              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              Analyzing {wardrobe.filter(item => item.needsAnalysis).length} items...
-            </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-              Analyze {wardrobe.filter(item => item.needsAnalysis).length} Items
-            </span>
-          )}
-        </button>
-      )}
-      
-      {/* Check analysis status button - always visible when there are items */}
-      {wardrobe.length > 0 && (
-        <button 
-          onClick={() => {
-            const needsAnalysis = wardrobe.filter(item => item.needsAnalysis).length;
-            const analyzed = wardrobe.filter(item => !item.needsAnalysis).length;
-            alert(`Wardrobe Status:\n\nTotal Items: ${wardrobe.length}\n✅ Analyzed: ${analyzed}\n⚠️ Need Analysis: ${needsAnalysis}\n\n${needsAnalysis > 0 ? 'Click "Analyze Items" to process unanalyzed items.' : 'All items have been analyzed!'}`);
-          }}
-          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-all"
-          title="Check analysis status"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </button>
-      )}
-      
       {/* Add images button */}
       <label className="px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-lg font-medium cursor-pointer transition-all">
         <input 
@@ -1626,6 +1584,109 @@ const isSameCategory = (lookCategory, wardrobeType) => {
       </label>
     </div>
   </div>
+
+  {/* Action Bar for Selected Items */}
+  {selectedItems.size > 0 && (
+    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-blue-900">
+            {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} selected
+          </span>
+          <button
+            onClick={clearSelection}
+            className="text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            Clear selection
+          </button>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const selectedItemsArray = wardrobe.filter(item => selectedItems.has(item.id));
+              const needsAnalysis = selectedItemsArray.filter(item => item.needsAnalysis);
+              const alreadyAnalyzed = selectedItemsArray.filter(item => !item.needsAnalysis);
+              
+              if (needsAnalysis.length > 0 && alreadyAnalyzed.length > 0) {
+                const confirmMsg = `You have selected ${needsAnalysis.length} items that need analysis and ${alreadyAnalyzed.length} items that are already analyzed.\n\nThis will:\n- Analyze the ${needsAnalysis.length} unanalyzed items\n- Re-analyze the ${alreadyAnalyzed.length} already analyzed items\n\nContinue?`;
+                if (window.confirm(confirmMsg)) {
+                  analyzeSelectedItems();
+                }
+              } else {
+                analyzeSelectedItems();
+              }
+            }}
+            disabled={Array.from(selectedItems).some(id => analyzingItems.has(id))}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            Analyze Selected
+          </button>
+          
+          <button
+            onClick={deleteSelectedItems}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete Selected
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* Bulk Actions Bar */}
+  {wardrobe.length > 0 && selectedItems.size === 0 && (
+    <div className="mb-4 flex gap-2">
+      {/* Select All button */}
+      <button
+        onClick={selectAll}
+        className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all"
+      >
+        Select All
+      </button>
+      
+      {/* Analyze All Unanalyzed button */}
+      {wardrobe.filter(item => item.needsAnalysis).length > 0 && (
+        <button 
+          onClick={analyzeAllUnanalyzedItems}
+          disabled={isAnalyzingAll}
+          className="px-3 py-1 text-sm bg-green-100 hover:bg-green-200 text-green-700 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          title={`Analyze ${wardrobe.filter(item => item.needsAnalysis).length} unanalyzed items`}
+        >
+          {isAnalyzingAll ? (
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-3 h-3 border border-green-700 border-t-transparent rounded-full animate-spin"></span>
+              Analyzing...
+            </span>
+          ) : (
+            `Analyze All (${wardrobe.filter(item => item.needsAnalysis).length})`
+          )}
+        </button>
+      )}
+      
+      {/* Status check button */}
+      <button 
+        onClick={() => {
+          const needsAnalysis = wardrobe.filter(item => item.needsAnalysis).length;
+          const analyzed = wardrobe.filter(item => !item.needsAnalysis).length;
+          alert(`Wardrobe Status:\n\nTotal Items: ${wardrobe.length}\n✅ Analyzed: ${analyzed}\n⚠️ Need Analysis: ${needsAnalysis}\n\n${needsAnalysis > 0 ? 'Select items and click "Analyze Selected" or use "Analyze All" button.' : 'All items have been analyzed!'}`);
+        }}
+        className="px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all"
+        title="Check analysis status"
+      >
+        <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Status
+      </button>
+    </div>
+  )}
 
   {/* Progress indicators */}
   {(isUploading || isAnalyzingAll) && (
@@ -1726,137 +1787,50 @@ const isSameCategory = (lookCategory, wardrobeType) => {
           </div>
         ))}
         
-        {/* Show existing wardrobe items with hover buttons */}
+        {/* Show existing wardrobe items with selection */}
         {wardrobe.map(item => (
           <div 
             key={item.id}
-            className="cursor-pointer relative"
-            onMouseEnter={() => setHoveredItem(item.id)}
-            onMouseLeave={() => setHoveredItem(null)}
-            title={item.needsAnalysis ? "Hover for options" : "Click image for details, hover for options"}
+            className={`cursor-pointer relative border-2 transition-all ${
+              selectedItems.has(item.id) 
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-transparent hover:border-gray-300'
+            }`}
+            onClick={() => {
+              if (analyzingItems.has(item.id)) return;
+              toggleItemSelection(item.id);
+            }}
+            onDoubleClick={() => {
+              if (!analyzingItems.has(item.id)) {
+                setSelectedItem(item);
+              }
+            }}
+            title="Click to select, double-click to view details"
           >
             <div className="item-image-container relative">
               <img 
                 src={item.imageUrl} 
                 alt={item.name}
                 className="item-image"
-                onClick={() => !analyzingItems.has(item.id) && setSelectedItem(item)}
                 style={{ cursor: 'pointer' }}
               />
               
-              {/* Hover overlay with buttons */}
-              {hoveredItem === item.id && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    justifyContent: 'center',
-                    paddingBottom: '8px',
-                    gap: '8px',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {/* Analyze/Re-analyze button */}
-                  <button
-                    style={{
-                      padding: '6px 12px',
-                      backgroundColor: analyzingItems.has(item.id) ? '#9CA3AF' : '#10B981',
-                      color: 'white',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: analyzingItems.has(item.id) ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!analyzingItems.has(item.id)) {
-                        if (item.needsAnalysis) {
-                          analyzeSingleItem(item);
-                        } else {
-                          reanalyzeSingleItem(item);
-                        }
-                      }
-                    }}
-                    disabled={analyzingItems.has(item.id)}
-                    onMouseOver={(e) => {
-                      if (!analyzingItems.has(item.id)) {
-                        e.target.style.backgroundColor = '#059669';
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      if (!analyzingItems.has(item.id)) {
-                        e.target.style.backgroundColor = '#10B981';
-                      }
-                    }}
-                  >
-                    {analyzingItems.has(item.id) ? (
-                      <>
-                        <span 
-                          style={{
-                            display: 'inline-block',
-                            width: '12px',
-                            height: '12px',
-                            border: '1px solid white',
-                            borderTopColor: 'transparent',
-                            borderRadius: '50%',
-                            animation: 'spin 1s linear infinite'
-                          }}
-                        />
-                        Analyzing
-                      </>
-                    ) : (
-                      <>
-                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                        {item.needsAnalysis ? 'Analyze' : 'Re-analyze'}
-                      </>
-                    )}
-                  </button>
-                  
-                  {/* Delete button */}
-                  <button
-                    style={{
-                      padding: '6px 12px',
-                      backgroundColor: '#EF4444',
-                      color: 'white',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteSingleItem(item);
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = '#DC2626';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = '#EF4444';
-                    }}
-                  >
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
+              {/* Selection indicator */}
+              {selectedItems.has(item.id) && (
+                <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+              
+              {/* Analyzing indicator */}
+              {analyzingItems.has(item.id) && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                  <div className="bg-white rounded-lg p-3 flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    <span className="text-sm font-medium">Analyzing...</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -1897,47 +1871,6 @@ const isSameCategory = (lookCategory, wardrobeType) => {
         ))}
       </div>
       
-      {/* Selection Action Bar */}
-      {selectedItems.size > 0 && (
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-blue-900">
-                {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} selected
-              </span>
-              <button
-                onClick={clearSelection}
-                className="text-sm text-blue-600 hover:text-blue-800 underline"
-              >
-                Clear selection
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={analyzeSelectedItems}
-                disabled={Array.from(selectedItems).some(id => analyzingItems.has(id))}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                Analyze Selected
-              </button>
-              
-              <button
-                onClick={deleteSelectedItems}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Delete Selected
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       
       {/* Load More Button */}
       {hasMoreItems && (
