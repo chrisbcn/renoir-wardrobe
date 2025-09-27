@@ -292,56 +292,7 @@ function App() {
   
 // Add these new functions after your existing analyzeSingleItem function (around line 250)
 
-  // Function to delete a single item
-  const deleteSingleItem = async (item) => {
-    console.log('Delete button clicked. Item details:', {
-      id: item.id,
-      databaseId: item.databaseId,
-      name: item.name,
-      hasDatabaseId: !!item.databaseId
-    });
-  
-    const confirmDelete = true; // Skip confirmation for now
-    //const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`);
-    
-    if (!confirmDelete) return;
-    
-    try {
-      // If item has a database ID, delete from database
-      if (item.databaseId) {
-        console.log(`Deleting item ${item.databaseId} from database...`);
-        const response = await fetch('/api/delete-item', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemId: item.databaseId })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-          console.error('Database delete failed:', result);
-          alert(`Failed to delete from database: ${result.error || 'Unknown error'}`);
-          return; // Don't remove from UI if database delete failed
-        }
-        
-        console.log('Database delete successful:', result);
-      }
-      
-      // Remove from local state
-      setWardrobe(prev => prev.filter(w => w.id !== item.id));
-      
-      // Close modal if this item was selected
-      if (selectedItem && selectedItem.id === item.id) {
-        setSelectedItem(null);
-      }
-      
-      console.log(`Successfully deleted item: ${item.name}`);
-    } catch (error) {
-      console.error(`Failed to delete item ${item.id}:`, error);
-      alert(`Failed to delete item: ${error.message}`);
-    }
-  };
-  
+
   // Function to re-analyze an already analyzed item
 const reanalyzeSingleItem = async (item) => {
   const confirmReanalyze = window.confirm(`Re-analyze "${item.name}"? This will replace the existing analysis.`);
