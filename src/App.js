@@ -502,6 +502,26 @@ function App() {
     clearSelection();
   };
 
+  // ✅ FIXED: Add the missing analyzeUnanalyzedItems function
+  const analyzeUnanalyzedItems = async (items) => {
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const item of items) {
+      try {
+        await analyzeSingleItem(item);
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to analyze ${item.name}:`, error);
+        failCount++;
+      }
+    }
+    
+    setIsAnalyzingInitial(false);
+    const message = `Analysis complete!\nSuccessfully analyzed ${successCount} items.${failCount > 0 ? ` Failed: ${failCount} items.` : ''}`;
+    alert(message);
+  };
+
   // Handle inspiration image uploads
   const handleInspirationUpload = async (e) => {
     const file = e.target.files[0];
