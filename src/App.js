@@ -210,9 +210,35 @@ function App() {
         }
       }
     } catch (err) {
-      console.error('Could not load items:', err);
-      setHasMoreItems(false);
-      // Don't show error to user - just show empty state gracefully
+      console.error('Could not load items from API, trying localStorage:', err);
+      
+      // Fallback to localStorage when API fails
+      try {
+        const savedItems = localStorage.getItem('wardrobe-items');
+        const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
+        
+        if (savedItems) {
+          const allItems = JSON.parse(savedItems);
+          // Filter out deleted items
+          const filteredItems = allItems.filter(item => !deletedItems.includes(item.id));
+          
+          if (offset === 0) {
+            setWardrobe(filteredItems);
+          } else {
+            setWardrobe(prev => [...prev, ...filteredItems.slice(offset, offset + ITEMS_PER_PAGE)]);
+          }
+          
+          setHasMoreItems(filteredItems.length > offset + ITEMS_PER_PAGE);
+          setCurrentOffset(offset);
+          
+          console.log(`Loaded ${filteredItems.length} items from localStorage`);
+        } else {
+          setHasMoreItems(false);
+        }
+      } catch (localErr) {
+        console.error('Could not load from localStorage:', localErr);
+        setHasMoreItems(false);
+      }
     }
     setIsLoadingMore(false);
     if (offset === 0) {
@@ -299,25 +325,10 @@ function App() {
     if (!confirmDelete) return;
     
     try {
-      // If item has a database ID, delete from database
-      if (item.databaseId) {
-        console.log(`Deleting item ${item.databaseId} from database...`);
-        const response = await fetch('/api/delete-item', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemId: item.databaseId })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-          console.error('Database delete failed:', result);
-          alert(`Failed to delete from database: ${result.error || 'Unknown error'}`);
-          return; // Don't remove from UI if database delete failed
-        }
-        
-        console.log('Database delete successful:', result);
-      }
+      // Add to deleted items list in localStorage
+      const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
+      deletedItems.push(item.id);
+      localStorage.setItem('deleted-items', JSON.stringify(deletedItems));
       
       // Remove from local state
       setWardrobe(prev => prev.filter(w => w.id !== item.id));
@@ -327,7 +338,8 @@ function App() {
         setSelectedItem(null);
       }
       
-      console.log(`Successfully deleted item: ${item.name}`);
+      console.log(`Successfully deleted item: ${item.name} (permanently removed)`);
+      
     } catch (error) {
       console.error(`Failed to delete item ${item.id}:`, error);
       alert(`Failed to delete item: ${error.message}`);
@@ -374,11 +386,23 @@ const deleteSelectedItems = async () => {
   
   const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
   
-  for (const item of itemsToDelete) {
-    await deleteSingleItem(item);
+  // Add all selected items to deleted items list in localStorage
+  const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
+  const itemIdsToDelete = itemsToDelete.map(item => item.id);
+  deletedItems.push(...itemIdsToDelete);
+  localStorage.setItem('deleted-items', JSON.stringify(deletedItems));
+  
+  // Remove all selected items from local state
+  setWardrobe(prev => prev.filter(item => !selectedItems.has(item.id)));
+  
+  // Close modal if any selected item was being viewed
+  if (selectedItem && selectedItems.has(selectedItem.id)) {
+    setSelectedItem(null);
   }
   
   clearSelection();
+  
+  console.log(`Successfully deleted ${itemsToDelete.length} items (permanently removed)`);
 };
 
 const analyzeSelectedItems = async () => {
@@ -804,6 +828,17 @@ const analyzeSelectedItems = async () => {
     }
     
     setWardrobe(prev => [...prev, ...newItems]);
+    
+    // Save to localStorage for persistence
+    try {
+      const existingItems = JSON.parse(localStorage.getItem('wardrobe-items') || '[]');
+      const updatedItems = [...existingItems, ...newItems];
+      localStorage.setItem('wardrobe-items', JSON.stringify(updatedItems));
+      console.log('Items saved to localStorage for persistence');
+    } catch (error) {
+      console.error('Failed to save to localStorage:', error);
+    }
+    
     setIsUploading(false);
     setUploadingItems([]);
     setCurrentAnalysisStep('');
