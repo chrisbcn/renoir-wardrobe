@@ -212,8 +212,36 @@ function App() {
       }
     } catch (err) {
       console.error('Could not load items:', err);
+      console.log('API not available - using mock data for local development');
+      
+      // Mock data for local development
+      const mockItems = [
+        {
+          id: 'mock-1',
+          name: 'Classic Blazer',
+          imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiPkJsYXplciBJbWFnZTwvdGV4dD4KPC9zdmc+',
+          needsAnalysis: true,
+          analysis: null
+        },
+        {
+          id: 'mock-2', 
+          name: 'Silk Dress',
+          imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiPkRyZXNzIEltYWdlPC90ZXh0Pgo8L3N2Zz4=',
+          needsAnalysis: true,
+          analysis: null
+        },
+        {
+          id: 'mock-3',
+          name: 'Wool Coat',
+          imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiPkNvYXQgSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==',
+          needsAnalysis: true,
+          analysis: null
+        }
+      ];
+      
+      setWardrobe(mockItems);
       setHasMoreItems(false);
-      // Don't show error to user - just show empty state gracefully
+      console.log('Loaded mock items for local development');
     }
     setIsLoadingMore(false);
     if (offset === 0) {
@@ -397,58 +425,12 @@ const analyzeSelectedItems = async () => {
   const itemsToAnalyze = wardrobe.filter(item => selectedItems.has(item.id));
   console.log('Items to analyze:', itemsToAnalyze.map(i => ({id: i.id, name: i.name})));
   
-  // Analyze each item
+  // Analyze each item using the proper analyzeSingleItem function
   for (const item of itemsToAnalyze) {
     console.log(`Analyzing item: ${item.name}`);
     
-    try {
-      // Convert image to base64
-      let base64;
-      if (item.imageUrl.startsWith('data:')) {
-        base64 = item.imageUrl.split(',')[1];
-      } else {
-        const response = await fetch(item.imageUrl);
-        const blob = await response.blob();
-        base64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result.split(',')[1]);
-          reader.readAsDataURL(blob);
-        });
-      }
-      
-      // Call analysis API
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, type: 'wardrobe' })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Analysis API failed: ${response.status}`);
-      }
-      
-      const { analysis } = await response.json();
-      
-      if (analysis && !analysis.error) {
-        // Update the item in wardrobe - just update locally for now
-        setWardrobe(prev => prev.map(w => 
-          w.id === item.id ? { 
-            ...w, 
-            analysis, 
-            name: analysis.name || analysis.type || w.name,
-            needsAnalysis: false 
-          } : w
-        ));
-        
-        console.log(`Successfully analyzed ${item.name}`);
-      } else {
-        throw new Error(analysis?.error || 'Analysis failed');
-      }
-      
-    } catch (error) {
-      console.error(`Error analyzing ${item.name}:`, error);
-      alert(`Error analyzing ${item.name}: ${error.message}`);
-    }
+    // Use the existing analyzeSingleItem function which handles both new analysis and re-analysis
+    await analyzeSingleItem(item);
   }
   
   // Clear selection
@@ -628,7 +610,7 @@ const analyzeSelectedItems = async () => {
       />
     )}
     
-    <p className="text-sm mt-1 text-center">{item.name}</p>
+    <p className="text-m mt-3 text-center">{item.name}</p>
   </div>
 ))}
   // Function to analyze all unanalyzed items
@@ -1270,26 +1252,18 @@ const isSameCategory = (lookCategory, wardrobeType) => {
   }, [selectedItem]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAFAF8' }}>
+    <div className="min-h-screen">
       
       <div className="container">
         {/* Header */}
         <div className="header-section">
           <h1 className="main-title">Maura</h1>
-          <p className="subtitle">
-            Luxury Fashion Analysis
-            {isAnalyzingInitial && (
-              <span style={{ marginLeft: '16px', color: '#808080' }}>
-                — Analyzing items...
-              </span>
-            )}
-          </p>
         </div>
 
         {/* Wardrobe Section */}
 <div className="bg-white p-6 mb-6">
   <div className="flex justify-between items-center mb-4">
-    <h2 className="text-xl font-semibold">
+    <h2 className="text-3xl">
       Your Wardrobe
       {wardrobe.length > 0 && (
         <span className="text-sm text-gray-500 ml-2">
@@ -1301,7 +1275,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
         </span>
       )}
     </h2>
-    <div className="flex gap-2">
+    <div className="flex gap-2 controls">
       {/* Edit Mode Toggle */}
       <button
         onClick={() => {
@@ -1310,10 +1284,10 @@ const isSameCategory = (lookCategory, wardrobeType) => {
             clearSelection(); // Clear selection when exiting edit mode
           }
         }}
-        className={`px-4 py-2 rounded-lg font-medium transition-all ${
+        className={`px-4 py-2 font-medium transition-all ${
           isEditMode 
             ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+            : ''
         }`}
       >
         <span className="flex items-center gap-2">
@@ -1508,32 +1482,10 @@ const isSameCategory = (lookCategory, wardrobeType) => {
   ) : (
     <>
       {/* Wardrobe section header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">
-          Your Wardrobe ({wardrobe.length} items)
-        </h2>
-        {wardrobe.length > 0 && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={selectAll}
-              className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all"
-            >
-              Select All
-            </button>
-            {selectedItems.size > 0 && (
-              <button
-                onClick={clearSelection}
-                className="px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all"
-              >
-                Clear Selection
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+
       
       {/* Wardrobe grid */}
-      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
         {/* Show loading placeholders */}
         {uploadingItems.map(item => (
           <div key={item.id} className="relative">
@@ -1558,7 +1510,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
         {wardrobe.map(item => (
           <div 
             key={item.id}
-            className={`cursor-pointer relative border-2 transition-all ${
+            className={`cursor-pointer relative transition-all ${
               isEditMode && selectedItems.has(item.id) 
               
 
@@ -1635,7 +1587,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
               />
             )}
             
-            <p className="text-sm mt-1 text-center">{item.name}</p>
+            <p className="text-m mt-3 text-center">{item.name}</p>
           </div>
         ))}
       </div>
@@ -1706,7 +1658,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
 
       {/* Wardrobe Matches */}
       <div>
-        <h3 className="font-semibold mb-2">Your Wardrobe Matches</h3>
+        <h3 className=" mb-2">Your Wardrobe Matches</h3>
         {lookMatches ? (
           <div className="space-y-3">
             <div className="text-lg font-medium text-green-600">
@@ -1762,7 +1714,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
             onClick={() => setSelectedItem(null)}
           >
             <div 
-              className="min-h-screen px-4 py-8"
+              className="min-h-screen"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="bg-white rounded-lg max-w-4xl mx-auto">
