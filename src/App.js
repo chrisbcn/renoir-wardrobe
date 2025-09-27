@@ -376,96 +376,38 @@ const selectAll = () => {
 // Bulk actions
 // Simple delete selected items
 const deleteSelectedItems = async () => {
-  console.log('DELETE SELECTED CLICKED!'); // Debug log
+  console.log('DELETE SELECTED CLICKED!');
+  console.log('selectedItems:', selectedItems);
+  console.log('selectedItems.size:', selectedItems.size);
   
   if (selectedItems.size === 0) {
-    console.log('No items selected');
+    console.log('No items selected - returning');
     return;
   }
   
-  const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)?\n\nThis action cannot be undone.`);
-  if (!confirmDelete) return;
-  
-  console.log('Selected items to delete:', Array.from(selectedItems));
-  
-  // Get the actual items
+  console.log('Getting items to delete...');
   const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
-  console.log('Items to delete:', itemsToDelete.map(i => ({id: i.id, databaseId: i.databaseId, name: i.name})));
+  console.log('itemsToDelete:', itemsToDelete);
   
-  // Delete each item
-  for (const item of itemsToDelete) {
-    console.log(`Deleting item: ${item.name} (databaseId: ${item.databaseId})`);
-    
-    try {
-      // Delete from database if it has a databaseId
-      if (item.databaseId) {
-        const response = await fetch('/api/delete-item', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemId: item.databaseId })
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('API delete failed:', errorData);
-          alert(`Failed to delete ${item.name}: ${errorData.error}`);
-          continue; // Skip this item but continue with others
-        }
-        
-        console.log(`Successfully deleted ${item.name} from database`);
-      }
-      // Delete each item
-for (const item of itemsToDelete) {
-  console.log(`Deleting item: ${item.name} (databaseId: ${item.databaseId})`);
+  console.log('About to confirm delete...');
+  const confirmDelete = window.confirm(`Delete ${selectedItems.size} selected item(s)?`);
+  console.log('User confirmed:', confirmDelete);
   
-  try {
-    // Delete from database if it has a databaseId
-    if (item.databaseId) {
-      console.log('About to call /api/delete-item API...'); // 🔍 ADD THIS
-      
-      const response = await fetch('/api/delete-item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId: item.databaseId })
-      });
-      
-      console.log('API response received:', response.status, response.ok); // 🔍 ADD THIS
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API delete failed:', errorData);
-        alert(`Failed to delete ${item.name}: ${errorData.error}`);
-        continue;
-      }
-      
-      console.log(`Successfully deleted ${item.name} from database`);
-    } else {
-      console.log('No databaseId, skipping API call'); // 🔍 ADD THIS
-    }
-    
-    // Remove from UI
-    console.log('About to remove from UI...'); // 🔍 ADD THIS
-    setWardrobe(prev => prev.filter(w => w.id !== item.id));
-    console.log(`Removed ${item.name} from UI`);
-    
-  } catch (error) {
-    console.error(`Error deleting ${item.name}:`, error);
-    alert(`Error deleting ${item.name}: ${error.message}`);
-  }
-}
-      // Remove from UI
-      setWardrobe(prev => prev.filter(w => w.id !== item.id));
-      console.log(`Removed ${item.name} from UI`);
-      
-    } catch (error) {
-      console.error(`Error deleting ${item.name}:`, error);
-      alert(`Error deleting ${item.name}: ${error.message}`);
-    }
+  if (!confirmDelete) {
+    console.log('User cancelled - returning');
+    return;
   }
   
-  // Clear selection
+  console.log('Starting delete process...');
+  
+  // Just remove from UI for now - skip API call to test
+  console.log('Removing from UI...');
+  setWardrobe(prev => prev.filter(w => !selectedItems.has(w.id)));
+  console.log('Removed from UI');
+  
+  console.log('Clearing selection...');
   clearSelection();
-  console.log('Cleared selection');
+  console.log('DONE!');
 };
 
 // Simple analyze selected items  
