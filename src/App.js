@@ -70,52 +70,6 @@ const getLuxuryAnalysisPrompt = () => {
   };
 };
 
-// Analysis prompt for complete looks/outfits
-const getLookAnalysisPrompt = () => {
-  return {
-    type: "Analyze complete outfit/look",
-    
-    overallLook: {
-      style: "Describe the overall aesthetic (e.g., 'casual chic', 'business formal', 'street luxe')",
-      occasion: "When/where this would be worn",
-      seasonality: "Fall/Winter/Spring/Summer/Trans-seasonal",
-      keyPieces: "List the hero/statement pieces"
-    },
-    
-    itemBreakdown: {
-      visible_items: [
-        {
-          category: "top/bottom/outerwear/shoes/bag/accessories",
-          type: "Specific item type (e.g., 'crew neck sweater')",
-          color: "Precise color description",
-          material: "Visible fabric/material",
-          styling: "How it's worn (tucked, layered, cuffed, etc.)",
-          distinctiveFeatures: "Unique details that matter for matching"
-        }
-      ]
-    },
-    
-    colorPalette: {
-      primary: "Main color",
-      secondary: "Supporting colors",
-      accents: "Pop colors or metallic accents",
-      neutrals: "Base neutral colors"
-    },
-    
-    proportionsAndFit: {
-      silhouette: "Overall shape (oversized, fitted, balanced)",
-      proportions: "How pieces relate to each other",
-      lengths: "Hem lengths, sleeve lengths that matter"
-    },
-    
-    essentialElements: {
-      mustHaves: "Elements crucial to recreating this look",
-      niceToHaves: "Elements that enhance but aren't essential",
-      avoidables: "What would break this look"
-    }
-  };
-};
-
 function App() {
   const [wardrobe, setWardrobe] = useState([]);
   const [inspirationImage, setInspirationImage] = useState(null);
@@ -151,7 +105,7 @@ function App() {
     loadWardrobeItems(0);
   }, []);
 
-  // New function to load items with pagination - FIXED VERSION
+  // ✅ FIXED: New function to load items with pagination
   const loadWardrobeItems = async (offset) => {
     if (isLoadingMore) return;
     
@@ -242,7 +196,7 @@ function App() {
   // Generate a unique ID for new items
   const generateUniqueId = () => `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  // Updated saveToDatabase to return the database ID - FIXED VERSION
+  // ✅ FIXED: Updated saveToDatabase to return the database ID
   const saveToDatabase = async (analysisResult, imageData, category = 'wardrobe', itemId = null) => {
     try {
       const endpoint = itemId ? '/api/update-item' : '/api/save-item';
@@ -272,7 +226,7 @@ function App() {
     }
   };
 
-  // Handle wardrobe image uploads - FIXED VERSION
+  // ✅ FIXED: Handle wardrobe image uploads
   const handleWardrobeUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -548,34 +502,6 @@ function App() {
     clearSelection();
   };
 
-  // Analyze unanalyzed items function
-  const analyzeUnanalyzedItems = async (items) => {
-    let successCount = 0;
-    let failCount = 0;
-    
-    for (const item of items) {
-      try {
-        await analyzeSingleItem(item);
-        successCount++;
-      } catch (error) {
-        console.error(`Failed to analyze ${item.name}:`, error);
-        failCount++;
-      }
-    }
-    
-    setIsAnalyzingInitial(false);
-    const message = `Analysis complete!\nSuccessfully analyzed ${successCount} items.${failCount > 0 ? ` Failed: ${failCount} items.` : ''}`;
-    alert(message);
-  };
-
-  // Load more button handler
-  const handleLoadMore = () => {
-    if (!isLoadingMore && hasMoreItems) {
-      setIsLoadingMore(true);
-      loadWardrobeItems(currentOffset + ITEMS_PER_PAGE);
-    }
-  };
-
   // Handle inspiration image uploads
   const handleInspirationUpload = async (e) => {
     const file = e.target.files[0];
@@ -640,121 +566,6 @@ function App() {
     }
     
     setIsProcessingInspiration(false);
-  };
-
-  // Look upload handler
-  const handleLookUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setIsProcessingLook(true);
-    setLookAnalysis(null);
-    setLookMatches(null);
-    
-    try {
-      const base64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64String = reader.result.split(',')[1];
-          resolve(base64String);
-        };
-        reader.readAsDataURL(file);
-      });
-
-      const mimeType = file.type || 'image/jpeg';
-      const imageUrl = `data:${mimeType};base64,${base64}`;
-      setLookImage(imageUrl);
-      
-      const lookPromptText = `
-      Analyze this complete outfit/look and provide a detailed breakdown.
-      Return a JSON object with this structure:
-      {
-        "overallLook": {
-          "style": "Describe the overall aesthetic (e.g., 'casual chic', 'business formal', 'street luxe')",
-          "occasion": "When/where this would be worn",
-          "seasonality": "Fall/Winter/Spring/Summer/Trans-seasonal",
-          "keyPieces": ["List the hero/statement pieces"]
-        },
-        
-        "itemBreakdown": {
-          "visible_items": [
-            {
-              "category": "top/bottom/outerwear/shoes/bag/accessories",
-              "type": "Specific item type (e.g., 'crew neck sweater')",
-              "color": "Precise color description",
-              "material": "Visible fabric/material",
-              "styling": "How it's worn (tucked, layered, cuffed, etc.)",
-              "distinctiveFeatures": "Unique details that matter for matching"
-            }
-          ]
-        },
-        
-        "colorPalette": {
-          "primary": "Main color",
-          "secondary": ["Supporting colors"],
-          "accents": ["Pop colors or metallic accents"],
-          "neutrals": ["Base neutral colors"]
-        },
-        
-        "proportionsAndFit": {
-          "silhouette": "Overall shape (oversized, fitted, balanced)",
-          "proportions": "How pieces relate to each other",
-          "lengths": "Hem lengths, sleeve lengths that matter"
-        },
-        
-        "essentialElements": {
-          "mustHaves": ["Elements crucial to recreating this look"],
-          "niceToHaves": ["Elements that enhance but aren't essential"],
-          "avoidables": ["What would break this look"]
-        }
-      }
-      
-      Respond ONLY with valid JSON.
-      `;
-
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          image: base64,
-          type: 'wardrobe',
-          prompt: lookPromptText,
-          mimeType: mimeType
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error('API Error:', errorData);
-        throw new Error(errorData?.error || `API error: ${response.status}`);
-      }
-
-      const { analysis } = await response.json();
-      
-      if (analysis && !analysis.error) {
-        console.log('Look analysis received:', analysis);
-        setLookAnalysis(analysis);
-        
-        if (analysis.itemBreakdown && analysis.itemBreakdown.visible_items) {
-          const matches = matchLookToWardrobe(analysis, wardrobe);
-          setLookMatches(matches);
-        } else {
-          console.error('Analysis does not have expected structure:', analysis);
-          alert('The analysis format was not as expected. Please try again.');
-        }
-      } else {
-        throw new Error(analysis?.error || 'Analysis failed');
-      }
-      
-    } catch (error) {
-      console.error('Look upload failed:', error);
-      alert(`Failed to analyze look: ${error.message}`);
-      setLookAnalysis(null);
-      setLookMatches(null);
-    } finally {
-      setIsProcessingLook(false);
-      e.target.value = null;
-    }
   };
 
   // Generate matching results with enhanced luxury matching
@@ -825,303 +636,87 @@ function App() {
     };
   };
 
-  // Look matching function
-  const matchLookToWardrobe = (lookAnalysis, wardrobeItems) => {
-    if (!lookAnalysis.itemBreakdown?.visible_items) {
-      return null;
-    }
-
-    const matches = {};
-    let totalScore = 0;
-    let itemCount = 0;
-
-    lookAnalysis.itemBreakdown.visible_items.forEach(lookItem => {
-      const category = lookItem.category;
-      const categoryItems = wardrobeItems
-        .filter(item => isSameCategory(category, item.analysis?.type))
-        .map(item => ({
-          ...item,
-          matchScore: calculateItemMatchScore(lookItem, item.analysis)
-        }))
-        .sort((a, b) => b.matchScore.total - a.matchScore.total);
-
-      matches[category] = categoryItems.slice(0, 3);
-      
-      if (categoryItems.length > 0) {
-        totalScore += categoryItems[0].matchScore.total;
-        itemCount++;
-      }
-    });
-
-    return {
-      matches,
-      overallMatch: {
-        percentage: itemCount > 0 ? totalScore / itemCount : 0,
-        itemsMatched: itemCount,
-        totalItems: lookAnalysis.itemBreakdown?.visible_items?.length || 0
-      }
-    };
-  };
-
-  const calculateItemMatchScore = (lookItem, wardrobeItem) => {
-    if (!wardrobeItem) return { total: 0, details: {} };
-    
-    const scores = {
-      typeMatch: 0,
-      colorMatch: 0,
-      materialMatch: 0,
-      styleMatch: 0
-    };
-    
-    // Type matching (40% weight)
-    if (lookItem.type && wardrobeItem.type) {
-      if (lookItem.type.toLowerCase() === wardrobeItem.type?.toLowerCase()) {
-        scores.typeMatch = 40;
-      } else if (lookItem.type.toLowerCase().includes(wardrobeItem.type?.toLowerCase()) || 
-                 wardrobeItem.type?.toLowerCase().includes(lookItem.type.toLowerCase())) {
-        scores.typeMatch = 25;
-      }
-    }
-    
-    // Color matching (30% weight) 
-    if (lookItem.color && wardrobeItem.fabricAnalysis?.colors) {
-      const lookColor = lookItem.color.toLowerCase();
-      const matchingColor = wardrobeItem.fabricAnalysis.colors.some(c => 
-        c.toLowerCase().includes(lookColor) || lookColor.includes(c.toLowerCase())
-      );
-      if (matchingColor) {
-        scores.colorMatch = 30;
-      }
-    }
-    
-    // Material matching (15% weight)
-    if (lookItem.material && wardrobeItem.fabricAnalysis?.weaveStructure) {
-      if (lookItem.material.toLowerCase().includes(wardrobeItem.fabricAnalysis.weaveStructure.toLowerCase())) {
-        scores.materialMatch = 15;
-      }
-    }
-    
-    // Style compatibility (15% weight)
-    scores.styleMatch = 10; // Base score for same category
-    
-    return {
-      total: Object.values(scores).reduce((a, b) => a + b, 0),
-      details: scores
-    };
-  };
-
-  // Helper functions
-  const isSameCategory = (lookCategory, wardrobeType) => {
-    const categoryMap = {
-      'top': ['shirt', 'blouse', 'sweater', 'turtleneck', 't-shirt'],
-      'bottom': ['trouser', 'pant', 'skirt', 'jean'],
-      'outerwear': ['coat', 'jacket', 'blazer'],
-      'shoes': ['shoe', 'boot', 'sneaker', 'heel'],
-      'bag': ['bag', 'purse', 'clutch'],
-      'accessories': ['scarf', 'belt', 'jewelry', 'watch']
-    };
-    
-    const categoryItems = categoryMap[lookCategory] || [];
-    return categoryItems.some(item => 
-      wardrobeType?.toLowerCase().includes(item) || 
-      item.includes(wardrobeType?.toLowerCase())
-    );
-  };
-
   return (
-    <div className="app">
-      <div className="container">
-        <header className="header">
-          <h1 className="title">Maura</h1>
-          <p className="subtitle">Luxury Wardrobe Management & Style Matching</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-4">
+        <header className="text-center py-12 mb-6">
+          <h1 className="text-5xl font-bold mb-2 text-gray-900">Maura</h1>
+          <p className="text-xl text-gray-600">Luxury Wardrobe Management & Style Matching</p>
         </header>
 
-        <div className="tabs">
-          <div className="tab-buttons">
-            <button 
-              className={`tab-button ${!lookImage ? 'active' : ''}`}
-              onClick={() => {
-                setLookImage(null);
-                setLookAnalysis(null);
-                setLookMatches(null);
-              }}
-            >
-              Inspiration Matching
-            </button>
-            <button 
-              className={`tab-button ${lookImage ? 'active' : ''}`}
-              onClick={() => {
-                setInspirationImage(null);
-                setInspirationAnalysis(null);
-                setMatchingResults(null);
-              }}
-            >
-              Look Matcher
-            </button>
-          </div>
-
-          {/* Inspiration Matching Tab */}
-          {!lookImage && (
-            <div className="tab-content">
-              <div className="upload-section">
-                <h2>Upload Inspiration Image</h2>
-                <p className="section-description">
-                  Upload a fashion image to find similar luxury pieces in your wardrobe
-                </p>
-                
-                <label className="upload-button">
-                  <input 
-                    type="file" 
-                    accept="image/*"
-                    onChange={handleInspirationUpload}
-                    disabled={isProcessingInspiration}
-                    className="hidden-input"
-                  />
-                  {isProcessingInspiration ? 'Analyzing...' : 'Choose Inspiration Image'}
-                </label>
-                
-                {currentAnalysisStep && (
-                  <div className="analysis-step">
-                    {currentAnalysisStep}
-                  </div>
-                )}
-              </div>
-
-              {inspirationImage && (
-                <div className="results-section">
-                  <div className="inspiration-display">
-                    <h3>Inspiration</h3>
-                    <img src={inspirationImage} alt="Fashion inspiration" className="inspiration-image" />
-                    
-                    {inspirationAnalysis && (
-                      <div className="analysis-summary">
-                        <h4>Analysis</h4>
-                        <div className="analysis-item">
-                          <strong>Type:</strong> {inspirationAnalysis.type}
-                        </div>
-                        <div className="analysis-item">
-                          <strong>Brand:</strong> {inspirationAnalysis.brandIdentifiers?.likelyBrand || 'Unidentified'}
-                        </div>
-                        <div className="analysis-item">
-                          <strong>Tier:</strong> {inspirationAnalysis.overallAssessment?.tier}
-                        </div>
-                        <div className="analysis-item">
-                          <strong>Colors:</strong> {inspirationAnalysis.fabricAnalysis?.colors?.join(', ')}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {matchingResults && (
-                    <div className="matching-results">
-                      <h3>Your Wardrobe Matches</h3>
-                      <div className="matches-grid">
-                        {matchingResults.map(match => (
-                          <div key={match.id} className="match-item">
-                            <img src={match.imageUrl} alt={match.name} className="match-image" />
-                            <div className="match-info">
-                              <div className="match-name">{match.name}</div>
-                              <div className="match-score">{Math.round(match.similarity.score)}% match</div>
-                              <div className="match-reasoning">{match.similarity.reasoning}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Look Matcher Tab */}
-          {lookImage && (
-            <div className="tab-content">
-              <div className="upload-section">
-                <h2>Upload Complete Look</h2>
-                <p className="section-description">
-                  Upload a complete outfit to find matching pieces in your wardrobe
-                </p>
-                
-                <label className="upload-button">
-                  <input 
-                    type="file" 
-                    accept="image/*"
-                    onChange={handleLookUpload}
-                    disabled={isProcessingLook}
-                    className="hidden-input"
-                  />
-                  {isProcessingLook ? 'Analyzing Look...' : 'Upload Look'}
-                </label>
-              </div>
-
-              {lookImage && (
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-semibold mb-2">Target Look</h3>
-                    <img 
-                      src={lookImage} 
-                      alt="Target look" 
-                      className="w-full rounded-lg border"
-                    />
-                    {lookAnalysis && (
-                      <div className="mt-2 p-3 bg-gray-50 rounded text-sm">
-                        <p><strong>Style:</strong> {lookAnalysis.overallLook?.style}</p>
-                        <p><strong>Occasion:</strong> {lookAnalysis.overallLook?.occasion}</p>
-                        <p><strong>Season:</strong> {lookAnalysis.overallLook?.seasonality}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Your Wardrobe Matches</h3>
-                    {lookMatches ? (
-                      <div className="space-y-3">
-                        <div className="text-lg font-medium text-green-600">
-                          Overall Match: {Math.round(lookMatches.overallMatch?.percentage || 0)}%
-                        </div>
-                        {Object.entries(lookMatches.matches).map(([category, items]) => (
-                          <div key={category} className="border rounded p-2">
-                            <p className="font-medium capitalize">{category}</p>
-                            {items && items[0] ? (
-                              <div className="flex items-center gap-2 mt-1">
-                                <img 
-                                  src={items[0].imageUrl} 
-                                  alt={items[0].name}
-                                  className="w-16 h-16 object-cover rounded"
-                                />
-                                <div className="text-sm">
-                                  <p>{items[0].name}</p>
-                                  <p className="text-green-600">
-                                    {Math.round(items[0].matchScore?.total || 0)}% match
-                                  </p>
-                                </div>
-                              </div>
-                            ) : (
-                              <p className="text-gray-400 text-sm">No match found</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : isProcessingLook ? (
-                      <div className="flex justify-center py-8">
-                        <div className="loading-spinner" />
-                      </div>
-                    ) : lookAnalysis ? (
-                      <p className="text-gray-500">Processing matches...</p>
-                    ) : null}
-                  </div>
-                </div>
-              )}
+        {/* Upload Inspiration Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-2xl font-semibold mb-4">Upload Inspiration Image</h2>
+          <p className="text-gray-600 mb-4">
+            Upload a fashion image to find similar luxury pieces in your wardrobe
+          </p>
+          
+          <label className="btn-primary cursor-pointer">
+            <input 
+              type="file" 
+              accept="image/*"
+              onChange={handleInspirationUpload}
+              disabled={isProcessingInspiration}
+              className="hidden"
+            />
+            {isProcessingInspiration ? 'Analyzing...' : 'Choose Inspiration Image'}
+          </label>
+          
+          {currentAnalysisStep && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg text-blue-800 font-medium">
+              {currentAnalysisStep}
             </div>
           )}
         </div>
 
-        <div className="wardrobe-section">
-          <div className="section-header">
-            <h2>Your Wardrobe ({wardrobe.length} items)</h2>
+        {/* Results Section */}
+        {inspirationImage && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-xl font-semibold mb-4">Inspiration</h3>
+              <img src={inspirationImage} alt="Fashion inspiration" className="w-full max-w-md rounded-lg mb-4" />
+              
+              {inspirationAnalysis && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Analysis</h4>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <div><strong>Type:</strong> {inspirationAnalysis.type}</div>
+                    <div><strong>Brand:</strong> {inspirationAnalysis.brandIdentifiers?.likelyBrand || 'Unidentified'}</div>
+                    <div><strong>Tier:</strong> {inspirationAnalysis.overallAssessment?.tier}</div>
+                    <div><strong>Colors:</strong> {inspirationAnalysis.fabricAnalysis?.colors?.join(', ')}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {matchingResults && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-semibold mb-4">Your Wardrobe Matches</h3>
+                <div className="space-y-4">
+                  {matchingResults.map(match => (
+                    <div key={match.id} className="flex gap-4 p-3 bg-gray-50 rounded-lg">
+                      <img src={match.imageUrl} alt={match.name} className="w-16 h-16 object-cover rounded" />
+                      <div className="flex-1">
+                        <div className="font-medium">{match.name}</div>
+                        <div className="text-green-600 font-semibold">{Math.round(match.similarity.score)}% match</div>
+                        <div className="text-sm text-gray-600">{match.similarity.reasoning}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Wardrobe Section */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-semibold">
+              Your Wardrobe ({wardrobe.length} items)
+            </h2>
             
-            <div className="wardrobe-controls">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsEditMode(!isEditMode)}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
@@ -1130,12 +725,7 @@ function App() {
                     : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                 }`}
               >
-                <span className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  {isEditMode ? 'Exit Edit' : 'Edit Mode'}
-                </span>
+                {isEditMode ? 'Exit Edit' : 'Edit Mode'}
               </button>
               
               <label className="px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-lg font-medium cursor-pointer transition-all">
@@ -1146,21 +736,7 @@ function App() {
                   onChange={handleWardrobeUpload}
                   className="hidden"
                 />
-                <span className="flex items-center gap-2">
-                  {isUploading ? (
-                    <>
-                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Images
-                    </>
-                  )}
-                </span>
+                {isUploading ? 'Processing...' : 'Add Images'}
               </label>
             </div>
           </div>
@@ -1183,36 +759,16 @@ function App() {
                 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      const selectedItemsArray = wardrobe.filter(item => selectedItems.has(item.id));
-                      const needsAnalysis = selectedItemsArray.filter(item => item.needsAnalysis);
-                      const alreadyAnalyzed = selectedItemsArray.filter(item => !item.needsAnalysis);
-                      
-                      if (needsAnalysis.length > 0 && alreadyAnalyzed.length > 0) {
-                        const confirmMsg = `You have selected ${needsAnalysis.length} items that need analysis and ${alreadyAnalyzed.length} items that are already analyzed.\n\nThis will:\n- Analyze the ${needsAnalysis.length} unanalyzed items\n- Re-analyze the ${alreadyAnalyzed.length} already analyzed items\n\nContinue?`;
-                        if (window.confirm(confirmMsg)) {
-                          analyzeSelectedItems();
-                        }
-                      } else {
-                        analyzeSelectedItems();
-                      }
-                    }}
-                    disabled={Array.from(selectedItems).some(id => analyzingItems.has(id))}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg flex items-center gap-2"
+                    onClick={analyzeSelectedItems}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
                     Analyze Selected
                   </button>
                   
                   <button
                     onClick={deleteSelectedItems}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg flex items-center gap-2"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
                     Delete Selected
                   </button>
                 </div>
@@ -1222,18 +778,18 @@ function App() {
 
           {/* Show uploading items */}
           {uploadingItems.length > 0 && (
-            <div className="uploading-items">
-              <h3>Uploading Items...</h3>
-              <div className="upload-progress">
-                Progress: {uploadProgress}%
-              </div>
-              <div className="uploading-grid">
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold mb-2">Uploading Items...</h3>
+              <div className="text-sm text-gray-600 mb-4">Progress: {uploadProgress}%</div>
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {uploadingItems.map(item => (
-                  <div key={item.id} className="uploading-item">
-                    <img src={item.imageUrl} alt={item.name} className="uploading-image" />
-                    <div className="uploading-status">
-                      <div className="loading-spinner"></div>
-                      <p>{item.loadingMessage}</p>
+                  <div key={item.id} className="text-center">
+                    <div className="item-image-container relative">
+                      <img src={item.imageUrl} alt={item.name} className="item-image opacity-50" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-30">
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <p className="text-white text-xs text-center px-2">{item.loadingMessage}</p>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1243,9 +799,9 @@ function App() {
 
           {/* Loading state */}
           {isInitialLoading ? (
-            <div className="loading-state">
-              <div className="loading-spinner"></div>
-              <p>Loading your wardrobe...</p>
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your wardrobe...</p>
             </div>
           ) : (
             <>
@@ -1326,16 +882,6 @@ function App() {
                               }
                             }}
                             disabled={analyzingItems.has(item.id)}
-                            onMouseOver={(e) => {
-                              if (!analyzingItems.has(item.id)) {
-                                e.target.style.backgroundColor = '#059669';
-                              }
-                            }}
-                            onMouseOut={(e) => {
-                              if (!analyzingItems.has(item.id)) {
-                                e.target.style.backgroundColor = '#10B981';
-                              }
-                            }}
                           >
                             {analyzingItems.has(item.id) ? (
                               <>
@@ -1351,15 +897,13 @@ function App() {
                               </>
                             ) : (
                               <>
-                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                </svg>
+                                ⚡
                                 {item.needsAnalysis ? 'Analyze' : 'Re-analyze'}
                               </>
                             )}
                           </button>
                           
-                          {/* Delete button */}
+                          {/* ✅ FIXED: Delete button */}
                           <button
                             style={{
                               padding: '6px 12px',
@@ -1384,17 +928,8 @@ function App() {
                               });
                               deleteSingleItem(item);
                             }}
-                            onMouseOver={(e) => {
-                              e.target.style.backgroundColor = '#DC2626';
-                            }}
-                            onMouseOut={(e) => {
-                              e.target.style.backgroundColor = '#EF4444';
-                            }}
                           >
-                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            Delete
+                            🗑️ Delete
                           </button>
                         </div>
                       )}
@@ -1406,7 +941,7 @@ function App() {
                         className={`absolute top-1 right-1 px-1 py-0.5 text-xs font-medium rounded ${
                           item.analysis.overallAssessment.tier === 'luxury' ? 'bg-purple-100 text-purple-800' :
                           item.analysis.overallAssessment.tier === 'premium' ? 'bg-blue-100 text-blue-800' :
-                          item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-gold-100 text-gold-800' :
+                          item.analysis.overallAssessment.tier === 'haute couture' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-gray-100 text-gray-800'
                         }`}
                         style={{ zIndex: 10 }}
@@ -1440,7 +975,12 @@ function App() {
               {hasMoreItems && (
                 <div className="text-center mt-6">
                   <button
-                    onClick={handleLoadMore}
+                    onClick={() => {
+                      if (!isLoadingMore && hasMoreItems) {
+                        setIsLoadingMore(true);
+                        loadWardrobeItems(currentOffset + ITEMS_PER_PAGE);
+                      }
+                    }}
                     disabled={isLoadingMore}
                     className="px-6 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white rounded-lg font-medium"
                   >
@@ -1454,77 +994,72 @@ function App() {
 
         {/* Item detail modal */}
         {selectedItem && (
-          <div className="modal-overlay" onClick={() => setSelectedItem(null)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>{selectedItem.name}</h3>
-                <button className="modal-close" onClick={() => setSelectedItem(null)}>×</button>
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+            onClick={() => setSelectedItem(null)}
+          >
+            <div 
+              className="bg-white rounded-lg max-w-2xl max-h-80vh overflow-y-auto m-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center p-6 border-b">
+                <h3 className="text-xl font-semibold">{selectedItem.name}</h3>
+                <button 
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                  onClick={() => setSelectedItem(null)}
+                >
+                  ×
+                </button>
               </div>
               
-              <div className="modal-body">
-                <img src={selectedItem.imageUrl} alt={selectedItem.name} className="modal-image" />
+              <div className="p-6">
+                <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-full max-w-sm mx-auto rounded-lg mb-6" />
                 
                 {selectedItem.analysis && !selectedItem.analysis.error ? (
-                  <div className="analysis-details">
-                    <div className="analysis-section">
-                      <h4>Basic Information</h4>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-semibold mb-2">Basic Information</h4>
                       <p><strong>Type:</strong> {selectedItem.analysis.type}</p>
                       <p><strong>Brand:</strong> {selectedItem.analysis.brandIdentifiers?.likelyBrand || 'Unidentified'}</p>
                     </div>
                     
-                    <div className="analysis-section">
-                      <h4>Quality Assessment</h4>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-semibold mb-2">Quality Assessment</h4>
                       <p><strong>Tier:</strong> {selectedItem.analysis.overallAssessment?.tier}</p>
                       <p><strong>Estimated Value:</strong> {selectedItem.analysis.overallAssessment?.estimatedRetail}</p>
                       <p><strong>Authenticity:</strong> {selectedItem.analysis.overallAssessment?.authenticityConfidence}</p>
                     </div>
                     
                     {selectedItem.analysis.fabricAnalysis && (
-                      <div className="analysis-section">
-                        <h4>Fabric Analysis</h4>
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-semibold mb-2">Fabric Analysis</h4>
                         <p><strong>Material:</strong> {selectedItem.analysis.fabricAnalysis.weaveStructure}</p>
                         <p><strong>Colors:</strong> {selectedItem.analysis.fabricAnalysis.colors?.join(', ')}</p>
                       </div>
                     )}
-                    
-                    {selectedItem.analysis.qualityIndicators && (
-                      <div className="analysis-section">
-                        <h4>Quality Indicators</h4>
-                        {selectedItem.analysis.qualityIndicators.luxuryMarkers && (
-                          <div>
-                            <strong>Luxury Markers:</strong>
-                            <ul>
-                              {selectedItem.analysis.qualityIndicators.luxuryMarkers.map((marker, index) => (
-                                <li key={index}>{marker}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 ) : selectedItem.needsAnalysis ? (
-                  <div className="analysis-needed">
-                    <p>This item needs analysis. Click the analyze button to get detailed information.</p>
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">This item needs analysis. Click the analyze button to get detailed information.</p>
                     <button 
                       onClick={() => {
                         setSelectedItem(null);
                         analyzeSingleItem(selectedItem);
                       }}
-                      className="analyze-button"
+                      className="btn-primary"
                     >
                       Analyze Now
                     </button>
                   </div>
                 ) : (
-                  <div className="analysis-error">
-                    <p>Analysis failed for this item. Please try re-analyzing.</p>
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">Analysis failed for this item. Please try re-analyzing.</p>
                     <button 
                       onClick={() => {
                         setSelectedItem(null);
                         reanalyzeSingleItem(selectedItem);
                       }}
-                      className="analyze-button"
+                      className="btn-primary"
                     >
                       Re-analyze
                     </button>
@@ -1535,459 +1070,6 @@ function App() {
           </div>
         )}
       </div>
-      
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        .app {
-          min-height: 100vh;
-          background-color: #f8f9fa;
-          font-family: 'Inter', sans-serif;
-        }
-        
-        .container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 20px;
-        }
-        
-        .header {
-          text-align: center;
-          margin-bottom: 40px;
-        }
-        
-        .title {
-          font-family: 'Playfair Display', serif;
-          font-size: 3rem;
-          font-weight: 700;
-          color: #1a1a1a;
-          margin-bottom: 8px;
-        }
-        
-        .subtitle {
-          color: #666;
-          font-size: 1.1rem;
-          font-weight: 400;
-        }
-        
-        .tabs {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          margin-bottom: 40px;
-        }
-        
-        .tab-buttons {
-          display: flex;
-          border-bottom: 1px solid #e5e7eb;
-        }
-        
-        .tab-button {
-          flex: 1;
-          padding: 16px 24px;
-          background: none;
-          border: none;
-          font-size: 1rem;
-          font-weight: 500;
-          color: #6b7280;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .tab-button.active {
-          color: #1f2937;
-          border-bottom: 2px solid #000;
-        }
-        
-        .tab-button:hover {
-          color: #1f2937;
-        }
-        
-        .tab-content {
-          padding: 24px;
-        }
-        
-        .upload-section {
-          text-align: center;
-          margin-bottom: 32px;
-        }
-        
-        .upload-section h2 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #1f2937;
-          margin-bottom: 8px;
-        }
-        
-        .section-description {
-          color: #6b7280;
-          margin-bottom: 24px;
-        }
-        
-        .upload-button {
-          display: inline-block;
-          padding: 12px 24px;
-          background-color: #000;
-          color: white;
-          border-radius: 8px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-        
-        .upload-button:hover {
-          background-color: #374151;
-        }
-        
-        .hidden-input {
-          display: none;
-        }
-        
-        .analysis-step {
-          margin-top: 16px;
-          padding: 12px;
-          background-color: #f3f4f6;
-          border-radius: 6px;
-          color: #374151;
-          font-weight: 500;
-        }
-        
-        .results-section {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 32px;
-        }
-        
-        .inspiration-display h3,
-        .matching-results h3 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          margin-bottom: 16px;
-          color: #1f2937;
-        }
-        
-        .inspiration-image {
-          width: 100%;
-          max-width: 400px;
-          border-radius: 8px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .analysis-summary {
-          margin-top: 16px;
-          padding: 16px;
-          background-color: #f9fafb;
-          border-radius: 8px;
-        }
-        
-        .analysis-summary h4 {
-          font-weight: 600;
-          margin-bottom: 12px;
-          color: #1f2937;
-        }
-        
-        .analysis-item {
-          margin-bottom: 8px;
-          color: #374151;
-        }
-        
-        .matches-grid {
-          display: grid;
-          gap: 16px;
-        }
-        
-        .match-item {
-          display: flex;
-          gap: 12px;
-          padding: 12px;
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .match-image {
-          width: 80px;
-          height: 80px;
-          object-fit: cover;
-          border-radius: 6px;
-        }
-        
-        .match-info {
-          flex: 1;
-        }
-        
-        .match-name {
-          font-weight: 600;
-          color: #1f2937;
-          margin-bottom: 4px;
-        }
-        
-        .match-score {
-          color: #059669;
-          font-weight: 600;
-          margin-bottom: 4px;
-        }
-        
-        .match-reasoning {
-          color: #6b7280;
-          font-size: 0.875rem;
-        }
-        
-        .wardrobe-section {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          padding: 24px;
-        }
-        
-        .section-header {
-          display: flex;
-          justify-content: between;
-          align-items: center;
-          margin-bottom: 24px;
-        }
-        
-        .section-header h2 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #1f2937;
-        }
-        
-        .wardrobe-controls {
-          display: flex;
-          gap: 12px;
-        }
-        
-        .loading-state {
-          text-align: center;
-          padding: 48px;
-          color: #6b7280;
-        }
-        
-        .loading-spinner {
-          width: 32px;
-          height: 32px;
-          border: 3px solid #e5e7eb;
-          border-top: 3px solid #3b82f6;
-          border-radius: 50%;
-          margin: 0 auto 16px;
-          animation: spin 1s linear infinite;
-        }
-        
-        .uploading-items {
-          margin-bottom: 32px;
-          padding: 20px;
-          background-color: #f3f4f6;
-          border-radius: 8px;
-        }
-        
-        .upload-progress {
-          margin-bottom: 16px;
-          font-weight: 600;
-          color: #374151;
-        }
-        
-        .uploading-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-          gap: 16px;
-        }
-        
-        .uploading-item {
-          text-align: center;
-        }
-        
-        .uploading-image {
-          width: 100%;
-          height: 150px;
-          object-fit: cover;
-          border-radius: 8px;
-          margin-bottom: 8px;
-        }
-        
-        .uploading-status {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .uploading-status .loading-spinner {
-          width: 20px;
-          height: 20px;
-          border-width: 2px;
-          margin: 0;
-        }
-        
-        .uploading-status p {
-          font-size: 0.875rem;
-          color: #6b7280;
-        }
-        
-        .wardrobe-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 20px;
-          margin-bottom: 24px;
-        }
-        
-        .item-image-container {
-          position: relative;
-          aspect-ratio: 1;
-          overflow: hidden;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .item-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.2s;
-        }
-        
-        .item-image:hover {
-          transform: scale(1.02);
-        }
-        
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: rgba(0, 0, 0, 0.75);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-        
-        .modal-content {
-          background: white;
-          border-radius: 12px;
-          max-width: 800px;
-          max-height: 90vh;
-          overflow-y: auto;
-          margin: 20px;
-          box-shadow: 0 20px 25px rgba(0, 0, 0, 0.25);
-        }
-        
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px 24px;
-          border-bottom: 1px solid #e5e7eb;
-        }
-        
-        .modal-header h3 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #1f2937;
-        }
-        
-        .modal-close {
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          color: #6b7280;
-          cursor: pointer;
-          padding: 4px;
-        }
-        
-        .modal-close:hover {
-          color: #374151;
-        }
-        
-        .modal-body {
-          padding: 24px;
-        }
-        
-        .modal-image {
-          width: 100%;
-          max-width: 300px;
-          border-radius: 8px;
-          margin-bottom: 24px;
-        }
-        
-        .analysis-details {
-          display: grid;
-          gap: 20px;
-        }
-        
-        .analysis-section {
-          padding: 16px;
-          background-color: #f9fafb;
-          border-radius: 8px;
-        }
-        
-        .analysis-section h4 {
-          font-weight: 600;
-          margin-bottom: 12px;
-          color: #1f2937;
-        }
-        
-        .analysis-section p {
-          margin-bottom: 8px;
-          color: #374151;
-        }
-        
-        .analysis-section ul {
-          margin-left: 20px;
-          color: #374151;
-        }
-        
-        .analysis-section li {
-          margin-bottom: 4px;
-        }
-        
-        .analysis-needed,
-        .analysis-error {
-          text-align: center;
-          padding: 32px;
-          color: #6b7280;
-        }
-        
-        .analyze-button {
-          margin-top: 16px;
-          padding: 12px 24px;
-          background-color: #059669;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-        
-        .analyze-button:hover {
-          background-color: #047857;
-        }
-        
-        @media (max-width: 768px) {
-          .results-section {
-            grid-template-columns: 1fr;
-          }
-          
-          .wardrobe-grid {
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-          }
-          
-          .section-header {
-            flex-direction: column;
-            gap: 16px;
-            align-items: stretch;
-          }
-          
-          .wardrobe-controls {
-            justify-content: center;
-          }
-        }
-      `}</style>
     </div>
   );
 }
