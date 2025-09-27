@@ -172,6 +172,13 @@ function App() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
+      // Check if response is JSON, if not it's probably HTML (API not available)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.log('API returned non-JSON response, falling back to localStorage');
+        throw new Error('API not available - non-JSON response');
+      }
+      
       const data = await response.json();
       
       if (data.success && data.items?.length > 0) {
@@ -217,10 +224,16 @@ function App() {
         const savedItems = localStorage.getItem('wardrobe-items');
         const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
         
+        console.log('localStorage savedItems:', savedItems ? 'exists' : 'empty');
+        console.log('localStorage deletedItems:', deletedItems);
+        
         if (savedItems) {
           const allItems = JSON.parse(savedItems);
+          console.log('All items from localStorage:', allItems.length);
+          
           // Filter out deleted items
           const filteredItems = allItems.filter(item => !deletedItems.includes(item.id));
+          console.log('Filtered items (after removing deleted):', filteredItems.length);
           
           if (offset === 0) {
             setWardrobe(filteredItems);
@@ -233,6 +246,7 @@ function App() {
           
           console.log(`Loaded ${filteredItems.length} items from localStorage`);
         } else {
+          console.log('No items in localStorage');
           setHasMoreItems(false);
         }
       } catch (localErr) {
@@ -329,6 +343,9 @@ function App() {
       const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
       deletedItems.push(item.id);
       localStorage.setItem('deleted-items', JSON.stringify(deletedItems));
+      
+      console.log('Added to deleted items:', item.id);
+      console.log('Current deleted items:', deletedItems);
       
       // Remove from local state
       setWardrobe(prev => prev.filter(w => w.id !== item.id));
