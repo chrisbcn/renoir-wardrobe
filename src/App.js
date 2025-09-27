@@ -1810,25 +1810,27 @@ const isSameCategory = (lookCategory, wardrobeType) => {
           </div>
         ))}
         
-        {/* Show existing wardrobe items with selection */}
+        {/* Show existing wardrobe items */}
         {wardrobe.map(item => (
           <div 
             key={item.id}
             className={`cursor-pointer relative border-2 transition-all ${
-              selectedItems.has(item.id) 
+              isEditMode && selectedItems.has(item.id) 
                 ? 'border-blue-500 bg-blue-50' 
                 : 'border-transparent hover:border-gray-300'
             }`}
             onClick={() => {
               if (analyzingItems.has(item.id)) return;
-              toggleItemSelection(item.id);
-            }}
-            onDoubleClick={() => {
-              if (!analyzingItems.has(item.id)) {
+              
+              if (isEditMode) {
+                // In edit mode: click to select/deselect
+                toggleItemSelection(item.id);
+              } else {
+                // In normal mode: click to view details
                 setSelectedItem(item);
               }
             }}
-            title="Click to select, double-click to view details"
+            title={isEditMode ? "Click to select/deselect" : "Click to view details"}
           >
             <div className="item-image-container relative">
               <img 
@@ -1838,8 +1840,8 @@ const isSameCategory = (lookCategory, wardrobeType) => {
                 style={{ cursor: 'pointer' }}
               />
               
-              {/* Selection indicator */}
-              {selectedItems.has(item.id) && (
+              {/* Selection indicator - only in edit mode */}
+              {isEditMode && selectedItems.has(item.id) && (
                 <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
