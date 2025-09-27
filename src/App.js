@@ -339,56 +339,37 @@ function App() {
 
   // Function to delete a single item
   const deleteSingleItem = async (item) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`);
-    
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${item.name}"?`);
     if (!confirmDelete) return;
     
     try {
-      // Try to delete from database first (for production)
-      if (item.databaseId) {
-        try {
-          console.log(`Deleting item ${item.databaseId} from database...`);
-          const response = await fetch('/api/delete-item', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itemId: item.databaseId })
-          });
-          
-          console.log('Delete API response status:', response.status);
-          const result = await response.json();
-          console.log('Delete API response:', result);
-          
-          if (!response.ok) {
-            console.error('Database delete failed:', result);
-            alert(`Delete failed: ${result.error || 'Unknown error'}`);
-            return; // Don't remove from UI if delete failed
-          } else {
-            console.log('Database delete successful:', result);
-          }
-        } catch (apiError) {
-          console.error('API delete error:', apiError);
-          alert(`Delete failed: ${apiError.message}`);
-          return; // Don't remove from UI if API call failed
+      // Try databaseId first, fall back to id
+      const idToDelete = item.databaseId || item.id;
+      
+      if (idToDelete && !idToDelete.startsWith('temp-')) {
+        const response = await fetch('/api/delete-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId: idToDelete })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          alert(`Delete failed: ${errorData.error}`);
+          return;
         }
       }
       
-      // Always remove from UI and use localStorage as backup
+      // Remove from UI
       setWardrobe(prev => prev.filter(w => w.id !== item.id));
       
-      // Save to localStorage for persistence
-      const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
-      deletedItems.push(item.id);
-      localStorage.setItem('deleted-items', JSON.stringify(deletedItems));
-      
-      // Close modal if this item was selected
       if (selectedItem && selectedItem.id === item.id) {
         setSelectedItem(null);
       }
       
-      console.log(`Successfully deleted item: ${item.name}`);
     } catch (error) {
-      console.error(`Failed to delete item ${item.id}:`, error);
-      alert(`Failed to delete item: ${error.message}`);
+      console.error('Delete error:', error);
+      alert(`Failed to delete: ${error.message}`);
     }
   };
   
