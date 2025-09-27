@@ -172,6 +172,13 @@ function App() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
+      // Check if response is JSON, if not it's probably HTML (API not available)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.log('API returned non-JSON response, falling back to localStorage');
+        throw new Error('API not available - non-JSON response');
+      }
+      
       const data = await response.json();
       
       if (data.success && data.items?.length > 0) {
@@ -217,10 +224,16 @@ function App() {
         const savedItems = localStorage.getItem('wardrobe-items');
         const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
         
+        console.log('localStorage savedItems:', savedItems ? 'exists' : 'empty');
+        console.log('localStorage deletedItems:', deletedItems);
+        
         if (savedItems) {
           const allItems = JSON.parse(savedItems);
+          console.log('All items from localStorage:', allItems.length);
+          
           // Filter out deleted items
           const filteredItems = allItems.filter(item => !deletedItems.includes(item.id));
+          console.log('Filtered items (after removing deleted):', filteredItems.length);
           
           if (offset === 0) {
             setWardrobe(filteredItems);
@@ -233,6 +246,7 @@ function App() {
           
           console.log(`Loaded ${filteredItems.length} items from localStorage`);
         } else {
+          console.log('No items in localStorage');
           setHasMoreItems(false);
         }
       } catch (localErr) {
@@ -274,6 +288,7 @@ function App() {
       }
 
       // Call API with luxury prompt
+      console.log('Calling analyze API...');
       const analysisResponse = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -283,7 +298,11 @@ function App() {
         })
       });
 
-      const { analysis } = await analysisResponse.json();
+      console.log('Analyze API response status:', analysisResponse.status);
+      const analysisResult = await analysisResponse.json();
+      console.log('Analyze API response:', analysisResult);
+      
+      const { analysis } = analysisResult;
       
       if (analysis && !analysis.error) {
         // Update the item with analysis
@@ -325,21 +344,48 @@ function App() {
     if (!confirmDelete) return;
     
     try {
-      // Add to deleted items list in localStorage
+      // Try to delete from database first (for production)
+      if (item.databaseId) {
+        try {
+          console.log(`Deleting item ${item.databaseId} from database...`);
+          const response = await fetch('/api/delete-item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemId: item.databaseId })
+          });
+          
+          console.log('Delete API response status:', response.status);
+          const result = await response.json();
+          console.log('Delete API response:', result);
+          
+          if (!response.ok) {
+            console.error('Database delete failed:', result);
+            alert(`Delete failed: ${result.error || 'Unknown error'}`);
+            return; // Don't remove from UI if delete failed
+          } else {
+            console.log('Database delete successful:', result);
+          }
+        } catch (apiError) {
+          console.error('API delete error:', apiError);
+          alert(`Delete failed: ${apiError.message}`);
+          return; // Don't remove from UI if API call failed
+        }
+      }
+      
+      // Always remove from UI and use localStorage as backup
+      setWardrobe(prev => prev.filter(w => w.id !== item.id));
+      
+      // Save to localStorage for persistence
       const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
       deletedItems.push(item.id);
       localStorage.setItem('deleted-items', JSON.stringify(deletedItems));
-      
-      // Remove from local state
-      setWardrobe(prev => prev.filter(w => w.id !== item.id));
       
       // Close modal if this item was selected
       if (selectedItem && selectedItem.id === item.id) {
         setSelectedItem(null);
       }
       
-      console.log(`Successfully deleted item: ${item.name} (permanently removed)`);
-      
+      console.log(`Successfully deleted item: ${item.name}`);
     } catch (error) {
       console.error(`Failed to delete item ${item.id}:`, error);
       alert(`Failed to delete item: ${error.message}`);
@@ -386,23 +432,11 @@ const deleteSelectedItems = async () => {
   
   const itemsToDelete = wardrobe.filter(item => selectedItems.has(item.id));
   
-  // Add all selected items to deleted items list in localStorage
-  const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
-  const itemIdsToDelete = itemsToDelete.map(item => item.id);
-  deletedItems.push(...itemIdsToDelete);
-  localStorage.setItem('deleted-items', JSON.stringify(deletedItems));
-  
-  // Remove all selected items from local state
-  setWardrobe(prev => prev.filter(item => !selectedItems.has(item.id)));
-  
-  // Close modal if any selected item was being viewed
-  if (selectedItem && selectedItems.has(selectedItem.id)) {
-    setSelectedItem(null);
+  for (const item of itemsToDelete) {
+    await deleteSingleItem(item);
   }
   
   clearSelection();
-  
-  console.log(`Successfully deleted ${itemsToDelete.length} items (permanently removed)`);
 };
 
 const analyzeSelectedItems = async () => {
@@ -1571,7 +1605,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
             Luxury Fashion Analysis
             {isAnalyzingInitial && (
               <span style={{ marginLeft: '16px', color: '#808080' }}>
-                — Analyzing items...
+                â€” Analyzing items...
               </span>
             )}
           </p>
@@ -1586,9 +1620,9 @@ const isSameCategory = (lookCategory, wardrobeType) => {
         <span className="text-sm text-gray-500 ml-2">
           ({wardrobe.length} items
           {wardrobe.filter(item => item.needsAnalysis).length > 0 && 
-            ` • ${wardrobe.filter(item => item.needsAnalysis).length} need analysis`}
+            ` â€¢ ${wardrobe.filter(item => item.needsAnalysis).length} need analysis`}
           {wardrobe.filter(item => !item.needsAnalysis).length > 0 && 
-            ` • ${wardrobe.filter(item => !item.needsAnalysis).length} analyzed`})
+            ` â€¢ ${wardrobe.filter(item => !item.needsAnalysis).length} analyzed`})
         </span>
       )}
     </h2>
@@ -1733,7 +1767,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
         onClick={() => {
           const needsAnalysis = wardrobe.filter(item => item.needsAnalysis).length;
           const analyzed = wardrobe.filter(item => !item.needsAnalysis).length;
-          alert(`Wardrobe Status:\n\nTotal Items: ${wardrobe.length}\n✅ Analyzed: ${analyzed}\n⚠️ Need Analysis: ${needsAnalysis}\n\n${needsAnalysis > 0 ? 'Select items and click "Analyze Selected" or use "Analyze All" button.' : 'All items have been analyzed!'}`);
+          alert(`Wardrobe Status:\n\nTotal Items: ${wardrobe.length}\nâœ… Analyzed: ${analyzed}\nâš ï¸ Need Analysis: ${needsAnalysis}\n\n${needsAnalysis > 0 ? 'Select items and click "Analyze Selected" or use "Analyze All" button.' : 'All items have been analyzed!'}`);
         }}
         className="px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all"
         title="Check analysis status"
@@ -2063,7 +2097,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
                     onClick={() => setSelectedItem(null)}
                     className="text-gray-500 hover:text-gray-700 text-2xl"
                   >
-                    ×
+                    Ã—
                   </button>
                 </div>
                 <div className="p-6 max-h-[80vh] overflow-y-auto">
