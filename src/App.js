@@ -339,28 +339,37 @@ function App() {
     if (!confirmDelete) return;
     
     try {
-      // If item has a database ID, delete from database
+      // Try to delete from database first (for production)
       if (item.databaseId) {
-        console.log(`Deleting item ${item.databaseId} from database...`);
-        const response = await fetch('/api/delete-item', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemId: item.databaseId })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-          console.error('Database delete failed:', result);
-          alert(`Failed to delete from database: ${result.error || 'Unknown error'}`);
-          return; // Don't remove from UI if database delete failed
+        try {
+          console.log(`Deleting item ${item.databaseId} from database...`);
+          const response = await fetch('/api/delete-item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemId: item.databaseId })
+          });
+          
+          const result = await response.json();
+          
+          if (!response.ok) {
+            console.log('Database delete failed, using localStorage fallback:', result);
+            // Fall through to localStorage approach
+          } else {
+            console.log('Database delete successful:', result);
+          }
+        } catch (apiError) {
+          console.log('API not available, using localStorage fallback:', apiError);
+          // Fall through to localStorage approach
         }
-        
-        console.log('Database delete successful:', result);
       }
       
-      // Remove from local state
+      // Always remove from UI and use localStorage as backup
       setWardrobe(prev => prev.filter(w => w.id !== item.id));
+      
+      // Save to localStorage for persistence
+      const deletedItems = JSON.parse(localStorage.getItem('deleted-items') || '[]');
+      deletedItems.push(item.id);
+      localStorage.setItem('deleted-items', JSON.stringify(deletedItems));
       
       // Close modal if this item was selected
       if (selectedItem && selectedItem.id === item.id) {
