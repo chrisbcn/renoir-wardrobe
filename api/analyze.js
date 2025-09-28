@@ -1,5 +1,5 @@
 // api/analyze.js - Enhanced version of your existing endpoint
-import enhancedImageAnalyzer from '../lib/enhanced-image-analyzer.js';
+import enhancedImageAnalyzer from './enhanced-image-analyzer.js';
 
 export default async function handler(req, res) {
   // CORS headers
@@ -69,6 +69,8 @@ async function callClaudeVision(base64Image, type, customPrompt, mimeType = 'ima
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
@@ -121,37 +123,38 @@ async function callClaudeVision(base64Image, type, customPrompt, mimeType = 'ima
  */
 function transformToLegacyFormat(enhancedAnalysis) {
   const category = enhancedAnalysis.category;
-  const attributes = enhancedAnalysis.attributes;
+  const colors = enhancedAnalysis.colors || [];
+  const fabrics = enhancedAnalysis.fabrics || [];
   
   return {
     // Basic fields your app expects
-    name: generateItemName(category, attributes),
-    type: category.name,
+    name: generateItemName(category, { colors, fabrics }),
+    type: category,
     
     // Enhanced fields with much better data
     overallAssessment: {
-      tier: determineTier(enhancedAnalysis),
-      estimatedRetail: estimateRetail(category, attributes),
-      authenticityConfidence: enhancedAnalysis.confidence_score >= 0.8 ? 'high' : 
-                            enhancedAnalysis.confidence_score >= 0.6 ? 'medium' : 'low',
-      condition: 'excellent', // Could be enhanced further
+      tier: enhancedAnalysis.qualityTier || 'contemporary',
+      estimatedRetail: enhancedAnalysis.priceRange || 'unknown',
+      authenticityConfidence: enhancedAnalysis.confidence >= 0.8 ? 'high' : 
+                            enhancedAnalysis.confidence >= 0.6 ? 'medium' : 'low',
+      condition: 'excellent',
       estimatedAge: 'current season'
     },
     
     // Fabric analysis from enhanced data
     fabricAnalysis: {
-      colors: attributes.colors.map(c => c.name),
-      weaveStructure: attributes.fabrics.length > 0 ? attributes.fabrics[0].name : 'unknown',
-      yarnQuality: attributes.fabrics.some(f => f.name === 'cashmere') ? 'Super 150s+' : 'Standard',
+      colors: colors,
+      weaveStructure: fabrics.length > 0 ? fabrics[0] : 'unknown',
+      yarnQuality: fabrics.some(f => f === 'cashmere') ? 'Super 150s+' : 'Standard',
       weight: 'medium',
-      pattern: attributes.patterns.length > 0 ? attributes.patterns[0].name : 'solid',
+      pattern: enhancedAnalysis.patterns && enhancedAnalysis.patterns.length > 0 ? enhancedAnalysis.patterns[0] : 'solid',
       patternMatching: 'yes'
     },
     
     // Brand identification
     brandIdentifiers: {
       likelyBrand: 'Unknown',
-      confidence: Math.round(enhancedAnalysis.confidence_score * 100),
+      confidence: Math.round((enhancedAnalysis.confidence || 0.7) * 100),
       constructionHouse: 'European',
       visibleLogos: 'none detected',
       hiddenSignatures: 'none detected'
@@ -159,23 +162,26 @@ function transformToLegacyFormat(enhancedAnalysis) {
     
     // Quality indicators
     qualityIndicators: {
-      handworkEvidence: generateQualityMarkers(attributes),
-      luxuryMarkers: generateLuxuryMarkers(category, attributes),
+      handworkEvidence: enhancedAnalysis.luxuryIndicators || ['quality construction'],
+      luxuryMarkers: generateLuxuryMarkers(category, { colors, fabrics }),
       authenticityMarkers: ['consistent stitching', 'quality materials']
     },
     
     // Construction details
     constructionSignatures: {
-      pickStitching: attributes.details?.construction || 'standard',
+      pickStitching: 'standard',
       shoulderConstruction: 'natural',
       seamConstruction: 'flat-fell',
-      handwork: generateHandworkDetails(attributes)
+      handwork: 'machine construction with quality finishing'
     },
     
     // Enhanced search capability
-    searchTerms: enhancedAnalysis.search_terms,
-    confidenceScore: enhancedAnalysis.confidence_score,
-    needsReview: enhancedAnalysis.needs_review
+    searchTerms: enhancedAnalysis.searchTerms || [],
+    confidenceScore: enhancedAnalysis.confidence || 0.7,
+    needsReview: enhancedAnalysis.needsReview || false,
+    
+    // Summary
+    summary: enhancedAnalysis.summary || 'Quality fashion item with good construction'
   };
 }
 
@@ -183,10 +189,10 @@ function transformToLegacyFormat(enhancedAnalysis) {
  * Helper functions for transformation
  */
 function generateItemName(category, attributes) {
-  let name = category.name !== 'unknown' ? category.name : 'Fashion Item';
+  let name = category !== 'unknown' ? category : 'Fashion Item';
   
-  const primaryColor = attributes.colors.find(c => c.validated)?.name;
-  const primaryFabric = attributes.fabrics.find(f => f.validated)?.name;
+  const primaryColor = attributes.colors && attributes.colors[0];
+  const primaryFabric = attributes.fabrics && attributes.fabrics[0];
   
   if (primaryFabric) {
     name = `${primaryFabric} ${name}`;
@@ -201,66 +207,18 @@ function generateItemName(category, attributes) {
   ).join(' ');
 }
 
-function determineTier(analysis) {
-  const confidence = analysis.confidence_score;
-  const hasLuxuryFabrics = analysis.attributes.fabrics.some(f => 
-    ['cashmere', 'silk', 'wool'].includes(f.name)
-  );
-  
-  if (confidence >= 0.9 && hasLuxuryFabrics) return 'luxury';
-  if (confidence >= 0.7) return 'premium';
-  return 'contemporary';
-}
-
-function estimateRetail(category, attributes) {
-  const hasLuxuryFabrics = attributes.fabrics.some(f => 
-    ['cashmere', 'silk'].includes(f.name)
-  );
-  
-  if (hasLuxuryFabrics) {
-    return category.name === 'jacket' ? '$2,000-$5,000' : '$500-$2,000';
-  }
-  
-  return category.name === 'jacket' ? '$500-$1,500' : '$200-$800';
-}
-
-function generateQualityMarkers(attributes) {
-  const markers = [];
-  
-  if (attributes.fabrics.some(f => f.name === 'cashmere')) {
-    markers.push('premium cashmere construction');
-  }
-  
-  if (attributes.fabrics.some(f => f.name === 'silk')) {
-    markers.push('silk lining or construction');
-  }
-  
-  if (attributes.styles.some(s => s.name === 'tailored')) {
-    markers.push('tailored construction');
-  }
-  
-  return markers.length > 0 ? markers : ['quality construction'];
-}
-
 function generateLuxuryMarkers(category, attributes) {
   const markers = [];
   
-  if (category.name === 'jacket') {
+  if (category === 'jacket') {
     markers.push('structured shoulders', 'functional buttonholes');
   }
   
-  if (attributes.fabrics.length > 0) {
-    markers.push(`premium ${attributes.fabrics[0].name} fabric`);
+  if (attributes.fabrics && attributes.fabrics.length > 0) {
+    markers.push(`premium ${attributes.fabrics[0]} fabric`);
   }
   
   return markers.length > 0 ? markers : ['quality materials'];
-}
-
-function generateHandworkDetails(attributes) {
-  if (attributes.details?.construction) {
-    return attributes.details.construction;
-  }
-  return 'machine construction with quality finishing';
 }
 
 function getLuxuryAnalysisPrompt(type) {
@@ -268,8 +226,35 @@ function getLuxuryAnalysisPrompt(type) {
     return `Analyze this fashion inspiration image with expert detail. Identify the main garment types, colors, fabrics, and styling. Focus on what makes this look appealing and how it could be recreated. Provide a JSON response with: {"type": "garment type", "colors": ["color1", "color2"], "style": "overall style description", "key_pieces": ["piece1", "piece2"], "occasion": "when to wear this"}`;
   }
   
+  if (type === 'receipt') {
+    return `Analyze this receipt or invoice for fashion items. Extract item names, prices, brands, and any other relevant details. Provide a JSON response with: {"items": [{"name": "item name", "price": "price", "brand": "brand if visible", "category": "item category"}]}`;
+  }
+  
   // Default wardrobe analysis
-  return `Analyze this luxury fashion item with expert-level detail. Identify the garment type, construction quality, fabric details, and any brand indicators. Focus on: garment category, fabric type and quality, construction details, color analysis, and overall quality assessment. Provide detailed analysis in JSON format.`;
+  return `Analyze this luxury fashion item with expert-level detail. Focus on authentication markers and construction details.
+
+Analyze the key features:
+- Item type and style
+- Brand identification (logos, labels, construction signatures)
+- Quality indicators (materials, stitching, hardware)
+- Construction details
+- Estimated tier and value
+
+Response Format:
+{
+  "type": "blazer/suit/dress/coat/shirt/pants/etc",
+  "name": "Descriptive name with potential brand",
+  "brand": "identified or likely brand",
+  "qualityScore": 1-100,
+  "tier": "luxury/premium/diffusion/mass market",
+  "estimatedValue": "$X,XXX - $X,XXX",
+  "authenticityConfidence": "high/medium/low",
+  "keyFeatures": ["notable construction details", "material quality", "hardware quality"],
+  "condition": "pristine/excellent/good/fair/poor",
+  "summary": "brief overall assessment with authentication notes"
+}
+
+Respond ONLY with valid JSON.`;
 }
 
 function parseTextAnalysis(text, type) {
