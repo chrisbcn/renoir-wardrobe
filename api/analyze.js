@@ -1,6 +1,4 @@
-// api/analyze.js - Enhanced version of your existing endpoint
-import enhancedImageAnalyzer from './enhanced-image-analyzer.js';
-
+// api/analyze.js - Simplified to work with Supabase
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,41 +14,96 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { image, type, prompt, mimeType } = req.body;
+    const { image, type = 'wardrobe', prompt, mimeType } = req.body;
 
     if (!image) {
       return res.status(400).json({ error: 'No image data provided' });
     }
 
-    console.log(`🔍 Starting enhanced analysis for type: ${type}`);
-
-    let analysis;
-
-    if (type === 'wardrobe' || type === 'inspiration') {
-      // Use enhanced image analyzer instead of basic Claude Vision
-      
-      // Convert base64 to File-like object
-      const imageFile = base64ToFile(image, 'uploaded-image.jpg', mimeType || 'image/jpeg');
-      
-      // Use enhanced analyzer
-      const enhancedResult = await enhancedImageAnalyzer.analyzeWardrobeImage(
-        imageFile, 
-        'temp-user', // You can get this from request if needed
-        null
-      );
-      
-      // Transform to match your existing app structure
-      analysis = transformToLegacyFormat(enhancedResult.analysis);
-      
-    } else {
-      // Fallback to your existing Claude Vision for other types
-      analysis = await callClaudeVision(image, type, prompt, mimeType);
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    
+    if (!apiKey) {
+      console.error('No API key found');
+      return res.status(500).json({ 
+        error: 'Claude API key not configured' 
+      });
     }
 
-    res.status(200).json({ analysis });
+    console.log(`🔍 Starting analysis for type: ${type}`);
+
+    // Use custom prompt if provided, otherwise use the default
+    const analysisPrompt = prompt || getLuxuryAnalysisPrompt(type);
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mimeType || 'image/jpeg',
+                  data: image
+                }
+              },
+              {
+                type: 'text',
+                text: analysisPrompt
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Claude API error:', response.status, errorText);
+      
+      return res.status(response.status).json({ 
+        error: `Analysis failed: ${response.status}`,
+        details: errorText
+      });
+    }
+
+    const data = await response.json();
+    
+    let analysisResult;
+    try {
+      const responseText = data.content[0].text;
+      const cleanJson = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      analysisResult = JSON.parse(cleanJson);
+      
+      console.log('Analysis complete:', {
+        type: analysisResult.type,
+        brand: analysisResult.brand
+      });
+      
+    } catch (parseError) {
+      console.error('Parse error:', parseError);
+      
+      return res.status(500).json({
+        error: 'Failed to parse analysis',
+        rawResponse: data.content[0].text
+      });
+    }
+
+    return res.status(200).json({ 
+      analysis: analysisResult
+    });
 
   } catch (error) {
-    console.error('Enhanced analysis error:', error);
+    console.error('Analysis error:', error);
     res.status(500).json({
       error: 'Analysis failed',
       details: error.message
