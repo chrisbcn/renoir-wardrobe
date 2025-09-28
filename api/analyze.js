@@ -193,15 +193,30 @@ Response Format (JSON only):
   "summary": "brief overall assessment with authentication notes",
   "fabricAnalysis": {
     "colors": ["primary color", "secondary colors"],
+    "weaveStructure": "fabric weave type (knit, woven, etc.)",
+    "yarnQuality": "yarn quality assessment (Super 150s+, etc.)",
+    "weight": "fabric weight (light, medium, heavy)",
+    "patternMatching": "pattern matching capability (yes/no)",
     "materials": ["primary fabric", "secondary materials"],
-    "patterns": ["pattern type if any"],
-    "quality": "fabric quality assessment"
+    "patterns": ["pattern type if any"]
   },
-  "constructionDetails": {
-    "stitching": "stitching quality and type",
-    "hardware": "buttons, zippers, buckles quality",
-    "finishing": "overall construction finish quality",
-    "luxuryMarkers": ["hand-stitched details", "premium materials", "brand signatures"]
+  "constructionSignatures": {
+    "pickStitching": "pick stitching quality and type",
+    "shoulderConstruction": "shoulder construction method",
+    "seamConstruction": "seam construction type",
+    "handwork": "handwork evidence and quality"
+  },
+  "brandIdentifiers": {
+    "likelyBrand": "identified or likely brand name",
+    "confidence": 85,
+    "constructionHouse": "country/region of construction",
+    "visibleLogos": "visible logos or branding",
+    "hiddenSignatures": "hidden brand signatures or details"
+  },
+  "qualityIndicators": {
+    "handworkEvidence": ["hand-stitched details", "premium materials", "brand signatures"],
+    "luxuryMarkers": ["Italian craftsmanship", "premium materials", "attention to detail"],
+    "authenticityMarkers": ["consistent stitching", "quality materials", "proper construction"]
   },
   "stylingAdvice": {
     "formality": "appropriate occasions",
