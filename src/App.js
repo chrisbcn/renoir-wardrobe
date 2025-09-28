@@ -1,3 +1,5 @@
+//09/28 - 12:00pm - this is working and returns a JSON object with the analysis
+
 import React, { useState, useEffect } from 'react';
 import './App.css';
 

@@ -1,4 +1,4 @@
-// api/analyze.js - Restore to working state
+// api/analyze.js - Restore to working state - 09/28 - 12:00pm - working and returns a JSON object with the analysis
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
