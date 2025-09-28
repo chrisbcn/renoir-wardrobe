@@ -309,11 +309,11 @@ function base64ToFile(base64String, filename, mimeType) {
   const byteArray = new Uint8Array(byteNumbers);
   const blob = new Blob([byteArray], { type: mimeType });
   
-  // Add File-like properties
-  blob.name = filename;
-  blob.lastModified = Date.now();
-  blob.size = byteArray.length;
-  blob.type = mimeType;
+  // Create a File-like object without trying to modify read-only properties
+  const file = new File([byteArray], filename, { 
+    type: mimeType,
+    lastModified: Date.now()
+  });
   
-  return blob;
+  return file;
 }
