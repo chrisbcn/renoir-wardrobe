@@ -1,5 +1,5 @@
 // api/analyze.js - Enhanced version of your existing endpoint
-import enhancedImageAnalyzer from '../src/lib/enhanced-image-analyzer.js';
+import enhancedImageAnalyzer from '../lib/enhanced-image-analyzer.js';
 
 export default async function handler(req, res) {
   // CORS headers
