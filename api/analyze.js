@@ -135,28 +135,80 @@ function getLuxuryAnalysisPrompt(type) {
     return `Analyze this receipt or invoice for fashion items. Extract item names, prices, brands, and any other relevant details. Provide a JSON response with: {"items": [{"name": "item name", "price": "price", "brand": "brand if visible", "category": "item category"}]}`;
   }
   
-  // Default wardrobe analysis
-  return `Analyze this luxury fashion item with expert-level detail. Focus on authentication markers and construction details.
+  // Enhanced luxury analysis with detailed prompts
+  return `Analyze this luxury fashion item with expert-level detail. Provide comprehensive analysis covering:
 
-Analyze the key features:
-- Item type and style
-- Brand identification (logos, labels, construction signatures)
-- Quality indicators (materials, stitching, hardware)
-- Construction details
-- Estimated tier and value
+BASIC IDENTIFICATION:
+- Item name (be specific: "Double-breasted wool blazer" not just "jacket")
+- Brand (if visible/recognizable)
+- Category and subcategory
 
-Response Format:
+DETAILED CONSTRUCTION & MATERIALS:
+- Primary fabric composition and quality indicators
+- Construction techniques (hand-stitched, machine-sewn, bonded, etc.)
+- Hardware details (buttons, zippers, buckles - material and finish)
+- Lining type and quality
+- Seaming and finishing techniques
+
+DESIGN & STYLING:
+- Silhouette and fit characteristics
+- Color analysis (exact shade, undertones, finish)
+- Pattern details (if applicable - type, scale, repeat)
+- Unique design elements or signatures
+- Seasonal appropriateness
+
+LUXURY INDICATORS:
+- Quality tier assessment (ultra-luxury, luxury, premium, contemporary)
+- Craftsmanship quality indicators
+- Materials luxury level
+- Design sophistication
+- Brand positioning indicators
+
+STYLING CONTEXT:
+- Formality level (black-tie, business formal, smart casual, etc.)
+- Versatility rating
+- Key styling opportunities
+- Wardrobe compatibility
+- Investment piece assessment
+
+MARKET CONTEXT:
+- Estimated price range based on visible quality
+- Target demographic
+- Occasion appropriateness
+- Seasonality
+
+Provide detailed, specific observations rather than generic descriptions. Focus on elements that matter to luxury consumers and professional stylists.
+
+Response Format (JSON only):
 {
   "type": "blazer/suit/dress/coat/shirt/pants/etc",
   "name": "Descriptive name with potential brand",
   "brand": "identified or likely brand",
   "qualityScore": 1-100,
-  "tier": "luxury/premium/diffusion/mass market",
+  "tier": "ultra-luxury/luxury/premium/contemporary/mass market",
   "estimatedValue": "$X,XXX - $X,XXX",
   "authenticityConfidence": "high/medium/low",
   "keyFeatures": ["notable construction details", "material quality", "hardware quality"],
   "condition": "pristine/excellent/good/fair/poor",
-  "summary": "brief overall assessment with authentication notes"
+  "summary": "brief overall assessment with authentication notes",
+  "fabricAnalysis": {
+    "colors": ["primary color", "secondary colors"],
+    "materials": ["primary fabric", "secondary materials"],
+    "patterns": ["pattern type if any"],
+    "quality": "fabric quality assessment"
+  },
+  "constructionDetails": {
+    "stitching": "stitching quality and type",
+    "hardware": "buttons, zippers, buckles quality",
+    "finishing": "overall construction finish quality",
+    "luxuryMarkers": ["hand-stitched details", "premium materials", "brand signatures"]
+  },
+  "stylingAdvice": {
+    "formality": "appropriate occasions",
+    "versatility": "how many ways to wear",
+    "seasonality": "best seasons to wear",
+    "investment": "worth the price assessment"
+  }
 }
 
 Respond ONLY with valid JSON.`;
