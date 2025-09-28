@@ -228,3 +228,38 @@ Response Format (JSON only):
 
 Respond ONLY with valid JSON.`;
 }
+// Add to your api/analyze.js
+async function enhanceWithFashionpedia(imageData, claudeAnalysis) {
+  try {
+    // Save image temporarily
+    const imageBuffer = Buffer.from(imageData.split(',')[1], 'base64');
+    const tempImagePath = `/tmp/analysis_${Date.now()}.jpg`;
+    await fs.writeFile(tempImagePath, imageBuffer);
+
+    // Run Fashionpedia analyzer
+    const pythonProcess = spawn('python3', [
+      './python/fashionpedia_analyzer.py', 
+      tempImagePath, 
+      claudeAnalysis
+    ]);
+    
+    let result = '';
+    pythonProcess.stdout.on('data', (data) => {
+      result += data.toString();
+    });
+
+    return new Promise((resolve) => {
+      pythonProcess.on('close', (code) => {
+        try {
+          const fashionpediaResults = JSON.parse(result);
+          resolve(fashionpediaResults);
+        } catch (error) {
+          resolve({ method: 'fallback', error: error.message });
+        }
+      });
+    });
+
+  } catch (error) {
+    return { method: 'fallback', error: error.message };
+  }
+}
