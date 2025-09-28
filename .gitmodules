@@ -1,0 +1,3 @@
+[submodule "fashionpedia-api"]
+	path = fashionpedia-api
+	url = https://github.com/KMnP/fashionpedia-api.git
