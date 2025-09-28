@@ -144,6 +144,8 @@ function App() {
   const [lookAnalysis, setLookAnalysis] = useState(null);
   const [lookMatches, setLookMatches] = useState(null);
   const [isProcessingLook, setIsProcessingLook] = useState(false);
+  const [isProcessingReceipt, setIsProcessingReceipt] = useState(false);
+  const [receiptResults, setReceiptResults] = useState(null);
 
   // Load saved wardrobe items - now with pagination
   useEffect(() => {
@@ -923,131 +925,276 @@ const analyzeSelectedItems = async () => {
     
     setIsProcessingInspiration(false);
   };
+// ADD THESE FUNCTIONS TO YOUR APP.JS (around line 800-900)
 
-// This version properly detects image format and handles errors better
-
-const handleLookUpload = async (e) => {
+const handleReceiptUpload = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  setIsProcessingLook(true);
-  setLookAnalysis(null);
-  setLookMatches(null);
-  
+  setIsProcessingReceipt(true);
+  setReceiptResults(null);
+
   try {
     // Convert to base64
     const base64 = await new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result.split(',')[1];
-        resolve(base64String);
-      };
+      reader.onload = () => resolve(reader.result.split(',')[1]);
       reader.readAsDataURL(file);
     });
 
-    // Detect the actual mime type from the file
-    const mimeType = file.type || 'image/jpeg'; // fallback to jpeg if type not detected
-    const imageUrl = `data:${mimeType};base64,${base64}`;
-    setLookImage(imageUrl);
-    
-    // Create the look analysis prompt as a text string
-    const lookPromptText = `
-    Analyze this complete outfit/look and provide a detailed breakdown.
-    
-    Return a JSON object with this structure:
-    {
-      "overallLook": {
-        "style": "Describe the overall aesthetic (e.g., 'casual chic', 'business formal', 'street luxe')",
-        "occasion": "When/where this would be worn",
-        "seasonality": "Fall/Winter/Spring/Summer/Trans-seasonal",
-        "keyPieces": ["List the hero/statement pieces"]
-      },
-      
-      "itemBreakdown": {
-        "visible_items": [
-          {
-            "category": "top/bottom/outerwear/shoes/bag/accessories",
-            "type": "Specific item type (e.g., 'crew neck sweater')",
-            "color": "Precise color description",
-            "material": "Visible fabric/material",
-            "styling": "How it's worn (tucked, layered, cuffed, etc.)",
-            "distinctiveFeatures": "Unique details that matter for matching"
-          }
-        ]
-      },
-      
-      "colorPalette": {
-        "primary": "Main color",
-        "secondary": ["Supporting colors"],
-        "accents": ["Pop colors or metallic accents"],
-        "neutrals": ["Base neutral colors"]
-      },
-      
-      "proportionsAndFit": {
-        "silhouette": "Overall shape (oversized, fitted, balanced)",
-        "proportions": "How pieces relate to each other",
-        "lengths": "Hem lengths, sleeve lengths that matter"
-      },
-      
-      "essentialElements": {
-        "mustHaves": ["Elements crucial to recreating this look"],
-        "niceToHaves": ["Elements that enhance but aren't essential"],
-        "avoidables": ["What would break this look"]
-      }
-    }
-    
-    Respond ONLY with valid JSON.
-    `;
+    console.log('📄 Processing receipt...');
 
-    // Call API with proper parameters
-    const response = await fetch('/api/analyze', {
+    // Call the receipt analyzer API
+    const response = await fetch('/api/analyze-receipt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         image: base64,
-        type: 'wardrobe', // Using 'wardrobe' type
-        prompt: lookPromptText, // Send custom prompt
-        mimeType: mimeType // Send the actual mime type
+        type: 'receipt',
+        mimeType: file.type
       })
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error('API Error:', errorData);
-      throw new Error(errorData?.error || `API error: ${response.status}`);
+      throw new Error(`API error: ${response.status}`);
     }
 
-    const { analysis } = await response.json();
+    const result = await response.json();
     
-    if (analysis && !analysis.error) {
-      console.log('Look analysis received:', analysis);
-      setLookAnalysis(analysis);
-      
-      // Check if the response has the expected structure
-      if (analysis.itemBreakdown && analysis.itemBreakdown.visible_items) {
-        // Now match the look to wardrobe
-        const matches = matchLookToWardrobe(analysis, wardrobe);
-        setLookMatches(matches);
-      } else {
-        console.error('Analysis does not have expected structure:', analysis);
-        // Try to handle it as a standard wardrobe item analysis
-        alert('The analysis format was not as expected. Please try again.');
-      }
-      
-    } else {
-      throw new Error(analysis?.error || 'Analysis failed');
+    if (result.error) {
+      throw new Error(result.error);
     }
-    
+
+    console.log('✅ Receipt processed:', result);
+    setReceiptResults(result);
+
   } catch (error) {
-    console.error('Look upload failed:', error);
-    alert(`Failed to analyze look: ${error.message}`);
-    setLookAnalysis(null);
-    setLookMatches(null);
+    console.error('❌ Receipt processing failed:', error);
+    alert('Failed to process receipt: ' + error.message);
   } finally {
-    setIsProcessingLook(false);
-    e.target.value = null; // Reset file input
+    setIsProcessingReceipt(false);
+    e.target.value = null;
   }
 };
+
+const addReceiptItemToWardrobe = async (receiptItem) => {
+  try {
+    console.log('➕ Adding receipt item to wardrobe:', receiptItem.name);
+
+    // Create a placeholder image for receipt items
+    const placeholderImage = `data:image/svg+xml;base64,${btoa(`
+      <svg width="300" height="400" viewBox="0 0 300 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="300" height="400" fill="#F8F9FA"/>
+        <rect x="50" y="50" width="200" height="300" fill="#E9ECEF" rx="8"/>
+        <text x="150" y="180" text-anchor="middle" fill="#6C757D" font-family="Arial" font-size="14">From Receipt</text>
+        <text x="150" y="200" text-anchor="middle" fill="#6C757D" font-family="Arial" font-size="12">${receiptItem.name}</text>
+        <text x="150" y="220" text-anchor="middle" fill="#6C757D" font-family="Arial" font-size="12">${receiptItem.currency || 'EUR'} ${receiptItem.price}</text>
+      </svg>
+    `)}`;
+
+    // Convert receipt item to wardrobe item format
+    const wardrobeItem = {
+      id: `receipt-${Date.now()}-${Math.random()}`,
+      name: receiptItem.name,
+      imageUrl: placeholderImage,
+      source: 'receipt',
+      analysis: {
+        type: receiptItem.category,
+        name: receiptItem.name,
+        
+        // Map receipt analysis to your app's format
+        fabricAnalysis: {
+          colors: receiptItem.colors ? receiptItem.colors.map(c => 
+            typeof c === 'object' ? c.name : c
+          ) : [],
+          weaveStructure: receiptItem.fabrics && receiptItem.fabrics.length > 0 ? 
+            (typeof receiptItem.fabrics[0] === 'object' ? receiptItem.fabrics[0].name : receiptItem.fabrics[0]) : 
+            'unknown'
+        },
+        
+        overallAssessment: {
+          tier: receiptItem.confidence_score >= 0.8 ? 'premium' : 'contemporary',
+          estimatedRetail: `${receiptItem.currency || 'EUR'} ${receiptItem.price}`,
+          condition: 'new',
+          authenticityConfidence: receiptItem.confidence_score >= 0.7 ? 'high' : 'medium'
+        },
+        
+        brandIdentifiers: {
+          likelyBrand: receiptItem.brand?.name || 'Unknown',
+          confidence: Math.round((receiptItem.confidence_score || 0) * 100)
+        },
+        
+        // Include enhanced search terms if available
+        searchTerms: receiptItem.search_terms || [receiptItem.name.toLowerCase()],
+        
+        // Store original receipt data
+        receiptData: {
+          originalPrice: receiptItem.price,
+          currency: receiptItem.currency,
+          confidence: receiptItem.confidence_score,
+          rawLine: receiptItem.raw_line
+        }
+      },
+      needsAnalysis: false // Receipt items are already analyzed
+    };
+
+    // Add to wardrobe state
+    setWardrobe(prev => [wardrobeItem, ...prev]);
+    
+    // Save to database in background
+    const analysisForDB = {
+      ...wardrobeItem.analysis,
+      source: 'receipt',
+      originalPrice: receiptItem.price,
+      currency: receiptItem.currency
+    };
+    
+    saveToDatabase(analysisForDB, placeholderImage.split(',')[1], 'receipt').then(itemId => {
+      if (itemId) {
+        // Update the item with database ID
+        setWardrobe(prev => prev.map(item => 
+          item.id === wardrobeItem.id 
+            ? { ...item, databaseId: itemId }
+            : item
+        ));
+        console.log('💾 Receipt item saved to database:', itemId);
+      }
+    }).catch(error => {
+      console.warn('Database save failed for receipt item:', error);
+    });
+    
+    // Show success message
+    alert(`✅ Added "${receiptItem.name}" to your wardrobe!`);
+    
+  } catch (error) {
+    console.error('Failed to add receipt item:', error);
+    alert('Failed to add item to wardrobe: ' + error.message);
+  }
+};
+// This version properly detects image format and handles errors better
+
+  const handleLookUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsProcessingLook(true);
+    setLookAnalysis(null);
+    setLookMatches(null);
+    
+    try {
+      // Convert to base64
+      const base64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64String = reader.result.split(',')[1];
+          resolve(base64String);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Detect the actual mime type from the file
+      const mimeType = file.type || 'image/jpeg'; // fallback to jpeg if type not detected
+      const imageUrl = `data:${mimeType};base64,${base64}`;
+      setLookImage(imageUrl);
+      
+      // Create the look analysis prompt as a text string
+      const lookPromptText = `
+      Analyze this complete outfit/look and provide a detailed breakdown.
+      
+      Return a JSON object with this structure:
+      {
+        "overallLook": {
+          "style": "Describe the overall aesthetic (e.g., 'casual chic', 'business formal', 'street luxe')",
+          "occasion": "When/where this would be worn",
+          "seasonality": "Fall/Winter/Spring/Summer/Trans-seasonal",
+          "keyPieces": ["List the hero/statement pieces"]
+        },
+        
+        "itemBreakdown": {
+          "visible_items": [
+            {
+              "category": "top/bottom/outerwear/shoes/bag/accessories",
+              "type": "Specific item type (e.g., 'crew neck sweater')",
+              "color": "Precise color description",
+              "material": "Visible fabric/material",
+              "styling": "How it's worn (tucked, layered, cuffed, etc.)",
+              "distinctiveFeatures": "Unique details that matter for matching"
+            }
+          ]
+        },
+        
+        "colorPalette": {
+          "primary": "Main color",
+          "secondary": ["Supporting colors"],
+          "accents": ["Pop colors or metallic accents"],
+          "neutrals": ["Base neutral colors"]
+        },
+        
+        "proportionsAndFit": {
+          "silhouette": "Overall shape (oversized, fitted, balanced)",
+          "proportions": "How pieces relate to each other",
+          "lengths": "Hem lengths, sleeve lengths that matter"
+        },
+        
+        "essentialElements": {
+          "mustHaves": ["Elements crucial to recreating this look"],
+          "niceToHaves": ["Elements that enhance but aren't essential"],
+          "avoidables": ["What would break this look"]
+        }
+      }
+      
+      Respond ONLY with valid JSON.
+      `;
+
+      // Call API with proper parameters
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          image: base64,
+          type: 'wardrobe', // Using 'wardrobe' type
+          prompt: lookPromptText, // Send custom prompt
+          mimeType: mimeType // Send the actual mime type
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('API Error:', errorData);
+        throw new Error(errorData?.error || `API error: ${response.status}`);
+      }
+
+      const { analysis } = await response.json();
+      
+      if (analysis && !analysis.error) {
+        console.log('Look analysis received:', analysis);
+        setLookAnalysis(analysis);
+        
+        // Check if the response has the expected structure
+        if (analysis.itemBreakdown && analysis.itemBreakdown.visible_items) {
+          // Now match the look to wardrobe
+          const matches = matchLookToWardrobe(analysis, wardrobe);
+          setLookMatches(matches);
+        } else {
+          console.error('Analysis does not have expected structure:', analysis);
+          // Try to handle it as a standard wardrobe item analysis
+          alert('The analysis format was not as expected. Please try again.');
+        }
+        
+      } else {
+        throw new Error(analysis?.error || 'Analysis failed');
+      }
+      
+    } catch (error) {
+      console.error('Look upload failed:', error);
+      alert(`Failed to analyze look: ${error.message}`);
+      setLookAnalysis(null);
+      setLookMatches(null);
+    } finally {
+      setIsProcessingLook(false);
+      e.target.value = null; // Reset file input
+    }
+  };
   // Generate matching results with enhanced luxury matching
   const generateMatches = (inspirationData) => {
     const matches = wardrobe.map(item => {
@@ -1615,6 +1762,7 @@ const isSameCategory = (lookCategory, wardrobeType) => {
     </>
   )}
 </div>
+
 {/* Add this NEW SECTION after the Wardrobe Section closes (after </div>) */}
 {/* Look Matching Section */}
 <div className="bg-white p-6 mb-6">
