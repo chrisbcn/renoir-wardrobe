@@ -795,10 +795,16 @@ const analyzeSelectedItems = async () => {
 
         if (!response.ok) {
           const error = await response.text();
-          throw new Error(`API error: ${response.status} - ${error}`);
+          throw new Error(`API error: ${response.status} ${error}`);
         }
 
-        const { analysis } = await response.json();
+        const responseData = await response.json();
+        const { analysis } = responseData;
+        
+        // Check if analysis exists
+        if (!analysis) {
+          throw new Error('No analysis data received from API');
+        }
         
         // Check for errors in analysis
         if (analysis.error) {

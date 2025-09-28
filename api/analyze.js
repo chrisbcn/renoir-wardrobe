@@ -14,9 +14,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('API request received:', { 
+      type: req.body?.type, 
+      hasImage: !!req.body?.image,
+      imageLength: req.body?.image?.length 
+    });
+
     const { image, type = 'wardrobe', prompt, mimeType } = req.body;
 
     if (!image) {
+      console.log('No image provided');
       return res.status(400).json({ error: 'No image data provided' });
     }
 
@@ -33,6 +40,7 @@ export default async function handler(req, res) {
 
     // Use custom prompt if provided, otherwise use the default
     const analysisPrompt = prompt || getLuxuryAnalysisPrompt(type);
+    console.log('Using prompt length:', analysisPrompt.length);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -77,10 +85,13 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
+    console.log('Claude API response received, content length:', data.content?.[0]?.text?.length);
     
     let analysisResult;
     try {
       const responseText = data.content[0].text;
+      console.log('Response text preview:', responseText.substring(0, 200));
+      
       const cleanJson = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       analysisResult = JSON.parse(cleanJson);
       
@@ -91,6 +102,7 @@ export default async function handler(req, res) {
       
     } catch (parseError) {
       console.error('Parse error:', parseError);
+      console.error('Raw response:', data.content[0].text);
       
       return res.status(500).json({
         error: 'Failed to parse analysis',
@@ -112,168 +124,8 @@ export default async function handler(req, res) {
 }
 
 /**
- * Enhanced Claude Vision call with better prompts
+ * Get the appropriate analysis prompt based on type
  */
-async function callClaudeVision(base64Image, type, customPrompt, mimeType = 'image/jpeg') {
-  const prompt = customPrompt || getLuxuryAnalysisPrompt(type);
-  
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                source: {
-                  type: "base64",
-                  media_type: mimeType,
-                  data: base64Image
-                }
-              },
-              {
-                type: "text",
-                text: prompt
-              }
-            ]
-          }
-        ]
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Claude API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    let analysisText = data.content[0].text;
-    
-    // Try to parse as JSON first
-    try {
-      return JSON.parse(analysisText);
-    } catch {
-      // If not JSON, convert to legacy format
-      return parseTextAnalysis(analysisText, type);
-    }
-
-  } catch (error) {
-    console.error('Claude Vision error:', error);
-    throw error;
-  }
-}
-
-/**
- * Transform enhanced analysis to match your app's expected format
- */
-function transformToLegacyFormat(enhancedAnalysis) {
-  const category = enhancedAnalysis.category;
-  const colors = enhancedAnalysis.colors || [];
-  const fabrics = enhancedAnalysis.fabrics || [];
-  
-  return {
-    // Basic fields your app expects
-    name: generateItemName(category, { colors, fabrics }),
-    type: category,
-    
-    // Enhanced fields with much better data
-    overallAssessment: {
-      tier: enhancedAnalysis.qualityTier || 'contemporary',
-      estimatedRetail: enhancedAnalysis.priceRange || 'unknown',
-      authenticityConfidence: enhancedAnalysis.confidence >= 0.8 ? 'high' : 
-                            enhancedAnalysis.confidence >= 0.6 ? 'medium' : 'low',
-      condition: 'excellent',
-      estimatedAge: 'current season'
-    },
-    
-    // Fabric analysis from enhanced data
-    fabricAnalysis: {
-      colors: colors,
-      weaveStructure: fabrics.length > 0 ? fabrics[0] : 'unknown',
-      yarnQuality: fabrics.some(f => f === 'cashmere') ? 'Super 150s+' : 'Standard',
-      weight: 'medium',
-      pattern: enhancedAnalysis.patterns && enhancedAnalysis.patterns.length > 0 ? enhancedAnalysis.patterns[0] : 'solid',
-      patternMatching: 'yes'
-    },
-    
-    // Brand identification
-    brandIdentifiers: {
-      likelyBrand: 'Unknown',
-      confidence: Math.round((enhancedAnalysis.confidence || 0.7) * 100),
-      constructionHouse: 'European',
-      visibleLogos: 'none detected',
-      hiddenSignatures: 'none detected'
-    },
-    
-    // Quality indicators
-    qualityIndicators: {
-      handworkEvidence: enhancedAnalysis.luxuryIndicators || ['quality construction'],
-      luxuryMarkers: generateLuxuryMarkers(category, { colors, fabrics }),
-      authenticityMarkers: ['consistent stitching', 'quality materials']
-    },
-    
-    // Construction details
-    constructionSignatures: {
-      pickStitching: 'standard',
-      shoulderConstruction: 'natural',
-      seamConstruction: 'flat-fell',
-      handwork: 'machine construction with quality finishing'
-    },
-    
-    // Enhanced search capability
-    searchTerms: enhancedAnalysis.searchTerms || [],
-    confidenceScore: enhancedAnalysis.confidence || 0.7,
-    needsReview: enhancedAnalysis.needsReview || false,
-    
-    // Summary
-    summary: enhancedAnalysis.summary || 'Quality fashion item with good construction'
-  };
-}
-
-/**
- * Helper functions for transformation
- */
-function generateItemName(category, attributes) {
-  let name = category !== 'unknown' ? category : 'Fashion Item';
-  
-  const primaryColor = attributes.colors && attributes.colors[0];
-  const primaryFabric = attributes.fabrics && attributes.fabrics[0];
-  
-  if (primaryFabric) {
-    name = `${primaryFabric} ${name}`;
-  }
-  
-  if (primaryColor) {
-    name = `${primaryColor} ${name}`;
-  }
-  
-  return name.split(' ').map(word => 
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ');
-}
-
-function generateLuxuryMarkers(category, attributes) {
-  const markers = [];
-  
-  if (category === 'jacket') {
-    markers.push('structured shoulders', 'functional buttonholes');
-  }
-  
-  if (attributes.fabrics && attributes.fabrics.length > 0) {
-    markers.push(`premium ${attributes.fabrics[0]} fabric`);
-  }
-  
-  return markers.length > 0 ? markers : ['quality materials'];
-}
-
 function getLuxuryAnalysisPrompt(type) {
   if (type === 'inspiration') {
     return `Analyze this fashion inspiration image with expert detail. Identify the main garment types, colors, fabrics, and styling. Focus on what makes this look appealing and how it could be recreated. Provide a JSON response with: {"type": "garment type", "colors": ["color1", "color2"], "style": "overall style description", "key_pieces": ["piece1", "piece2"], "occasion": "when to wear this"}`;
@@ -308,65 +160,4 @@ Response Format:
 }
 
 Respond ONLY with valid JSON.`;
-}
-
-function parseTextAnalysis(text, type) {
-  // Fallback parser for non-JSON responses
-  return {
-    type: extractType(text),
-    brand: extractBrand(text),
-    tier: extractTier(text),
-    summary: text.substring(0, 200) + '...',
-    error: null
-  };
-}
-
-function extractType(text) {
-  const types = ['blazer', 'jacket', 'shirt', 'dress', 'pants', 'shoes', 'bag'];
-  for (const type of types) {
-    if (text.toLowerCase().includes(type)) {
-      return type;
-    }
-  }
-  return 'unknown';
-}
-
-function extractBrand(text) {
-  const brands = ['kiton', 'brioni', 'armani', 'gucci', 'prada'];
-  for (const brand of brands) {
-    if (text.toLowerCase().includes(brand)) {
-      return brand;
-    }
-  }
-  return 'unknown';
-}
-
-function extractTier(text) {
-  if (text.toLowerCase().includes('luxury') || text.toLowerCase().includes('haute')) {
-    return 'luxury';
-  }
-  if (text.toLowerCase().includes('premium')) {
-    return 'premium';
-  }
-  return 'contemporary';
-}
-
-function base64ToFile(base64String, filename, mimeType) {
-  const byteCharacters = atob(base64String);
-  const byteNumbers = new Array(byteCharacters.length);
-  
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  
-  const byteArray = new Uint8Array(byteNumbers);
-  const blob = new Blob([byteArray], { type: mimeType });
-  
-  // Create a File-like object without trying to modify read-only properties
-  const file = new File([byteArray], filename, { 
-    type: mimeType,
-    lastModified: Date.now()
-  });
-  
-  return file;
 }
