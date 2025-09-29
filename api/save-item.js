@@ -59,19 +59,28 @@ export default async function handler(req, res) {
     //   analysis_data: analysisResult
     // };
     // Prepare item data for database - FIXED to match actual schema
-  const itemData = {
-    name: analysisResult.name || analysisResult.type || 'Fashion Item',
-    garment_type: analysisResult.type,
-    image_url: imageUrl,  // ✅ This will now be base64
-    created_at: new Date().toISOString(),
+  // const itemData = {
+  //   name: analysisResult.name || analysisResult.type || 'Fashion Item',
+  //   garment_type: analysisResult.type,
+  //   image_url: imageUrl,  // ✅ This will now be base64
+  //   created_at: new Date().toISOString(),
     
-    // Map to actual columns in your schema
-    brand_indicators: analysisResult.brandIdentifiers || null,
-    construction_details: analysisResult.constructionSignatures || null,
-    luxury_markers: analysisResult.qualityIndicators || null,
-    quality_indicators: analysisResult.overallAssessment || null
+  //   // Map to actual columns in your schema
+  //   brand_indicators: analysisResult.brandIdentifiers || null,
+  //   construction_details: analysisResult.constructionSignatures || null,
+  //   luxury_markers: analysisResult.qualityIndicators || null,
+  //   quality_indicators: analysisResult.overallAssessment || null
+  // };
+  const itemData = {
+    image_url: imageUrl,  // ✅ base64 data
+    name: analysisResult.name || 'Fashion Item',
+    garment_type: analysisResult.type || 'unknown',
+    source: 'upload',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
-
+  
+  console.log('📝 Attempting insert with:', Object.keys(itemData));
     console.log('📝 Inserting into database with image:', !!itemData.image_url);
 
     // Try to insert into database
