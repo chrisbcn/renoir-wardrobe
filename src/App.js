@@ -153,7 +153,12 @@ function App() {
   useEffect(() => {
     loadWardrobeItems(0);
   }, []);
-
+  useEffect(() => {
+    if (wardrobe.length > 0) {
+      console.log('🔄 Wardrobe state updated, items:', wardrobe.length);
+      console.log('Images present:', wardrobe.filter(i => i.imageUrl && i.imageUrl.length > 0).length);
+    }
+  }, [wardrobe]);
   // New function to load items with pagination
   // const loadWardrobeItems = async (offset) => {
   //   if (isLoadingMore) return;
