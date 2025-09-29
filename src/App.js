@@ -155,104 +155,205 @@ function App() {
   }, []);
 
   // New function to load items with pagination
-  const loadWardrobeItems = async (offset) => {
-    if (isLoadingMore) return;
+  // const loadWardrobeItems = async (offset) => {
+  //   if (isLoadingMore) return;
     
-    setIsLoadingMore(true);
-    if (offset === 0) {
-      setIsInitialLoading(true);
+  //   setIsLoadingMore(true);
+  //   if (offset === 0) {
+  //     setIsInitialLoading(true);
+  //   }
+    
+  //   try {
+  //     const response = await fetch(`/api/get-wardrobe?limit=${ITEMS_PER_PAGE}&offset=${offset}`);
+      
+  //     if (!response.ok) {
+  //       console.error(`API error: ${response.status} ${response.statusText}`);
+  //       // If it's a 500 error, it might be a database issue - show empty state gracefully
+  //       if (response.status === 500) {
+  //         console.log('Database connection issue - showing empty state');
+  //         setHasMoreItems(false);
+  //         return;
+  //       }
+  //       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  //     }
+      
+  //     const data = await response.json();
+      
+  //     if (data.success && data.items?.length > 0) {
+  //       const formattedItems = data.items.map(item => ({
+  //         id: `db-${item.id}`,  
+  //         imageUrl: item.image_url,
+  //         name: item.item_name || item.garment_type || 'Item',
+  //         source: 'database',
+  //         analysis: item.analysis_data || {},
+  //         databaseId: item.id,
+  //         needsAnalysis: !item.analysis_data || Object.keys(item.analysis_data).length === 0
+  //       }));
+
+  //       if (offset === 0) {
+  //         setWardrobe(formattedItems);
+  //         // Don't auto-analyze database items - let user decide with the buttons
+  //       } else {
+  //         setWardrobe(prev => [...prev, ...formattedItems]);
+  //       }
+        
+  //       // Check if there are more items
+  //       setHasMoreItems(data.items.length === ITEMS_PER_PAGE);
+  //       setCurrentOffset(offset);
+        
+  //       console.log(`Loaded ${formattedItems.length} items from offset ${offset}`);
+        
+  //       // Log how many need analysis
+  //       const needsAnalysisCount = formattedItems.filter(item => item.needsAnalysis).length;
+  //       if (needsAnalysisCount > 0) {
+  //         console.log(`${needsAnalysisCount} items need analysis - use "Analyze All" button or hover over individual items`);
+  //       }
+  //     } else {
+  //       setHasMoreItems(false);
+  //       if (data.message) {
+  //         console.log('API message:', data.message);
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.error('Could not load items:', err);
+  //     console.log('API not available - using mock data for local development');
+      
+  //     // Mock data for local development
+  //     const mockItems = [
+  //       {
+  //         id: 'mock-1',
+  //         name: 'Classic Blazer',
+  //         imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiPkJsYXplciBJbWFnZTwvdGV4dD4KPC9zdmc+',
+  //         needsAnalysis: true,
+  //         analysis: null
+  //       },
+  //       {
+  //         id: 'mock-2', 
+  //         name: 'Silk Dress',
+  //         imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiPkRyZXNzIEltYWdlPC90ZXh0Pgo8L3N2Zz4=',
+  //         needsAnalysis: true,
+  //         analysis: null
+  //       },
+  //       {
+  //         id: 'mock-3',
+  //         name: 'Wool Coat',
+  //         imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiPkNvYXQgSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==',
+  //         needsAnalysis: true,
+  //         analysis: null
+  //       }
+  //     ];
+      
+  //     setWardrobe(mockItems);
+  //     setHasMoreItems(false);
+  //     console.log('Loaded mock items for local development');
+  //   }
+  //   setIsLoadingMore(false);
+  //   if (offset === 0) {
+  //     setIsInitialLoading(false);
+  //   }
+  // };
+// CRITICAL FIX for image persistence
+// Replace your loadWardrobeItems function with this version
+
+const loadWardrobeItems = async (offset) => {
+  if (isLoadingMore) return;
+  
+  setIsLoadingMore(true);
+  if (offset === 0) {
+    setIsInitialLoading(true);
+  }
+  
+  try {
+    const response = await fetch(`/api/get-wardrobe?limit=${ITEMS_PER_PAGE}&offset=${offset}`);
+    
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      if (response.status === 500) {
+        console.log('Database connection issue - showing empty state');
+        setHasMoreItems(false);
+        return;
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
     
-    try {
-      const response = await fetch(`/api/get-wardrobe?limit=${ITEMS_PER_PAGE}&offset=${offset}`);
-      
-      if (!response.ok) {
-        console.error(`API error: ${response.status} ${response.statusText}`);
-        // If it's a 500 error, it might be a database issue - show empty state gracefully
-        if (response.status === 500) {
-          console.log('Database connection issue - showing empty state');
-          setHasMoreItems(false);
-          return;
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success && data.items?.length > 0) {
-        const formattedItems = data.items.map(item => ({
-          id: `db-${item.id}`,  
-          imageUrl: item.image_url,
+    const data = await response.json();
+    console.log('📦 API Response:', data); // Debug log
+    
+    if (data.success && data.items?.length > 0) {
+      // FIX: Add explicit checks and force string conversion
+      const formattedItems = data.items.map((item, index) => {
+        const imageUrl = item.image_url || '';
+        
+        // Debug: Log each item's image data
+        console.log(`Item ${index} (${item.id}):`, {
+          hasImageUrl: !!imageUrl,
+          imageLength: imageUrl.length,
+          imageStart: imageUrl.substring(0, 50)
+        });
+        
+        return {
+          id: `db-${item.id}`,
+          // FIX: Ensure imageUrl is always a string, never undefined
+          imageUrl: imageUrl,
           name: item.item_name || item.garment_type || 'Item',
           source: 'database',
           analysis: item.analysis_data || {},
           databaseId: item.id,
-          needsAnalysis: !item.analysis_data || Object.keys(item.analysis_data).length === 0
-        }));
+          needsAnalysis: !item.analysis_data || Object.keys(item.analysis_data).length === 0,
+          // FIX: Add a render key to force React updates
+          _renderKey: `${item.id}-${Date.now()}`
+        };
+      });
 
-        if (offset === 0) {
-          setWardrobe(formattedItems);
-          // Don't auto-analyze database items - let user decide with the buttons
-        } else {
-          setWardrobe(prev => [...prev, ...formattedItems]);
-        }
-        
-        // Check if there are more items
-        setHasMoreItems(data.items.length === ITEMS_PER_PAGE);
-        setCurrentOffset(offset);
-        
-        console.log(`Loaded ${formattedItems.length} items from offset ${offset}`);
-        
-        // Log how many need analysis
-        const needsAnalysisCount = formattedItems.filter(item => item.needsAnalysis).length;
-        if (needsAnalysisCount > 0) {
-          console.log(`${needsAnalysisCount} items need analysis - use "Analyze All" button or hover over individual items`);
-        }
+      console.log('✅ Formatted items with images:', 
+        formattedItems.map(i => ({
+          id: i.id,
+          name: i.name,
+          hasImage: !!i.imageUrl && i.imageUrl.length > 0
+        }))
+      );
+
+      if (offset === 0) {
+        // FIX: Use callback form to ensure clean state
+        setWardrobe(() => formattedItems);
+        setCurrentOffset(0);
       } else {
-        setHasMoreItems(false);
-        if (data.message) {
-          console.log('API message:', data.message);
-        }
+        // FIX: Use callback to properly merge
+        setWardrobe(prev => [...prev, ...formattedItems]);
+        setCurrentOffset(offset);
       }
-    } catch (err) {
-      console.error('Could not load items:', err);
-      console.log('API not available - using mock data for local development');
       
-      // Mock data for local development
-      const mockItems = [
-        {
-          id: 'mock-1',
-          name: 'Classic Blazer',
-          imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiPkJsYXplciBJbWFnZTwvdGV4dD4KPC9zdmc+',
-          needsAnalysis: true,
-          analysis: null
-        },
-        {
-          id: 'mock-2', 
-          name: 'Silk Dress',
-          imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiPkRyZXNzIEltYWdlPC90ZXh0Pgo8L3N2Zz4=',
-          needsAnalysis: true,
-          analysis: null
-        },
-        {
-          id: 'mock-3',
-          name: 'Wool Coat',
-          imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiPkNvYXQgSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==',
-          needsAnalysis: true,
-          analysis: null
-        }
-      ];
-      
-      setWardrobe(mockItems);
+      setHasMoreItems(formattedItems.length === ITEMS_PER_PAGE);
+    } else {
+      console.log('No items found or empty response');
+      if (offset === 0) {
+        setWardrobe([]);
+      }
       setHasMoreItems(false);
-      console.log('Loaded mock items for local development');
     }
+  } catch (error) {
+    console.error('❌ Load error:', error);
+    if (offset === 0) {
+      setWardrobe([]);
+    }
+    setHasMoreItems(false);
+  } finally {
     setIsLoadingMore(false);
     if (offset === 0) {
       setIsInitialLoading(false);
     }
-  };
+  }
+};
 
+// ALSO ADD THIS: Force re-render when wardrobe changes
+// Add this useEffect right after your existing useEffect that calls loadWardrobeItems
+
+useEffect(() => {
+  if (wardrobe.length > 0) {
+    console.log('🔄 Wardrobe state updated, items:', wardrobe.length);
+    console.log('Images present:', wardrobe.filter(i => i.imageUrl && i.imageUrl.length > 0).length);
+  }
+}, [wardrobe]);
   // Function to analyze a single item
   const analyzeSingleItem = async (item) => {
     // Check if already analyzing this item
