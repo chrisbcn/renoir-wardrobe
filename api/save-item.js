@@ -36,6 +36,8 @@ export default async function handler(req, res) {
       // Create data URL with base64 image
       imageUrl = `data:image/jpeg;base64,${imageData}`;
       console.log('✅ Created base64 data URL, length:', imageUrl.length);
+      console.log('   - Base64 data length:', imageData.length);
+      console.log('   - First 50 chars:', imageData.substring(0, 50));
     } else {
       console.warn('⚠️ No image data provided');
     }
@@ -60,6 +62,9 @@ export default async function handler(req, res) {
     };
 
     console.log('📝 Inserting into database with image:', !!itemData.image_url);
+    if (itemData.image_url) {
+      console.log('   - Image URL length:', itemData.image_url.length);
+    }
 
     // Try to insert into database
     const { data, error } = await supabase
@@ -70,6 +75,9 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('❌ Database insert error:', error);
+      console.error('   - Error code:', error.code);
+      console.error('   - Error message:', error.message);
+      console.error('   - Error details:', error.details);
       
       // If table doesn't exist, still return success but note the issue
       if (error.message.includes('relation "wardrobe_items" does not exist')) {
@@ -89,7 +97,22 @@ export default async function handler(req, res) {
     }
 
     console.log('✅ Successfully saved item to database:', data.id);
-    console.log('   - Has image_url:', !!data.image_url);
+    console.log('   - Has image_url in response:', !!data.image_url);
+    console.log('   - Saved image_url length:', data.image_url?.length || 0);
+    
+    // CRITICAL: Verify the data was actually saved by reading it back
+    const { data: verifyData, error: verifyError } = await supabase
+      .from('wardrobe_items')
+      .select('id, image_url, name')
+      .eq('id', data.id)
+      .single();
+    
+    if (verifyError) {
+      console.error('⚠️ Could not verify saved data:', verifyError);
+    } else {
+      console.log('🔍 Verification - Image in DB:', !!verifyData.image_url);
+      console.log('   - Verified image_url length:', verifyData.image_url?.length || 0);
+    }
 
     return res.status(200).json({
       success: true,
