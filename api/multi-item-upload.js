@@ -279,11 +279,19 @@ Respond ONLY with valid JSON.`;
       })
     });
 
-    const data = await response.json();
+    // Add error checking
+    if (data.error) {
+        throw new Error(`Claude API error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+    
+    if (!data.content || !data.content[0]) {
+        throw new Error(`Unexpected API response: ${JSON.stringify(data)}`);
+    }
+    
     const responseText = data.content[0].text;
     
-    const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    return JSON.parse(cleanedResponse);
+    // const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    // return JSON.parse(cleanedResponse);
     
   } catch (error) {
     console.error('Error in detailed analysis:', error);
