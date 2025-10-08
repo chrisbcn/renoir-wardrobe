@@ -11,9 +11,7 @@ const ItemRecreationWorkflow = ({ detectedItems, originalImage, onApproveItem, o
   const [recreatedItems, setRecreatedItems] = useState([]);
   const [isRecreating, setIsRecreating] = useState(false);
   const [recreationProgress, setRecreationProgress] = useState(0);
-  const [showRecreationWorkflow, setShowRecreationWorkflow] = useState(false);
-  const [pendingRecreationItems, setPendingRecreationItems] = useState([]);
-  const [recreationOriginalImage, setRecreationOriginalImage] = useState(null);
+
 
   const startRecreation = async () => {
     setRecreationStep('recreating');
@@ -253,6 +251,9 @@ const ItemRecreationWorkflow = ({ detectedItems, originalImage, onApproveItem, o
 
   return null;
 };
+const [showRecreationWorkflow, setShowRecreationWorkflow] = useState(false);
+const [recreationOriginalImage, setRecreationOriginalImage] = useState(null);
+const [recreationSelectedItem, setRecreationSelectedItem] = useState(null); 
 const handleApproveRecreatedItems = async (items, approvalType) => {
   for (const item of items) {
     const wardrobeItem = {
