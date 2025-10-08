@@ -1,6 +1,7 @@
 // api/multi-item-upload.js
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
@@ -76,7 +77,7 @@ export default async function handler(req, res) {
 
 // Helper functions
 async function createDetectionSession(userId, imageData) {
-  const imageHash = require('crypto')
+  const imageHash = crypto
     .createHash('sha256')
     .update(imageData)
     .digest('hex')
@@ -129,10 +130,29 @@ async function detectAndAnalyzeItems(base64Image) {
         id: i + 1,
         type: item.item_type,
         confidence: item.confidence,
-        bounding_box: item.bounding_box,
-        visual_description: item.visual_description,
-        details: detailedAnalysis,
-        analysis_confidence: item.confidence
+        boundingBox: {
+          left: item.bounding_box.x_percent,
+          top: item.bounding_box.y_percent,
+          width: item.bounding_box.width_percent,
+          height: item.bounding_box.height_percent
+        },
+        description: item.visual_description,
+        color: detailedAnalysis.color,
+        brand: 'Unknown',
+        material: detailedAnalysis.fabric,
+        analysis: {
+          name: `${detailedAnalysis.color} ${item.item_type}`,
+          type: item.item_type,
+          colorAnalysis: {
+            dominantColors: [{ name: detailedAnalysis.color, confidence: 0.9 }]
+          },
+          fabricAnalysis: {
+            weaveStructure: detailedAnalysis.fabric
+          },
+          overallAssessment: {
+            tier: detailedAnalysis.brand_tier
+          }
+        }
       });
     }
 
@@ -213,6 +233,8 @@ IMPORTANT: Respond ONLY with valid JSON. Do not include any other text.`;
     })
   });
 
+  const data = await response.json();
+
   if (data.error) {
     throw new Error(`Claude API error: ${data.error.message || data.error}`);
   }
@@ -222,6 +244,8 @@ IMPORTANT: Respond ONLY with valid JSON. Do not include any other text.`;
   }
   
   const responseText = data.content[0].text;
+  const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+  return JSON.parse(cleanedResponse);
 }
 
 async function analyzeIndividualItem(detectedItem, base64Image) {
@@ -279,6 +303,8 @@ Respond ONLY with valid JSON.`;
       })
     });
 
+    const data = await response.json();
+
     // Add error checking
     if (data.error) {
         throw new Error(`Claude API error: ${data.error.message || JSON.stringify(data.error)}`);
@@ -290,8 +316,8 @@ Respond ONLY with valid JSON.`;
     
     const responseText = data.content[0].text;
     
-    // const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    // return JSON.parse(cleanedResponse);
+    const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    return JSON.parse(cleanedResponse);
     
   } catch (error) {
     console.error('Error in detailed analysis:', error);
