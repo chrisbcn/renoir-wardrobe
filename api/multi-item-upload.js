@@ -28,14 +28,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No image data provided' });
     }
 
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID required' });
-    }
+    // if (!userId) {
+    //   return res.status(400).json({ error: 'User ID required' });
+    // }
 
     console.log('📸 Multi-item upload request received');
     console.log('🎨 Image MIME type:', mimeType);
 
-    const sessionId = await createDetectionSession(userId, imageData, mimeType);
+    const effectiveUserId = userId || `demo_user_${Date.now()}`;
+const sessionId = await createDetectionSession(effectiveUserId, imageData, mimeType);
     console.log('📋 Created detection session:', sessionId);
 
     const detectionResult = await detectAndAnalyzeItems(imageData, mimeType);
