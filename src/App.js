@@ -264,7 +264,7 @@ function App() {
       if (result.success && result.detectedItems && result.detectedItems.length > 0) {
         const detectionResult = {
           originalImage: URL.createObjectURL(file),
-          items: result.detectedItems.map(item => ({
+          detectedItems: result.detectedItems.map(item => ({
             id: `detected_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             type: item.type || 'Unknown Item',
             confidence: typeof item.confidence === 'number' ? 
