@@ -35,8 +35,8 @@ export default async function handler(req, res) {
     console.log('📸 Multi-item upload request received');
     console.log('🎨 Image MIME type:', mimeType);
 
-    const effectiveUserId = userId || `demo_user_${Date.now()}`;
-const sessionId = await createDetectionSession(effectiveUserId, imageData, mimeType);
+    const effectiveUserId = userId || "00000000-0000-0000-0000-000000000001";
+    const sessionId = await createDetectionSession(effectiveUserId, imageData, mimeType);
     console.log('📋 Created detection session:', sessionId);
 
     const detectionResult = await detectAndAnalyzeItems(imageData, mimeType);
