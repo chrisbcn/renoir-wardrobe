@@ -347,7 +347,7 @@ function App() {
         reader.readAsDataURL(file);
       });
 
-      const response = await fetch('/api/analyze-look', {
+      const response = await fetch('/api/analyze-wardrobe-item', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageData: base64 })
