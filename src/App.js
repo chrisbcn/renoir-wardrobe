@@ -1,4 +1,4 @@
-// src/App.js
+// src/App.js - is this in stagig or main?
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import MultiItemDetectionDisplay from './MultiItemDetectionDisplay';
