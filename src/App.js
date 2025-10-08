@@ -210,6 +210,8 @@ function App() {
   };
 
   // Multi-item upload handler
+// Replace your handleMultiItemUpload function in App.js with this fixed version:
+
   const handleMultiItemUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -236,18 +238,33 @@ function App() {
         reader.readAsDataURL(file);
       });
 
+      console.log('Sending multi-item upload request...');
+
       const response = await fetch('/api/multi-item-upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageData: base64 })
+        body: JSON.stringify({
+          imageData: base64,
+          mimeType: validation.mimeType,
+          userId: "00000000-0000-0000-0000-000000000001"
+        })
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
-      if (result.success && result.items && result.items.length > 0) {
+      const result = await response.json();
+      console.log('API result:', result);
+      console.log('Detected items count:', result.detectedItems?.length);
+      console.log('Items:', result.detectedItems);
+
+      // FIX: Check for the correct property names from your API response
+      if (result.success && result.detectedItems && result.detectedItems.length > 0) {
         const detectionResult = {
           originalImage: URL.createObjectURL(file),
-          items: result.items.map(item => ({
+          items: result.detectedItems.map(item => ({
             id: `detected_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             type: item.type || 'Unknown Item',
             confidence: typeof item.confidence === 'number' ? 
@@ -258,7 +275,10 @@ function App() {
               width: item.boundingBox?.width || 50,
               height: item.boundingBox?.height || 50
             },
-            analysis: item.analysis
+            analysis: item.analysis,
+            description: item.description,
+            color: item.color,
+            material: item.material
           })),
           sessionId: result.sessionId || `session_${Date.now()}`
         };
