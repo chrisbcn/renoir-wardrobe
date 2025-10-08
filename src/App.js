@@ -2,6 +2,26 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import MultiItemDetectionDisplay from './MultiItemDetectionDisplay';
 
+// Image format validation
+const SUPPORTED_FORMATS = ['image/jpeg', 'image/png'];
+const ACCEPT_STRING = 'image/jpeg,image/png';
+
+const validateImageFile = (file) => {
+  if (!file) return { valid: false, error: 'No file provided' };
+  
+  const mimeType = file.type.toLowerCase();
+  if (!SUPPORTED_FORMATS.includes(mimeType)) {
+    return {
+      valid: false,
+      error: `Unsupported format: ${file.type || 'unknown'}. Please use JPG or PNG files.`,
+      fileName: file.name,
+      mimeType
+    };
+  }
+  
+  return { valid: true, mimeType };
+};
+
 const ITEMS_PER_PAGE = 20;
 
 function App() {
@@ -32,6 +52,7 @@ function App() {
   const [multiItemDetectionResult, setMultiItemDetectionResult] = useState(null);
   const [isProcessingMultiItem, setIsProcessingMultiItem] = useState(false);
   const [showMultiItemSection, setShowMultiItemSection] = useState(false);
+  const [imageFormatError, setImageFormatError] = useState(null);
 
   // Load wardrobe items on component mount
   useEffect(() => {
@@ -100,10 +121,44 @@ function App() {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
+    // Validate all files first
+    const invalidFiles = [];
+    const validFiles = [];
+    
+    for (const file of files) {
+      const validation = validateImageFile(file);
+      if (!validation.valid) {
+        invalidFiles.push({ file, validation });
+      } else {
+        validFiles.push({ file, validation });
+      }
+    }
+
+    // Show error for first invalid file
+    if (invalidFiles.length > 0) {
+      const first = invalidFiles[0];
+      setImageFormatError({
+        error: first.validation.error,
+        fileName: first.validation.fileName
+      });
+      
+      // If ALL files are invalid, stop here
+      if (validFiles.length === 0) {
+        e.target.value = '';
+        return;
+      }
+      
+      // Otherwise continue with valid files only
+      alert(`Skipping ${invalidFiles.length} unsupported file(s). Processing ${validFiles.length} valid files.`);
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
+    
+    // Continue with valid files only
+    const filesToProcess = validFiles.map(item => item.file);
 
-    const placeholders = files.map((file, index) => ({
+    const placeholders = filesToProcess.map((file, index) => ({
       id: `placeholder-${Date.now()}-${index}`,
       imageUrl: URL.createObjectURL(file),
       name: file.name,
@@ -115,9 +170,9 @@ function App() {
     
     const newItems = [];
     
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+    for (let i = 0; i < filesToProcess.length; i++) {
+      const file = filesToProcess[i];
+      setUploadProgress(Math.round(((i + 1) / filesToProcess.length) * 100));
       
       setUploadingItems(prev => prev.map((item, index) => 
         index === i ? { ...item, loadingMessage: 'Analyzing with AI...' } : item
@@ -181,6 +236,7 @@ function App() {
     setUploadingItems([]);
     setIsUploading(false);
     setUploadProgress(0);
+    e.target.value = '';
   };
 
   // Handle multi-item detection upload
@@ -190,6 +246,17 @@ function App() {
     
     const file = files[0];
     if (!file) return;
+
+    // Validate file format
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setImageFormatError({
+        error: validation.error,
+        fileName: validation.fileName
+      });
+      e.target.value = '';
+      return;
+    }
 
     setIsProcessingMultiItem(true);
     setShowMultiItemSection(true);
@@ -212,11 +279,13 @@ function App() {
 
       console.log('Sending multi-item upload request...');
 
+      // Pass the MIME type to the backend
       const response = await fetch('/api/multi-item-upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageData: base64,
+          mimeType: validation.mimeType,
           userId: "00000000-0000-0000-0000-000000000001" 
         })
       });
@@ -335,6 +404,17 @@ function App() {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Validate file format
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setImageFormatError({
+        error: validation.error,
+        fileName: validation.fileName
+      });
+      e.target.value = '';
+      return;
+    }
+
     setIsProcessingLook(true);
     setLookImage(URL.createObjectURL(file));
     setLookAnalysis(null);
@@ -364,6 +444,7 @@ function App() {
       console.error('Look analysis failed:', error);
     } finally {
       setIsProcessingLook(false);
+      e.target.value = '';
     }
   };
 
@@ -568,6 +649,89 @@ function App() {
 
   return (
     <div className="min-h-screen">
+      {/* Error Dialog */}
+      {imageFormatError && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            padding: '24px',
+            maxWidth: '400px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <svg 
+                style={{ width: '24px', height: '24px', marginRight: '12px', color: '#EF4444' }}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                />
+              </svg>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0 }}>
+                Unsupported Image Format
+              </h3>
+            </div>
+            
+            {imageFormatError.fileName && (
+              <p style={{ 
+                fontSize: '14px', 
+                color: '#6B7280', 
+                marginBottom: '12px',
+                wordBreak: 'break-word'
+              }}>
+                <strong>File:</strong> {imageFormatError.fileName}
+              </p>
+            )}
+            
+            <p style={{ fontSize: '14px', color: '#374151', marginBottom: '16px' }}>
+              {imageFormatError.error}
+            </p>
+            
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '20px' }}>
+              <strong>Supported formats:</strong> JPG, JPEG, PNG
+            </p>
+            
+            <button
+              onClick={() => setImageFormatError(null)}
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                backgroundColor: '#000',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="container">
         {/* Header */}
         <div className="header-section">
@@ -616,7 +780,7 @@ function App() {
               <label className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium cursor-pointer transition-all">
                 <input 
                   type="file" 
-                  accept="image/*"
+                  accept={ACCEPT_STRING}
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       handleMultiItemUpload(e);
@@ -640,7 +804,7 @@ function App() {
                 <input 
                   type="file" 
                   multiple 
-                  accept="image/*"
+                  accept={ACCEPT_STRING}
                   onChange={handleWardrobeUpload}
                   className="hidden"
                 />
@@ -898,7 +1062,7 @@ function App() {
                 <label className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium cursor-pointer transition-all">
                   <input 
                     type="file" 
-                    accept="image/*"
+                    accept={ACCEPT_STRING}
                     onChange={handleMultiItemUpload}
                     className="hidden"
                   />
@@ -950,7 +1114,7 @@ function App() {
             <label className="btn-primary">
               <input 
                 type="file" 
-                accept="image/*"
+                accept={ACCEPT_STRING}
                 onChange={handleLookUpload}
                 className="hidden"
               />

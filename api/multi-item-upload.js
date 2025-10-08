@@ -1,10 +1,10 @@
-// api/multi-item-upload.js
+// api/multi-item-upload.js - Updated with MIME type support
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
 );
 
 export default async function handler(req, res) {
@@ -22,8 +22,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId, imageData, autoSave = false } = req.body;
-    
+    const { imageData, userId, mimeType = 'image/jpeg' } = req.body;
+
     if (!imageData) {
       return res.status(400).json({ error: 'No image data provided' });
     }
@@ -32,26 +32,41 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'User ID required' });
     }
 
-    console.log(`🚀 Processing multi-item upload for user: ${userId}`);
-    
-    // Step 1: Create detection session
-    const sessionId = await createDetectionSession(userId, imageData);
-    
-    // Step 2: Detect and analyze items using Claude API
-    const detectionResult = await detectAndAnalyzeItems(imageData);
-    
+    console.log('📸 Multi-item upload request received');
+    console.log('🎨 Image MIME type:', mimeType);
+
+    const sessionId = await createDetectionSession(userId, imageData, mimeType);
+    console.log('📋 Created detection session:', sessionId);
+
+    const detectionResult = await detectAndAnalyzeItems(imageData, mimeType);
+
     if (!detectionResult.success) {
       await updateSessionStatus(sessionId, 'failed', detectionResult.error);
-      return res.status(500).json(detectionResult);
+      return res.status(500).json({
+        success: false,
+        error: detectionResult.error
+      });
     }
 
-    // Step 3: Update session with results
     await updateDetectionSession(sessionId, detectionResult);
+
+    const savedItems = [];
     
-    // Step 4: Save items to wardrobe if requested
-    let savedItems = [];
-    if (autoSave) {
-      savedItems = await saveItemsToWardrobe(detectionResult.items, userId, sessionId);
+    for (const item of detectionResult.items) {
+      try {
+        const savedItem = await saveItemToDatabase(item, sessionId, userId);
+        if (savedItem) {
+          savedItems.push(savedItem);
+        }
+      } catch (error) {
+        console.error('Error saving item:', error);
+      }
+    }
+
+    if (savedItems.length > 0) {
+      await updateSessionStatus(sessionId, 'completed');
+    } else {
+      await updateSessionStatus(sessionId, 'completed_no_saves');
     }
 
     console.log(`✅ Successfully processed ${detectionResult.items.length} items`);
@@ -76,7 +91,7 @@ export default async function handler(req, res) {
 }
 
 // Helper functions
-async function createDetectionSession(userId, imageData) {
+async function createDetectionSession(userId, imageData, mimeType) {
   const imageHash = crypto
     .createHash('sha256')
     .update(imageData)
@@ -101,7 +116,7 @@ async function createDetectionSession(userId, imageData) {
     .insert({
       user_id: userId,
       image_hash: imageHash,
-      original_image_url: `data:image/jpeg;base64,${imageData}`,
+      original_image_url: `data:${mimeType};base64,${imageData}`,
       processing_status: 'processing'
     })
     .select('id')
@@ -111,12 +126,12 @@ async function createDetectionSession(userId, imageData) {
   return data.id;
 }
 
-async function detectAndAnalyzeItems(base64Image) {
+async function detectAndAnalyzeItems(base64Image, mimeType) {
   try {
     console.log('🔍 Starting AI clothing detection...');
     
     // Step 1: Use Claude to detect individual items
-    const detectedItems = await detectClothingItems(base64Image);
+    const detectedItems = await detectClothingItems(base64Image, mimeType);
     
     // Step 2: Analyze each item in detail
     const analyzedItems = [];
@@ -124,7 +139,7 @@ async function detectAndAnalyzeItems(base64Image) {
       const item = detectedItems[i];
       console.log(`🔬 Analyzing item ${i + 1}: ${item.item_type}`);
       
-      const detailedAnalysis = await analyzeIndividualItem(item, base64Image);
+      const detailedAnalysis = await analyzeIndividualItem(item, base64Image, mimeType);
       
       analyzedItems.push({
         id: i + 1,
@@ -172,7 +187,7 @@ async function detectAndAnalyzeItems(base64Image) {
   }
 }
 
-async function detectClothingItems(base64Image) {
+async function detectClothingItems(base64Image, mimeType = 'image/jpeg') {
   const prompt = `Analyze this image and detect ALL individual clothing items. For each item found, provide:
 
 1. Item type (shirt, pants, dress, jacket, shoes, accessories, etc.)
@@ -219,7 +234,7 @@ IMPORTANT: Respond ONLY with valid JSON. Do not include any other text.`;
               type: 'image',
               source: {
                 type: 'base64',
-                media_type: 'image/jpeg',
+                media_type: mimeType, // Use passed MIME type
                 data: base64Image
               }
             },
@@ -248,8 +263,7 @@ IMPORTANT: Respond ONLY with valid JSON. Do not include any other text.`;
   return JSON.parse(cleanedResponse);
 }
 
-async function analyzeIndividualItem(detectedItem, base64Image) {
-  // Use your existing analyze.js logic here
+async function analyzeIndividualItem(detectedItem, base64Image, mimeType = 'image/jpeg') {
   const analysisPrompt = `Analyze this specific clothing item: ${detectedItem.item_type}
 
 Description: ${detectedItem.visual_description}
@@ -270,122 +284,112 @@ Respond ONLY with valid JSON.`;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: 'image/jpeg',
-                  data: base64Image
-                }
-              },
-              {
-                type: 'text',
-                text: analysisPrompt
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1500,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mimeType, // Use passed MIME type
+                data: base64Image
               }
-            ]
-          }
-        ]
-      })
-    });
+            },
+            {
+              type: 'text',
+              text: analysisPrompt
+            }
+          ]
+        }
+      ]
+    })
+  });
 
-    const data = await response.json();
+  const data = await response.json();
 
-    // Add error checking
-    if (data.error) {
-        throw new Error(`Claude API error: ${data.error.message || JSON.stringify(data.error)}`);
-    }
-    
-    if (!data.content || !data.content[0]) {
-        throw new Error(`Unexpected API response: ${JSON.stringify(data)}`);
-    }
-    
+  if (data.error) {
+    console.warn('Analysis API error:', data.error);
+    return getBasicItemDetails(detectedItem);
+  }
+  
+  if (!data.content || !data.content[0]) {
+    console.warn('Unexpected analysis response');
+    return getBasicItemDetails(detectedItem);
+  }
+  
+  try {
     const responseText = data.content[0].text;
-    
     const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     return JSON.parse(cleanedResponse);
-    
   } catch (error) {
-    console.error('Error in detailed analysis:', error);
-    return {
-      color: 'unknown',
-      fabric: 'unknown',
-      pattern: 'solid',
-      style: 'standard',
-      formality_level: 'casual',
-      season: ['all seasons'],
-      price_range: 'unknown',
-      brand_tier: 'contemporary'
+    console.warn('Failed to parse analysis:', error);
+    return getBasicItemDetails(detectedItem);
+  }
+}
+
+function getBasicItemDetails(detectedItem) {
+  return {
+    color: 'Unknown',
+    fabric: 'Unknown',
+    pattern: 'solid',
+    style: detectedItem.item_type,
+    formality_level: 'casual',
+    season: ['all-season'],
+    price_range: 'Unknown',
+    brand_tier: 'contemporary'
+  };
+}
+
+async function saveItemToDatabase(item, sessionId, userId) {
+  try {
+    const wardrobeItem = {
+      user_id: userId,
+      name: item.analysis?.name || `${item.color} ${item.type}`,
+      garment_type: item.type,
+      colors: JSON.stringify([{
+        name: item.color,
+        primary: true,
+        confidence: 0.9
+      }]),
+      pattern: item.analysis?.fabricAnalysis?.weaveStructure || 'unknown',
+      material: item.material,
+      style: item.type,
+      ai_confidence: item.confidence,
+      price_range_estimate: item.analysis?.overallAssessment?.tier || 'contemporary',
+      source: 'multi_item_detection',
+      confidence_score: item.confidence,
+      needs_review: item.confidence < 0.7,
+      detection_session_id: sessionId,
+      bounding_box: JSON.stringify(item.boundingBox),
+      detection_confidence: item.confidence,
+      visual_description: item.description,
+      item_position: item.id
     };
+
+    const { data, error } = await supabase
+      .from('wardrobe_items')
+      .insert(wardrobeItem)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+
+  } catch (error) {
+    console.error(`Error saving item ${item.id}:`, error);
+    return null;
   }
-}
-
-async function saveItemsToWardrobe(items, userId, sessionId) {
-  const savedItems = [];
-
-  for (const item of items) {
-    try {
-      const wardrobeItem = {
-        user_id: userId,
-        name: generateItemName(item),
-        garment_type: item.type,
-        colors: JSON.stringify([{
-          name: item.details.color,
-          primary: true,
-          confidence: 0.9
-        }]),
-        pattern: item.details.pattern,
-        material: item.details.fabric,
-        style: item.details.style,
-        ai_confidence: item.analysis_confidence,
-        price_range_estimate: item.details.price_range,
-        source: 'multi_item_detection',
-        confidence_score: item.analysis_confidence,
-        needs_review: item.analysis_confidence < 0.7,
-        detection_session_id: sessionId,
-        bounding_box: JSON.stringify(item.bounding_box),
-        detection_confidence: item.confidence,
-        visual_description: item.visual_description,
-        item_position: item.id,
-        image_url: `data:image/jpeg;base64,placeholder` // You'd store the actual image
-      };
-
-      const { data, error } = await supabase
-        .from('wardrobe_items')
-        .insert(wardrobeItem)
-        .select()
-        .single();
-
-      if (error) throw error;
-      savedItems.push(data);
-
-    } catch (error) {
-      console.error(`Error saving item ${item.id}:`, error);
-    }
-  }
-
-  return savedItems;
-}
-
-function generateItemName(item) {
-  const color = item.details.color || '';
-  const fabric = item.details.fabric || '';
-  const type = item.type || 'Item';
-  return `${color} ${fabric} ${type}`.trim().replace(/\s+/g, ' ');
 }
 
 async function updateDetectionSession(sessionId, results) {
