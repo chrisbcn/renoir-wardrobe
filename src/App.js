@@ -1333,7 +1333,7 @@ const handleMultiItemUpload = async (e) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: 'test-user-id', // Replace with actual user ID
+        userId: '00000000-0000-0000-0000-000000000001', // Valid UUID format
         imageData: base64,
         autoSave: true
       })
