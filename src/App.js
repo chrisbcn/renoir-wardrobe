@@ -747,6 +747,7 @@ function App() {
             <MultiItemDetectionDisplay 
               detectionResult={multiItemDetectionResult}
               onAddToWardrobe={handleAddDetectedItemsToWardrobe}
+              onStartRecreation={handleStartRecreation}
               isProcessing={isProcessingMultiItem}
             />
             {showRecreationWorkflow && multiItemDetectionResult && (
