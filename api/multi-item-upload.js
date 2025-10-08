@@ -213,11 +213,15 @@ IMPORTANT: Respond ONLY with valid JSON. Do not include any other text.`;
     })
   });
 
-  const data = await response.json();
-  const responseText = data.content[0].text;
+  if (data.error) {
+    throw new Error(`Claude API error: ${data.error.message || data.error}`);
+  }
   
-  const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-  return JSON.parse(cleanedResponse);
+  if (!data.content || !data.content[0]) {
+    throw new Error(`Unexpected API response: ${JSON.stringify(data)}`);
+  }
+  
+  const responseText = data.content[0].text;
 }
 
 async function analyzeIndividualItem(detectedItem, base64Image) {
