@@ -1,6 +1,6 @@
 // api/multi-item-upload.js
 import { createClient } from '@supabase/supabase-js';
-
+import crypto from 'crypto';
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
