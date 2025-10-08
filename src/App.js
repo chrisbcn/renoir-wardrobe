@@ -217,7 +217,7 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageData: base64,
-          fileName: file.name
+          userId: "00000000-0000-0000-0000-000000000001" 
         })
       });
 
