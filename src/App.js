@@ -291,7 +291,7 @@ const App = () => {
           };
           
           // Add to your existing wardrobe state
-          setWardrobeItems(prev => [...prev, wardrobeItem]);
+          setWardrobe(prev => [...prev, wardrobeItem]);
         }
       } else {
         // Add recreated items
@@ -314,7 +314,7 @@ const App = () => {
             };
             
             // Add to your existing wardrobe state
-            setWardrobeItems(prev => [...prev, wardrobeItem]);
+            setWardrobe(prev => [...prev, wardrobeItem]);
           }
         }
       }
