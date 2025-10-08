@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import MultiItemDetectionDisplay from './MultiItemDetectionDisplay';
+import ItemRecreationWorkflow from './ItemRecreationWorkflow';
 
 // Image format validation
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png'];
@@ -465,7 +466,51 @@ function App() {
       alert('Failed to delete some items. Please try again.');
     }
   };
-
+  const handleStartRecreation = (detectedItems, originalImage) => {
+    setRecreationOriginalImage(originalImage);
+    setShowRecreationWorkflow(true);
+    setShowMultiItemSection(false); // Hide multi-item detection
+  };
+  
+  // Handle approving recreated item
+  const handleApproveRecreatedItem = async (wardrobeItem) => {
+    try {
+      // Save recreated item to database if needed
+      if (wardrobeItem.imageUrl && !wardrobeItem.imageUrl.startsWith('blob:')) {
+        // Convert the DALL-E URL to base64 for database storage
+        try {
+          const response = await fetch(wardrobeItem.imageUrl);
+          const blob = await response.blob();
+          const base64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.readAsDataURL(blob);
+          });
+  
+          const databaseId = await saveToDatabase(wardrobeItem.analysis, base64, 'wardrobe');
+          wardrobeItem.databaseId = databaseId;
+        } catch (error) {
+          console.error('Failed to save recreated item to database:', error);
+        }
+      }
+  
+      // Add to wardrobe state
+      setWardrobe(prev => [wardrobeItem, ...prev]);
+      
+      alert(`${wardrobeItem.name} has been added to your wardrobe!`);
+    } catch (error) {
+      console.error('Error adding recreated item:', error);
+      alert('Failed to add item to wardrobe. Please try again.');
+    }
+  };
+  
+  // Handle resetting recreation workflow
+  const handleResetRecreation = () => {
+    setShowRecreationWorkflow(false);
+    setRecreationOriginalImage(null);
+    setRecreationSelectedItem(null);
+    setShowMultiItemSection(true); // Return to multi-item detection
+  };
   // Look upload handler
   const handleLookUpload = async (e) => {
     const file = e.target.files[0];
@@ -704,6 +749,16 @@ function App() {
               onAddToWardrobe={handleAddDetectedItemsToWardrobe}
               isProcessing={isProcessingMultiItem}
             />
+            {showRecreationWorkflow && multiItemDetectionResult && (
+              <ItemRecreationWorkflow
+                detectedItems={multiItemDetectionResult.detectedItems || multiItemDetectionResult.items}
+                originalImage={recreationOriginalImage || multiItemDetectionResult.originalImage}
+                onApproveItem={handleApproveRecreatedItem}
+                onResetRecreation={handleResetRecreation}
+                showRecreationWorkflow={showRecreationWorkflow}
+                setShowRecreationWorkflow={setShowRecreationWorkflow}
+              />
+            )}
           </div>
         )}
 

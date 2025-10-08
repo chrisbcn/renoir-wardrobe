@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-const MultiItemDetectionDisplay = ({ detectionResult, onAddToWardrobe, isProcessing }) => {
+const MultiItemDetectionDisplay = ({ detectionResult, onAddToWardrobe, isProcessing, onStartRecreation }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
   const [selectedItems, setSelectedItems] = useState(new Set());
 
@@ -208,22 +208,30 @@ const MultiItemDetectionDisplay = ({ detectionResult, onAddToWardrobe, isProcess
                       </div>
                     </div>
                     
-                    <div className="flex flex-col items-end gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddToWardrobe([item], sessionId);
-                        }}
-                        className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded-lg transition-all"
-                      >
-                        Add to Wardrobe
-                      </button>
-                      
-                      {isSelected && (
-                        <div className="text-purple-600 text-xs font-medium">
-                          ✓ Selected
-                        </div>
-                      )}
+                    <div className="flex gap-2">
+                    {selectedItems.size > 0 && (
+                        <button
+                        onClick={handleAddSelectedToWardrobe}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all"
+                        >
+                        Add Selected ({selectedItems.size})
+                        </button>
+                    )}
+                    
+                    {/* NEW: Recreation Button */}
+                    <button
+                        onClick={() => onStartRecreation && onStartRecreation(detectedItems, originalImage)}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all"
+                    >
+                        🎨 Recreate as Product Photos
+                    </button>
+                    
+                    <button
+                        onClick={handleAddAllToWardrobe}
+                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-all"
+                    >
+                        Add All Items
+                    </button>
                     </div>
                   </div>
                 </div>
@@ -231,15 +239,6 @@ const MultiItemDetectionDisplay = ({ detectionResult, onAddToWardrobe, isProcess
             })}
           </div>
         </div>
-      </div>
-
-      {/* Instructions */}
-      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-        <p className="text-sm text-gray-600">
-          <strong>Instructions:</strong> Click on items in the image or list to select them. 
-          Use "Add Selected" to add only chosen items, or "Add All Items" to add everything to your wardrobe.
-          Individual items can be added using the "Add to Wardrobe" button on each item.
-        </p>
       </div>
     </div>
   );
