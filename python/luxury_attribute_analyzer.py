@@ -40,4 +40,3 @@ def determine_quality_tier(score):
     elif score >= 40: return 'premium'
     else: return 'contemporary'
 
-    
