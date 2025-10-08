@@ -43,7 +43,7 @@ function App() {
     try {
       if (offset === 0) setIsInitialLoading(true);
       
-      const response = await fetch(`/api/get-wardrobe-items?offset=${offset}&limit=${ITEMS_PER_PAGE}`);
+      const response = await fetch(`/api/get-wardrobe?offset=${offset}&limit=${ITEMS_PER_PAGE}`);
       const result = await response.json();
       
       if (result.success) {
