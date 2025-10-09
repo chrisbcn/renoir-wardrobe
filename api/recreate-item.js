@@ -129,9 +129,11 @@ export default async function handler(req, res) {
           ]
         }],
         generationConfig: {
-          temperature: 0.3,
-          topK: 40,
-          topP: 0.95,
+            temperature: 1.0,      // Match AI Studio default
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+            candidateCount: 1
         }
       })
     });
