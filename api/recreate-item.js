@@ -1,4 +1,4 @@
-// api/recreate-item.js
+// api/recreate-item.js - Complete version with all functions
 export default async function handler(req, res) {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -22,11 +22,20 @@ export default async function handler(req, res) {
   
       console.log(`🎨 Starting recreation for ${detectedItem.type}`);
   
-      // Step 1: Generate detailed description using Gemini
+      // Step 1: Generate detailed description using Gemini Vision
       const description = await generateDetailedDescription(detectedItem, originalImageData);
       
-      // Step 2: Create product photo using Nano Banana
-      const recreatedImage = await generateProductPhoto(description, detectedItem);  
+      // Step 2: Try Gemini image generation, fallback to DALL-E
+      let recreatedImage;
+      try {
+        recreatedImage = await generateWithGemini(description, detectedItem, originalImageData);
+        console.log('✅ Generated with Gemini');
+      } catch (geminiError) {
+        console.log('Gemini failed, falling back to DALL-E:', geminiError.message);
+        recreatedImage = await generateWithDALLE(description, detectedItem);
+        console.log('✅ Generated with DALL-E fallback');
+      }
+  
       console.log(`✅ Recreation complete for ${detectedItem.type}`);
   
       res.status(200).json({
@@ -47,6 +56,47 @@ export default async function handler(req, res) {
         error: 'Recreation failed',
         message: error.message
       });
+    }
+  }
+  
+  async function generateDetailedDescription(detectedItem, originalImageData) {
+    try {
+      const prompt = `Analyze this image and create a detailed product description for recreating the ${detectedItem.type}. Include:
+      - Exact colors and patterns visible
+      - Fabric texture and finish
+      - Specific design elements (buttons, collars, prints, etc.)
+      - Fit and style details
+      Be very specific about visual characteristics that would help recreate this exact item.`;
+  
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              {
+                inline_data: {
+                  mime_type: "image/jpeg",
+                  data: originalImageData
+                }
+              }
+            ]
+          }]
+        })
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Gemini analysis failed: ${response.status}`);
+      }
+  
+      const result = await response.json();
+      return result.candidates[0].content.parts[0].text;
+  
+    } catch (error) {
+      console.error('Description generation failed:', error);
+      // Fallback description
+      return `Professional product photography of a ${detectedItem.color} ${detectedItem.type} with ${detectedItem.description || 'detailed patterns'}, made of ${detectedItem.material}`;
     }
   }
   
@@ -101,52 +151,30 @@ export default async function handler(req, res) {
     return `data:image/jpeg;base64,${imageData}`;
   }
   
-  async function generateProductPhoto(description, detectedItem, originalImageData) {
-    try {
-      const prompt = `Create a professional product photography image of just the ${detectedItem.type} from this photo. Extract and recreate it as a clean product photo with:
-      - White or neutral background
-      - Professional studio lighting
-      - High resolution e-commerce style
-      - Preserve the exact pattern, colors, and design details
-      - Remove background and focus only on the garment
-      - Front-facing view suitable for online retail`;
+  async function generateWithDALLE(description, detectedItem) {
+    const dallePrompt = `Professional product photography: ${description}. Shot on clean white background with studio lighting, high resolution, e-commerce style, front view, no person, isolated ${detectedItem.type} only, preserve exact patterns and colors.`;
   
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              {
-                inline_data: {
-                  mime_type: "image/jpeg", 
-                  data: originalImageData
-                }
-              }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.4,
-            topK: 32,
-            topP: 1,
-            maxOutputTokens: 4096,
-          }
-        })
-      });
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt: dallePrompt,
+        size: '1024x1024',
+        quality: 'hd',
+        style: 'natural',
+        n: 1
+      })
+    });
   
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
-      }
-  
-      const result = await response.json();
-      
-      // Convert base64 to data URL for frontend display
-      const base64Image = result.candidates[0].content.parts[0].inline_data.data;
-      return `data:image/jpeg;base64,${base64Image}`;
-      
-    } catch (error) {
-      console.error('Gemini image generation failed:', error);
-      throw new Error(`Failed to generate product photo: ${error.message}`);
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`DALL-E API error: ${response.status} - ${error}`);
     }
+  
+    const result = await response.json();
+    return result.data[0].url;
   }
