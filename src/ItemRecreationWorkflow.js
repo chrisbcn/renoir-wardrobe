@@ -21,19 +21,32 @@ const ItemRecreationWorkflow = ({
 
     try {
       // Convert originalImage to base64 if it's a blob URL
+      // Enhanced image processing for better quality
       let imageData;
-      if (originalImage.startsWith('blob:')) {
-        const response = await fetch(originalImage);
-        const blob = await response.blob();
-        imageData = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result.split(',')[1]);
-          reader.readAsDataURL(blob);
-        });
-      } else {
-        imageData = originalImage.split(',')[1];
-      }
-
+        if (originalImage.startsWith('blob:')) {
+          const response = await fetch(originalImage);
+          const blob = await response.blob();
+          
+          // Create canvas for full resolution processing
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.src = originalImage;
+          });
+          
+          // Use original dimensions - no compression
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          
+          // Convert to high-quality PNG
+          imageData = canvas.toDataURL('image/png', 1.0).split(',')[1];
+        } else {
+          imageData = originalImage.split(',')[1];
+        }
       setRecreationProgress({ ...recreationProgress, [item.id]: 30 });
 
       const response = await fetch('/api/recreate-item', {
