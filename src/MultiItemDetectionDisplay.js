@@ -220,10 +220,10 @@ const MultiItemDetectionDisplay = ({ detectionResult, onAddToWardrobe, isProcess
                     
                     {/* NEW: Recreation Button */}
                     <button
-                        onClick={() => onStartRecreation && onStartRecreation(detectedItems, originalImage)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all"
+                    onClick={() => onStartRecreation && onStartRecreation(detectedItems, originalImage)}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all"
                     >
-                        🎨 Recreate as Product Photos
+                    🎨 Recreate as Product Photos
                     </button>
                     
                     <button
