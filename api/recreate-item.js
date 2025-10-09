@@ -61,12 +61,17 @@ export default async function handler(req, res) {
   
   async function generateDetailedDescription(detectedItem, originalImageData) {
     try {
-      const prompt = `Analyze this image and create a detailed product description for recreating the ${detectedItem.type}. Include:
-      - Exact colors and patterns visible
-      - Fabric texture and finish
-      - Specific design elements (buttons, collars, prints, etc.)
-      - Fit and style details
-      Be very specific about visual characteristics that would help recreate this exact item.`;
+        const prompt = `Analyze this image and focus specifically on the ${detectedItem.type} worn by the person. Provide a detailed description that captures:
+
+        1. Exact pattern details (type of print, motifs, layout)
+        2. Precise color palette (primary, secondary, accent colors)
+        3. Fabric appearance and texture
+        4. Specific design elements (collar style, buttons, fit, sleeves)
+        5. Any unique characteristics that make this garment distinctive
+        
+        Be extremely specific about the visual pattern - describe the shapes, colors, and arrangement in detail. This description will be used to recreate an identical garment.
+        
+        Current detection shows: "${detectedItem.description}" - expand on this with much more visual detail.`;
   
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
         method: 'POST',
@@ -105,13 +110,21 @@ export default async function handler(req, res) {
   
   ${description}
   
-  Requirements:
-  - Clean white background
-  - Professional studio lighting
-  - E-commerce product photography style
-  - High resolution and sharp focus
-  - Only the garment, no person or background elements
-  - Preserve all colors, patterns, and design details exactly as shown`;
+    Requirements:
+        - Clean white background
+        - Professional studio lighting
+        - E-commerce product photography style
+        - High resolution and sharp focus
+        - Only the garment, no person or background elements
+        - Preserve all colors, patterns, and design details exactly as shown
+    FOCUS AREA: The ${detectedItem.type} is located approximately at:
+        - Left: ${detectedItem.boundingBox.left}% from left edge
+        - Top: ${detectedItem.boundingBox.top}% from top edge  
+        - Width: ${detectedItem.boundingBox.width}% of image width
+        - Height: ${detectedItem.boundingBox.height}% of image height
+
+    Pay special attention to this region when extracting the garment details.`;
+
   
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',

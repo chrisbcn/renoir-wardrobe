@@ -18,6 +18,22 @@ const ItemRecreationWorkflow = ({
     setRecreationSelectedItem(item);
     setRecreationStep('recreating');
     setRecreationProgress({ ...recreationProgress, [item.id]: 0 });
+    // Don't compress the image - send full quality
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    await new Promise((resolve) => {
+      img.onload = resolve;
+      img.src = originalImage;
+    });
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+
+// Use maximum quality
+imageData = canvas.toDataURL('image/png').split(',')[1];
 
     try {
       // Convert originalImage to base64 if it's a blob URL
