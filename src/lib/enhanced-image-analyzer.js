@@ -225,26 +225,20 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
     const stylingContext = this.extractStylingContext(luxuryAnalysisText);
     const investmentAssessment = this.extractInvestmentAssessment(luxuryAnalysisText);
 
-    // Extract item name from detailed analysis
-    const itemName = this.extractItemName(luxuryAnalysisText);
-
-    // Debug logging
-    console.log('🔍 DEBUG - Detailed Analysis Text (first 500 chars):', luxuryAnalysisText.substring(0, 500));
-    console.log('🔍 DEBUG - Extracted colors:', colors);
-    console.log('🔍 DEBUG - Extracted fabrics:', fabrics);
-    console.log('🔍 DEBUG - Extracted itemName:', itemName);
+    // Extract key details directly from the detailed analysis text
+    const keyDetails = this.extractKeyDetails(luxuryAnalysisText);
 
     // Generate concise summary
     const summary = this.generateSummary({
       category: category.name,
-      colors,
-      fabrics,
+      colors: keyDetails.colors,
+      fabrics: keyDetails.fabrics,
       qualityTier,
       priceRange,
       formalityLevel,
       luxuryIndicators,
       confidence,
-      itemName
+      itemName: keyDetails.itemName
     });
 
     return {
@@ -325,112 +319,79 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
     return { name: 'unknown', confidence: 0.1 };
   }
 
-  extractItemName(text) {
-    // Look for specific item descriptions in the detailed analysis
-    const itemPatterns = [
-      /(?:Item|Item name)[:\s]+([^,\n]+)/gi,
-      /(?:Double-breasted|Single-breasted|Buttoned|Zippered|Hooded|Cropped|Oversized|Fitted|Tailored|Relaxed|Structured|Flowing)\s+([^,\n]+?)(?:\s+with|\s+featuring|\s+in|\s+made|\s+constructed|$)/gi,
-      /(?:blazer|jacket|coat|vest|cardigan|dress|skirt|pants|jeans|shorts|shirt|blouse|top|sweater|hoodie|suit|jumpsuit|romper|kimono)(?:\s+[^,\n]+)?/gi
-    ];
+  extractKeyDetails(text) {
+    const details = {
+      itemName: null,
+      colors: [],
+      fabrics: []
+    };
 
-    for (const pattern of itemPatterns) {
-      const matches = text.match(pattern);
-      if (matches && matches.length > 0) {
-        const itemName = matches[0].replace(/(?:Item|Item name)[:\s]+/gi, '').trim();
-        if (itemName && itemName.length > 3) {
-          return itemName;
+    // Extract item name - look for the first clear item description
+    const itemMatch = text.match(/\*\*Item:\*\*\s*([^\n]+)/i);
+    if (itemMatch) {
+      details.itemName = itemMatch[1].trim();
+    }
+
+    // Extract primary color - look for color analysis section
+    const colorMatch = text.match(/\*\*Color Analysis:\*\*[\s\S]*?-\s*([^\n]+)/i);
+    if (colorMatch) {
+      const colorText = colorMatch[1].toLowerCase();
+      // Extract the main color from the description
+      if (colorText.includes('sage') || colorText.includes('olive')) {
+        details.colors.push('sage green');
+      } else if (colorText.includes('navy')) {
+        details.colors.push('navy');
+      } else if (colorText.includes('black')) {
+        details.colors.push('black');
+      } else if (colorText.includes('white')) {
+        details.colors.push('white');
+      } else if (colorText.includes('brown')) {
+        details.colors.push('brown');
+      } else if (colorText.includes('grey') || colorText.includes('gray')) {
+        details.colors.push('grey');
+      } else {
+        // Extract any color word from the description
+        const colorWords = colorText.match(/\b(?:sage|olive|navy|black|white|brown|grey|gray|blue|red|green|yellow|orange|purple|pink|beige|cream|ivory|tan|khaki|mauve|taupe|rust|burgundy|maroon|teal|turquoise)\b/gi);
+        if (colorWords) {
+          details.colors.push(colorWords[0]);
         }
       }
     }
 
-    return null;
-  }
-
-  extractColors(text) {
-    const foundColors = [];
-    const lowerText = text.toLowerCase();
-    
-    // More flexible color extraction patterns
-    const colorPatterns = [
-      // Look for specific color names in context
-      /(?:sage|olive|burgundy|navy|charcoal|ecru|oatmeal|cream|ivory|beige|tan|khaki|mauve|taupe|rust|terracotta|forest|emerald|teal|turquoise|royal|powder|sky|midnight|jet|pearl|champagne|gold|silver|bronze|copper|platinum|black|white|gray|grey|blue|red|green|yellow|orange|purple|pink|brown)/gi,
-      // Look for color descriptions with adjectives
-      /(?:sophisticated|rich|deep|vibrant|muted|subtle|soft|bright|pale|dark|light)\s+([^,\n]+?)\s+(?:tone|shade|color|hue|finish)/gi,
-      // Look for color mentions in specific contexts
-      /(?:color|shade|tone|hue)[:\s]+([^,\n]+)/gi,
-      /(?:primary|main|dominant)\s+color[:\s]+([^,\n]+)/gi,
-      // Look for color in material descriptions
-      /(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)\s+(?:in|of|with)\s+([^,\n]+)/gi
-    ];
-
-    colorPatterns.forEach(pattern => {
-      const matches = text.match(pattern);
-      if (matches) {
-        matches.forEach(match => {
-          let color = match.replace(/(?:sophisticated|rich|deep|vibrant|muted|subtle|soft|bright|pale|dark|light|color|shade|tone|hue|finish|leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)[:\s]+/gi, '').trim();
-          // Clean up the color string
-          color = color.replace(/\s+(?:tone|shade|color|hue|finish)$/gi, '').trim();
-          if (color && color.length > 2 && color.length < 20 && !foundColors.includes(color)) {
-            foundColors.push(color);
-          }
-        });
-      }
-    });
-
-    // If no specific colors found, fall back to generic color detection
-    if (foundColors.length === 0) {
-      this.colors.forEach(color => {
-        if (lowerText.includes(color.toLowerCase())) {
-          foundColors.push(color);
+    // Extract primary material - look for material section
+    const materialMatch = text.match(/\*\*Primary Material:\*\*[\s\S]*?-\s*([^\n]+)/i);
+    if (materialMatch) {
+      const materialText = materialMatch[1].toLowerCase();
+      if (materialText.includes('leather')) {
+        details.fabrics.push('leather');
+      } else if (materialText.includes('wool')) {
+        details.fabrics.push('wool');
+      } else if (materialText.includes('cotton')) {
+        details.fabrics.push('cotton');
+      } else if (materialText.includes('silk')) {
+        details.fabrics.push('silk');
+      } else if (materialText.includes('cashmere')) {
+        details.fabrics.push('cashmere');
+      } else {
+        // Extract any fabric word from the description
+        const fabricWords = materialText.match(/\b(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)\b/gi);
+        if (fabricWords) {
+          details.fabrics.push(fabricWords[0]);
         }
-      });
+      }
     }
 
-    return foundColors.length > 0 ? foundColors : ['unknown'];
-  }
-
-  extractFabrics(text) {
-    const foundFabrics = [];
-    const lowerText = text.toLowerCase();
-    
-    // More flexible fabric extraction patterns
-    const fabricPatterns = [
-      // Look for specific fabric names in context
-      /(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede|nappa|aniline|semi-aniline|patent|suede|faux|synthetic)/gi,
-      // Look for fabric descriptions with adjectives
-      /(?:high-quality|premium|luxury|fine|soft|smooth|textured|structured|flowing|draping|high-grade|nappa|semi-aniline)\s+([^,\n]+?)\s+(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)/gi,
-      // Look for fabric mentions in specific contexts
-      /(?:material|fabric|textile)[:\s]+([^,\n]+)/gi,
-      /(?:primary|main|dominant)\s+(?:material|fabric)[:\s]+([^,\n]+)/gi,
-      // Look for fabric in construction descriptions
-      /(?:constructed|made|crafted|built)\s+(?:of|from|with)\s+([^,\n]+)/gi
-    ];
-
-    fabricPatterns.forEach(pattern => {
-      const matches = text.match(pattern);
-      if (matches) {
-        matches.forEach(match => {
-          let fabric = match.replace(/(?:high-quality|premium|luxury|fine|soft|smooth|textured|structured|flowing|draping|high-grade|nappa|semi-aniline|material|fabric|textile|constructed|made|crafted|built)[:\s]+(?:of|from|with)\s*/gi, '').trim();
-          // Clean up the fabric string
-          fabric = fabric.replace(/\s+(?:in|of|with)\s+[^,\n]+$/gi, '').trim();
-          if (fabric && fabric.length > 2 && fabric.length < 30 && !foundFabrics.includes(fabric)) {
-            foundFabrics.push(fabric);
-          }
-        });
-      }
-    });
-
-    // If no specific fabrics found, fall back to generic fabric detection
-    if (foundFabrics.length === 0) {
-      this.fabrics.forEach(fabric => {
-        if (lowerText.includes(fabric.toLowerCase())) {
-          foundFabrics.push(fabric);
-        }
-      });
+    // Fallback to generic extraction if nothing found
+    if (details.colors.length === 0) {
+      details.colors = ['unknown'];
+    }
+    if (details.fabrics.length === 0) {
+      details.fabrics = ['unknown'];
     }
 
-    return foundFabrics.length > 0 ? foundFabrics : ['unknown'];
+    return details;
   }
+
 
   extractPatterns(text) {
     const patterns = ['solid', 'striped', 'checkered', 'plaid', 'polka dot', 'floral', 'geometric', 'abstract'];
