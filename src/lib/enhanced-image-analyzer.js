@@ -228,6 +228,12 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
     // Extract item name from detailed analysis
     const itemName = this.extractItemName(luxuryAnalysisText);
 
+    // Debug logging
+    console.log('🔍 DEBUG - Detailed Analysis Text (first 500 chars):', luxuryAnalysisText.substring(0, 500));
+    console.log('🔍 DEBUG - Extracted colors:', colors);
+    console.log('🔍 DEBUG - Extracted fabrics:', fabrics);
+    console.log('🔍 DEBUG - Extracted itemName:', itemName);
+
     // Generate concise summary
     const summary = this.generateSummary({
       category: category.name,
@@ -344,20 +350,27 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
     const foundColors = [];
     const lowerText = text.toLowerCase();
     
-    // First, try to extract specific color descriptions from the detailed analysis
-    const specificColorPatterns = [
-      /(?:sophisticated|rich|deep|vibrant|muted|subtle)\s+([^,\n]+?)\s+(?:tone|shade|color|hue)/gi,
-      /(?:sage|olive|burgundy|navy|charcoal|ecru|oatmeal|cream|ivory|beige|tan|khaki|mauve|taupe|rust|terracotta|forest|emerald|teal|turquoise|royal|powder|sky|midnight|jet|pearl|champagne|gold|silver|bronze|copper|platinum)/gi,
+    // More flexible color extraction patterns
+    const colorPatterns = [
+      // Look for specific color names in context
+      /(?:sage|olive|burgundy|navy|charcoal|ecru|oatmeal|cream|ivory|beige|tan|khaki|mauve|taupe|rust|terracotta|forest|emerald|teal|turquoise|royal|powder|sky|midnight|jet|pearl|champagne|gold|silver|bronze|copper|platinum|black|white|gray|grey|blue|red|green|yellow|orange|purple|pink|brown)/gi,
+      // Look for color descriptions with adjectives
+      /(?:sophisticated|rich|deep|vibrant|muted|subtle|soft|bright|pale|dark|light)\s+([^,\n]+?)\s+(?:tone|shade|color|hue|finish)/gi,
+      // Look for color mentions in specific contexts
       /(?:color|shade|tone|hue)[:\s]+([^,\n]+)/gi,
-      /(?:primary|main|dominant)\s+color[:\s]+([^,\n]+)/gi
+      /(?:primary|main|dominant)\s+color[:\s]+([^,\n]+)/gi,
+      // Look for color in material descriptions
+      /(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)\s+(?:in|of|with)\s+([^,\n]+)/gi
     ];
 
-    specificColorPatterns.forEach(pattern => {
+    colorPatterns.forEach(pattern => {
       const matches = text.match(pattern);
       if (matches) {
         matches.forEach(match => {
-          const color = match.replace(/(?:sophisticated|rich|deep|vibrant|muted|subtle|color|shade|tone|hue)[:\s]+/gi, '').trim();
-          if (color && color.length > 2 && !foundColors.includes(color)) {
+          let color = match.replace(/(?:sophisticated|rich|deep|vibrant|muted|subtle|soft|bright|pale|dark|light|color|shade|tone|hue|finish|leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)[:\s]+/gi, '').trim();
+          // Clean up the color string
+          color = color.replace(/\s+(?:tone|shade|color|hue|finish)$/gi, '').trim();
+          if (color && color.length > 2 && color.length < 20 && !foundColors.includes(color)) {
             foundColors.push(color);
           }
         });
@@ -380,20 +393,27 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
     const foundFabrics = [];
     const lowerText = text.toLowerCase();
     
-    // First, try to extract specific fabric descriptions from the detailed analysis
-    const specificFabricPatterns = [
-      /(?:high-quality|premium|luxury|fine|soft|smooth|textured|structured|flowing|draping)\s+([^,\n]+?)\s+(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)/gi,
-      /(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)(?:\s+[^,\n]+)?/gi,
+    // More flexible fabric extraction patterns
+    const fabricPatterns = [
+      // Look for specific fabric names in context
+      /(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede|nappa|aniline|semi-aniline|patent|suede|faux|synthetic)/gi,
+      // Look for fabric descriptions with adjectives
+      /(?:high-quality|premium|luxury|fine|soft|smooth|textured|structured|flowing|draping|high-grade|nappa|semi-aniline)\s+([^,\n]+?)\s+(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)/gi,
+      // Look for fabric mentions in specific contexts
       /(?:material|fabric|textile)[:\s]+([^,\n]+)/gi,
-      /(?:primary|main|dominant)\s+(?:material|fabric)[:\s]+([^,\n]+)/gi
+      /(?:primary|main|dominant)\s+(?:material|fabric)[:\s]+([^,\n]+)/gi,
+      // Look for fabric in construction descriptions
+      /(?:constructed|made|crafted|built)\s+(?:of|from|with)\s+([^,\n]+)/gi
     ];
 
-    specificFabricPatterns.forEach(pattern => {
+    fabricPatterns.forEach(pattern => {
       const matches = text.match(pattern);
       if (matches) {
         matches.forEach(match => {
-          const fabric = match.replace(/(?:high-quality|premium|luxury|fine|soft|smooth|textured|structured|flowing|draping|material|fabric|textile)[:\s]+/gi, '').trim();
-          if (fabric && fabric.length > 2 && !foundFabrics.includes(fabric)) {
+          let fabric = match.replace(/(?:high-quality|premium|luxury|fine|soft|smooth|textured|structured|flowing|draping|high-grade|nappa|semi-aniline|material|fabric|textile|constructed|made|crafted|built)[:\s]+(?:of|from|with)\s*/gi, '').trim();
+          // Clean up the fabric string
+          fabric = fabric.replace(/\s+(?:in|of|with)\s+[^,\n]+$/gi, '').trim();
+          if (fabric && fabric.length > 2 && fabric.length < 30 && !foundFabrics.includes(fabric)) {
             foundFabrics.push(fabric);
           }
         });
