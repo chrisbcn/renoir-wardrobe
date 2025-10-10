@@ -130,66 +130,59 @@ async function createDetectionSession(userId, imageData, mimeType) {
 
 async function detectAndAnalyzeItems(base64Image, mimeType) {
   try {
-    console.log('🔍 Starting AI clothing detection with enhanced detailed analysis...');
+    console.log('🔍 Starting AI clothing detection with enhanced embellishment detection...');
     
-    // Step 1: Use enhanced detailed analyzer for comprehensive analysis
-    const imageDataUrl = `data:${mimeType};base64,${base64Image}`;
-    const detailedAnalysis = await enhancedDetailedAnalyzer.analyzeImage(imageDataUrl, 'multi-item');
+    // Step 1: Use Claude to detect individual items
+    const detectedItems = await detectClothingItems(base64Image, mimeType);
     
-    if (!detailedAnalysis.success) {
-      throw new Error(`Enhanced detailed analysis failed: ${detailedAnalysis.error}`);
-    }
-
-    const result = detailedAnalysis.result;
-    const clothingComponents = result.clothing_components || [];
-    
-    // Step 2: Map detailed analysis results to multi-item format
-    const analyzedItems = clothingComponents.map((component, index) => {
-      console.log(`🔬 Processing component ${index + 1}: ${component.type}`);
+    // Step 2: Analyze each item in detail
+    const analyzedItems = [];
+    for (let i = 0; i < detectedItems.length; i++) {
+      const item = detectedItems[i];
+      console.log(`🔬 Analyzing item ${i + 1}: ${item.item_type}`);
       
-      return {
-        id: index + 1,
-        type: component.type || 'unknown',
-        confidence: component.confidence || detailedAnalysis.confidence || 0.8,
+      const detailedAnalysis = await analyzeIndividualItem(item, base64Image, mimeType);
+      
+      analyzedItems.push({
+        id: i + 1,
+        type: item.item_type,
+        confidence: item.confidence,
         boundingBox: {
-          left: component.bounding_box?.x_percent || 0,
-          top: component.bounding_box?.y_percent || 0,
-          width: component.bounding_box?.width_percent || 0,
-          height: component.bounding_box?.height_percent || 0
+          left: item.bounding_box.x_percent,
+          top: item.bounding_box.y_percent,
+          width: item.bounding_box.width_percent,
+          height: item.bounding_box.height_percent
         },
-        description: component.description || component.visual_description || '',
-        color: this.extractPrimaryColor(component),
-        brand: component.brand || 'Unknown',
-        material: this.extractPrimaryFabric(component),
-        embellishments: component.embellishments || [],
-        has_sequins: component.has_sequins || false,
-        has_beadwork: component.has_beadwork || false,
-        has_embroidery: component.has_embroidery || false,
-        has_metallic: component.has_metallic || false,
+        description: item.visual_description,
+        color: detailedAnalysis.color,
+        brand: 'Unknown',
+        material: detailedAnalysis.fabric,
+        embellishments: detailedAnalysis.embellishments || {},
+        has_sequins: detailedAnalysis.embellishments?.beadwork?.length > 0 || false,
+        has_beadwork: detailedAnalysis.embellishments?.beadwork?.length > 0 || false,
+        has_embroidery: detailedAnalysis.embellishments?.embroidery?.length > 0 || false,
+        has_metallic: detailedAnalysis.embellishments?.metallic_elements?.length > 0 || false,
         analysis: {
-          name: component.name || `${this.extractPrimaryColor(component)} ${component.type}`,
-          type: component.type,
+          name: `${detailedAnalysis.color} ${item.item_type}`,
+          type: item.item_type,
           colorAnalysis: {
-            dominantColors: [{ name: this.extractPrimaryColor(component), confidence: 0.9 }]
+            dominantColors: [{ name: detailedAnalysis.color, confidence: 0.9 }]
           },
           fabricAnalysis: {
-            weaveStructure: this.extractPrimaryFabric(component)
+            weaveStructure: detailedAnalysis.fabric
           },
           overallAssessment: {
-            tier: this.determineBrandTier(component)
+            tier: detailedAnalysis.brand_tier
           },
-          embellishments: component.embellishments || [],
-          fashionpedia_attributes: component.fashionpedia_attributes || []
+          embellishments: detailedAnalysis.embellishments || {}
         }
-      };
-    });
+      });
+    }
 
     return {
       success: true,
       items: analyzedItems,
-      confidence: detailedAnalysis.confidence,
-      embellishment_summary: result.embellishment_summary || null,
-      fashionpedia_summary: result.fashionpedia_summary || null
+      confidence: analyzedItems.reduce((sum, item) => sum + item.confidence, 0) / analyzedItems.length
     };
 
   } catch (error) {
@@ -295,13 +288,35 @@ Description: ${detectedItem.visual_description}
 
 EMBELLISHMENT DETECTION:
 Pay special attention to decorative elements and embellishments. Look for and describe:
-- Sequins, beads, pearls, crystals, rhinestones, studs, spangles
-- Embroidery, decorative stitching, appliqué, patches
-- Metallic elements, shiny surfaces, reflective materials, foil, lamé
-- Ruffles, pleats, fringe, tassels, bows, ribbons
-- Hardware details, buttons, zippers, buckles, clasps
-- Surface treatments, textures, embossed, perforated
-- Any other decorative or embellished features
+
+SEQUINS AND BEADWORK (HIGH PRIORITY):
+- Sequins, sequined, beaded, beads, pearls, crystals, rhinestones, studs, spangles, paillettes
+- Bugle beads, seed beads, rocailles, crystal beads, pearl beads, glass beads, plastic beads, metal beads
+- Look for: small reflective discs, metallic dots, shiny circular elements, glittery surfaces
+- Specify: size (small, medium, large), density (sparse, moderate, dense), attachment method, color, material
+
+EMBROIDERY AND STITCHING:
+- Embroidery, embroidered, decorative stitching, appliqué, patches, hand-stitched details
+- Cross-stitch, satin stitch, chain stitch, backstitch, running stitch, decorative stitching
+- Specify: stitch type, thread material, pattern complexity, hand vs machine work
+
+METALLIC ELEMENTS:
+- Metallic, shiny, reflective, foil, lamé, mirror, chrome, platinum, gold, silver, bronze
+- Look for: reflective surfaces, metallic finishes, shiny materials
+- Specify: finish type, shine level, reflective properties
+
+TEXTURAL EMBELLISHMENTS:
+- Ruffles, pleats, fringe, tassels, bows, ribbons, fabric flowers, pom-poms, tassels
+- Ruffled, pleated, gathered, shirred, smocked, tucked, draped, layered
+- Specify: texture type, placement, construction method
+
+HARDWARE AND FUNCTIONAL:
+- Buttons, zippers, buckles, clasps, rivets, grommets, eyelets, studs, spikes, chains, rings, loops
+- Specify: material, finish, placement, functionality
+
+SURFACE TREATMENTS:
+- Textures, embossed, perforated, laser-cut, sueded, brushed, napped, fuzzy, furry
+- Specify: finish type, texture, visual effect
 
 For each decorative element found, specify:
 1. Type and specific terminology
@@ -309,12 +324,24 @@ For each decorative element found, specify:
 3. Material and construction
 4. Visual impact and luxury level
 
+DETAILED DESCRIPTIONS:
+Use specific terminology like:
+- "Aran" for cable knit textures
+- "French cuffs" for sleeve details
+- "cable knit" for patterns
+- "ribbed collar", "wider collars", "high ribbed turtleneck", "notch lapels"
+- "wide leg", "straight leg", "tailored", "relaxed fit"
+- "heavy gauge", "intricate cable knit patterns"
+- "French seams", "flat-fell seams", "pinked seams", "serged seams"
+- "pick stitching", "topstitching", "understitching", "edge stitching"
+- Color details like "wash", "marl", "tone", "oatmeal marl", "ecru", "burgundy"
+
 Provide analysis in JSON format:
 {
-  "color": "primary color name",
-  "fabric": "fabric type",
-  "pattern": "pattern type",
-  "style": "specific style details",
+  "color": "primary color name (be specific: navy blue, ecru, oatmeal marl, burgundy, whiter white)",
+  "fabric": "fabric type (be specific: wool, cotton, silk, cashmere, etc.)",
+  "pattern": "pattern type (cable knit, ribbed, striped, etc.)",
+  "style": "specific style details (Double-breasted wool blazer, not just blazer)",
   "embellishments": {
     "metallic_elements": ["list of metallic/reflective elements"],
     "beadwork": ["list of beadwork and sequins"],
