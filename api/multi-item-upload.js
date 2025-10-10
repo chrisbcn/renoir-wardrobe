@@ -196,29 +196,60 @@ async function detectAndAnalyzeItems(base64Image, mimeType) {
 }
 
 async function detectClothingItems(base64Image, mimeType = 'image/jpeg') {
-  const prompt = `Analyze this image and detect ALL individual clothing items with special attention to decorative elements and embellishments. For each item found, provide:
+  const prompt = `Analyze this image and detect ALL individual clothing items with EXTREME attention to detail and decorative elements. For each item found, provide:
 
 1. Item type (shirt, pants, dress, jacket, shoes, accessories, etc.)
 2. Approximate bounding box coordinates (as percentages of image dimensions)
 3. Confidence level (0-1)
-4. Visual description including any decorative elements
+4. HIGHLY DETAILED visual description including ALL decorative elements, textures, patterns, and construction details
 
-SPECIAL FOCUS ON EMBELLISHMENTS:
-Look for and describe any decorative elements such as:
-- Sequins, beads, pearls, crystals, rhinestones
-- Embroidery, decorative stitching, appliqué
-- Metallic elements, shiny surfaces, reflective materials
-- Ruffles, pleats, fringe, tassels, bows
-- Hardware details, buttons, zippers, buckles
-- Surface treatments, textures, patterns
-- Any other decorative or embellished features
+DETAILED ANALYSIS REQUIREMENTS:
+For each clothing item, provide an extremely detailed description that includes:
+
+CONSTRUCTION & FIT:
+- Specific cut and silhouette (tailored, relaxed, fitted, oversized, cropped, etc.)
+- Neckline type (crew neck, V-neck, scoop neck, turtleneck, etc.)
+- Sleeve details (long sleeves, short sleeves, sleeveless, French cuffs, etc.)
+- Length and proportions (crop length, full length, high-waisted, etc.)
+- Closure details (buttons, zippers, ties, etc.)
+
+FABRIC & TEXTURE:
+- Fabric type and weight (wool, cotton, silk, cashmere, denim, etc.)
+- Texture details (cable knit, ribbed, smooth, textured, etc.)
+- Pattern specifics (stripes, checks, floral, geometric, etc.)
+- Finish and drape (matte, shiny, structured, flowing, etc.)
+
+COLOR & PATTERN ANALYSIS:
+- Exact color descriptions (navy blue, charcoal grey, ecru, etc.)
+- Pattern details (pinstripes, wide stripes, subtle texture, etc.)
+- Color variations and undertones
+- Pattern scale and repeat
+
+EMBELLISHMENTS & DECORATIVE ELEMENTS (HIGH PRIORITY):
+- Sequins, beads, pearls, crystals, rhinestones, studs, spangles, paillettes
+- Embroidery, decorative stitching, appliqué, patches, hand-stitched details
+- Metallic elements, shiny surfaces, reflective materials, foil, lamé
+- Ruffles, pleats, fringe, tassels, bows, ribbons, fabric flowers
+- Hardware details, buttons, zippers, buckles, clasps, rivets, grommets
+- Surface treatments, textures, embossed, perforated, laser-cut details
+
+SPECIFIC TERMINOLOGY:
+Use precise fashion terminology like:
+- "Aran" for cable knit textures
+- "French cuffs" for sleeve details
+- "cable knit" for patterns
+- "ribbed collar", "notch lapels", "peak lapels"
+- "wide leg", "straight leg", "tailored", "relaxed fit"
+- "heavy gauge", "intricate cable knit patterns"
+- "French seams", "flat-fell seams", "pinked seams"
+- "pick stitching", "topstitching", "understitching"
 
 Focus on detecting SEPARATE clothing items - if someone is wearing a full outfit, identify each piece individually.
 
 Respond with a JSON array in this exact format:
 [
   {
-    "item_type": "blazer",
+    "item_type": "vest",
     "bounding_box": {
       "x_percent": 15,
       "y_percent": 10,
@@ -226,11 +257,11 @@ Respond with a JSON array in this exact format:
       "height_percent": 45
     },
     "confidence": 0.92,
-    "visual_description": "Navy blue tailored blazer with lapels and sequined trim"
+    "visual_description": "Dark navy blue sleeveless V-neck vest with subtle vertical pinstripes, tailored fit, welt pockets, five-button front closure, fine-gauge knit fabric with textured stripe pattern, structured silhouette, worn over white collared shirt"
   }
 ]
 
-IMPORTANT: Respond ONLY with valid JSON. Do not include any other text.`;
+IMPORTANT: Be extremely detailed and specific in your descriptions. Include every visible detail that would help recreate the item accurately. Respond ONLY with valid JSON.`;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   
@@ -324,31 +355,59 @@ For each decorative element found, specify:
 3. Material and construction
 4. Visual impact and luxury level
 
-DETAILED DESCRIPTIONS:
-Use specific terminology like:
-- "Aran" for cable knit textures
-- "French cuffs" for sleeve details
-- "cable knit" for patterns
-- "ribbed collar", "wider collars", "high ribbed turtleneck", "notch lapels"
-- "wide leg", "straight leg", "tailored", "relaxed fit"
-- "heavy gauge", "intricate cable knit patterns"
+DETAILED DESCRIPTIONS - BE EXTREMELY VERBOSE:
+Use specific terminology and provide comprehensive details:
+
+CONSTRUCTION DETAILS:
+- "Aran" for cable knit textures, "French cuffs" for sleeve details, "cable knit" for patterns
+- "ribbed collar", "wider collars", "high ribbed turtleneck", "notch lapels", "peak lapels"
+- "wide leg", "straight leg", "tailored", "relaxed fit", "cropped", "oversized"
+- "heavy gauge", "intricate cable knit patterns", "fine-gauge knit"
 - "French seams", "flat-fell seams", "pinked seams", "serged seams"
 - "pick stitching", "topstitching", "understitching", "edge stitching"
-- Color details like "wash", "marl", "tone", "oatmeal marl", "ecru", "burgundy"
 
-Provide analysis in JSON format:
+FABRIC & TEXTURE SPECIFICS:
+- Fabric weight and drape (lightweight, medium weight, heavyweight)
+- Texture details (smooth, ribbed, textured, cable knit, basketweave, slub-knit)
+- Pattern specifics (pinstripes, wide stripes, subtle texture, geometric patterns)
+- Finish details (matte, shiny, structured, flowing, crisp, soft)
+
+COLOR & PATTERN ANALYSIS:
+- Exact color names (navy blue, charcoal grey, ecru, oatmeal marl, burgundy, whiter white)
+- Pattern details (vertical pinstripes, horizontal stripes, subtle texture, etc.)
+- Color variations and undertones
+- Pattern scale and repeat frequency
+
+EMBELLISHMENT SPECIFICS:
+- Size and density of decorative elements
+- Attachment methods and construction
+- Material composition of embellishments
+- Placement and distribution patterns
+- Visual impact and luxury level
+
+SILHOUETTE & FIT DETAILS:
+- Overall silhouette (A-line, fitted, boxy, oversized, etc.)
+- Specific fit characteristics (tailored, relaxed, slim, regular, etc.)
+- Proportions and length details
+- Layering and styling context
+
+Provide analysis in JSON format with EXTREMELY DETAILED descriptions:
 {
   "color": "primary color name (be specific: navy blue, ecru, oatmeal marl, burgundy, whiter white)",
-  "fabric": "fabric type (be specific: wool, cotton, silk, cashmere, etc.)",
-  "pattern": "pattern type (cable knit, ribbed, striped, etc.)",
-  "style": "specific style details (Double-breasted wool blazer, not just blazer)",
+  "fabric": "fabric type and weight (be specific: fine-gauge wool knit, medium-weight cotton, lightweight silk, etc.)",
+  "pattern": "pattern type and details (vertical pinstripes, cable knit, ribbed texture, subtle stripe pattern, etc.)",
+  "style": "specific style details (Double-breasted wool blazer with notch lapels, not just blazer)",
+  "construction": "construction details (tailored fit, French seams, pick stitching, welt pockets, etc.)",
+  "texture": "texture specifics (smooth, ribbed, textured, cable knit, basketweave, slub-knit, etc.)",
+  "fit": "fit characteristics (tailored, relaxed, fitted, oversized, cropped, etc.)",
+  "silhouette": "silhouette details (A-line, fitted, boxy, structured, flowing, etc.)",
   "embellishments": {
-    "metallic_elements": ["list of metallic/reflective elements"],
-    "beadwork": ["list of beadwork and sequins"],
-    "embroidery": ["list of embroidery and decorative stitching"],
-    "textural": ["list of textural embellishments"],
-    "hardware": ["list of hardware and functional decorations"],
-    "surface_treatments": ["list of surface treatments"]
+    "metallic_elements": ["list of metallic/reflective elements with specific details"],
+    "beadwork": ["list of beadwork and sequins with size, density, and placement details"],
+    "embroidery": ["list of embroidery and decorative stitching with stitch types and patterns"],
+    "textural": ["list of textural embellishments with specific texture types"],
+    "hardware": ["list of hardware and functional decorations with materials and finishes"],
+    "surface_treatments": ["list of surface treatments with specific finish types"]
   },
   "formality_level": "casual, smart casual, business formal, black-tie",
   "season": ["applicable seasons"],
