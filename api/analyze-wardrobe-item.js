@@ -85,36 +85,21 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
 
   console.log('🖼️ Analyzing wardrobe image...');
   
-  // Convert base64 to File-like object for the analyzer
-  const imageFile = base64ToFile(imageData.base64, imageData.filename, imageData.type);
+  const imageDataUrl = `data:${imageData.type || 'image/jpeg'};base64,${imageData.base64}`;
   
-  // Use enhanced image analyzer
-  // Fix for api/analyze-wardrobe-item.js - Update the analyzeWardrobeImage function
-
-/**
- * Analyze wardrobe item image - CORRECTED VERSION
- */
-async function analyzeWardrobeImage(imageData, userId, brandId) {
-  if (!imageData) {
-    throw new Error('No image data provided');
-  }
-
-  console.log('🖼️ Analyzing wardrobe image...');
+  // Use the correct method name
+  const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');
   
-  // Create data URL from base64 for the analyzer
-  const imageDataUrl = `data:${imageData.type || 'image/jpeg'};base64,${imageData.base64}`;  
-  // FIXED: Use the correct method name from your actual file
-  const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');  
-  // FIXED: Map the actual response structure from your analyzer
+  // Map the actual response structure
   return {
     type: 'wardrobe_image',
     items: [{
-      name: analysis.itemName || analysis.summary || 'Fashion Item',
+      name: analysis.summary || analysis.itemName || 'Fashion Item',
       category: analysis.category || 'Unknown',
       colors: analysis.colors || [],
       fabrics: analysis.fabrics || [],
       patterns: analysis.patterns || [],
-      styles: [], // Add if available in analysis
+      styles: analysis.styles || [],
       brand: analysis.brand || 'Unknown',
       confidence_score: analysis.confidence || 0.8,
       needs_review: analysis.needsReview || false,
@@ -133,13 +118,6 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
       overall_confidence: analysis.confidence || 0.8
     }
   };
-}
-
-// ALSO FIX: The base64ToFile function if needed
-function base64ToFile(base64String, filename, mimeType) {
-  // Simple version that works with your analyzer
-  return `data:${mimeType};base64,${base64String}`;
-}
 }
 
 /**
