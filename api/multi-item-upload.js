@@ -143,6 +143,9 @@ async function detectAndAnalyzeItems(base64Image, mimeType) {
       
       const detailedAnalysis = await analyzeIndividualItem(item, base64Image, mimeType);
       
+      // Debug logging to see what we're getting
+      console.log(`🔍 DEBUG - Item ${i + 1} analysis:`, JSON.stringify(detailedAnalysis, null, 2));
+      
       analyzedItems.push({
         id: i + 1,
         type: item.item_type,
@@ -153,7 +156,7 @@ async function detectAndAnalyzeItems(base64Image, mimeType) {
           width: item.bounding_box.width_percent,
           height: item.bounding_box.height_percent
         },
-        description: `${detailedAnalysis.style || item.item_type} in ${detailedAnalysis.fabric || 'unknown material'}. ${detailedAnalysis.construction || ''} ${detailedAnalysis.texture || ''} ${detailedAnalysis.fit || ''} ${detailedAnalysis.silhouette || ''}`.trim(),
+        description: buildDetailedDescription(detailedAnalysis, item.item_type),
         color: detailedAnalysis.color,
         brand: 'Unknown',
         material: detailedAnalysis.fabric,
@@ -471,6 +474,69 @@ Respond ONLY with valid JSON.`;
     console.warn('Failed to parse analysis:', error);
     return getBasicItemDetails(detectedItem);
   }
+}
+
+function buildDetailedDescription(analysis, itemType) {
+  const parts = [];
+  
+  // Start with style or item type
+  if (analysis.style && analysis.style !== itemType) {
+    parts.push(analysis.style);
+  } else {
+    parts.push(itemType);
+  }
+  
+  // Add fabric/material
+  if (analysis.fabric && analysis.fabric !== 'Unknown') {
+    parts.push(`in ${analysis.fabric}`);
+  }
+  
+  // Add construction details
+  if (analysis.construction) {
+    parts.push(analysis.construction);
+  }
+  
+  // Add texture details
+  if (analysis.texture) {
+    parts.push(analysis.texture);
+  }
+  
+  // Add fit details
+  if (analysis.fit) {
+    parts.push(analysis.fit);
+  }
+  
+  // Add silhouette details
+  if (analysis.silhouette) {
+    parts.push(analysis.silhouette);
+  }
+  
+  // Add pattern details
+  if (analysis.pattern && analysis.pattern !== 'solid') {
+    parts.push(`with ${analysis.pattern} pattern`);
+  }
+  
+  // Add embellishment details
+  if (analysis.embellishments) {
+    const embellishmentTypes = [];
+    if (analysis.embellishments.metallic_elements?.length > 0) {
+      embellishmentTypes.push('metallic details');
+    }
+    if (analysis.embellishments.beadwork?.length > 0) {
+      embellishmentTypes.push('beadwork');
+    }
+    if (analysis.embellishments.embroidery?.length > 0) {
+      embellishmentTypes.push('embroidery');
+    }
+    if (analysis.embellishments.textural?.length > 0) {
+      embellishmentTypes.push('textural embellishments');
+    }
+    if (embellishmentTypes.length > 0) {
+      parts.push(`featuring ${embellishmentTypes.join(', ')}`);
+    }
+  }
+  
+  return parts.join(' ').trim();
 }
 
 function getBasicItemDetails(detectedItem) {
