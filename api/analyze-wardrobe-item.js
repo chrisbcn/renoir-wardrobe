@@ -102,11 +102,9 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
   console.log('🖼️ Analyzing wardrobe image...');
   
   // Create data URL from base64 for the analyzer
-  const imageDataUrl = `data:${imageData.type || 'image/jpeg'};base64,${imageData.base64}`;
-  
+  const imageDataUrl = `data:${imageData.type || 'image/jpeg'};base64,${imageData.base64}`;  
   // FIXED: Use the correct method name from your actual file
-  const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');
-  
+  const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');  
   // FIXED: Map the actual response structure from your analyzer
   return {
     type: 'wardrobe_image',
