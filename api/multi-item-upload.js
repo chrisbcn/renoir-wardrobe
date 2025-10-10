@@ -1,5 +1,6 @@
-// api/multi-item-upload.js - Updated with MIME type support and enhanced embellishment detection
+// api/multi-item-upload.js - Updated with MIME type support and enhanced detailed analysis
 import { createClient } from '@supabase/supabase-js';
+import enhancedDetailedAnalyzer from '../src/lib/enhanced-detailed-analyzer.js';
 import crypto from 'crypto';
 
 const supabase = createClient(
@@ -129,59 +130,66 @@ async function createDetectionSession(userId, imageData, mimeType) {
 
 async function detectAndAnalyzeItems(base64Image, mimeType) {
   try {
-    console.log('🔍 Starting AI clothing detection with enhanced embellishment detection...');
+    console.log('🔍 Starting AI clothing detection with enhanced detailed analysis...');
     
-    // Step 1: Use Claude to detect individual items
-    const detectedItems = await detectClothingItems(base64Image, mimeType);
+    // Step 1: Use enhanced detailed analyzer for comprehensive analysis
+    const imageDataUrl = `data:${mimeType};base64,${base64Image}`;
+    const detailedAnalysis = await enhancedDetailedAnalyzer.analyzeImage(imageDataUrl, 'multi-item');
     
-    // Step 2: Analyze each item in detail
-    const analyzedItems = [];
-    for (let i = 0; i < detectedItems.length; i++) {
-      const item = detectedItems[i];
-      console.log(`🔬 Analyzing item ${i + 1}: ${item.item_type}`);
+    if (!detailedAnalysis.success) {
+      throw new Error(`Enhanced detailed analysis failed: ${detailedAnalysis.error}`);
+    }
+
+    const result = detailedAnalysis.result;
+    const clothingComponents = result.clothing_components || [];
+    
+    // Step 2: Map detailed analysis results to multi-item format
+    const analyzedItems = clothingComponents.map((component, index) => {
+      console.log(`🔬 Processing component ${index + 1}: ${component.type}`);
       
-      const detailedAnalysis = await analyzeIndividualItem(item, base64Image, mimeType);
-      
-      analyzedItems.push({
-        id: i + 1,
-        type: item.item_type,
-        confidence: item.confidence,
+      return {
+        id: index + 1,
+        type: component.type || 'unknown',
+        confidence: component.confidence || detailedAnalysis.confidence || 0.8,
         boundingBox: {
-          left: item.bounding_box.x_percent,
-          top: item.bounding_box.y_percent,
-          width: item.bounding_box.width_percent,
-          height: item.bounding_box.height_percent
+          left: component.bounding_box?.x_percent || 0,
+          top: component.bounding_box?.y_percent || 0,
+          width: component.bounding_box?.width_percent || 0,
+          height: component.bounding_box?.height_percent || 0
         },
-        description: item.visual_description,
-        color: detailedAnalysis.color,
-        brand: 'Unknown',
-        material: detailedAnalysis.fabric,
-        embellishments: detailedAnalysis.embellishments || {},
-        has_sequins: detailedAnalysis.embellishments?.beadwork?.length > 0 || false,
-        has_beadwork: detailedAnalysis.embellishments?.beadwork?.length > 0 || false,
-        has_embroidery: detailedAnalysis.embellishments?.embroidery?.length > 0 || false,
-        has_metallic: detailedAnalysis.embellishments?.metallic_elements?.length > 0 || false,
+        description: component.description || component.visual_description || '',
+        color: this.extractPrimaryColor(component),
+        brand: component.brand || 'Unknown',
+        material: this.extractPrimaryFabric(component),
+        embellishments: component.embellishments || [],
+        has_sequins: component.has_sequins || false,
+        has_beadwork: component.has_beadwork || false,
+        has_embroidery: component.has_embroidery || false,
+        has_metallic: component.has_metallic || false,
         analysis: {
-          name: `${detailedAnalysis.color} ${item.item_type}`,
-          type: item.item_type,
+          name: component.name || `${this.extractPrimaryColor(component)} ${component.type}`,
+          type: component.type,
           colorAnalysis: {
-            dominantColors: [{ name: detailedAnalysis.color, confidence: 0.9 }]
+            dominantColors: [{ name: this.extractPrimaryColor(component), confidence: 0.9 }]
           },
           fabricAnalysis: {
-            weaveStructure: detailedAnalysis.fabric
+            weaveStructure: this.extractPrimaryFabric(component)
           },
           overallAssessment: {
-            tier: detailedAnalysis.brand_tier
+            tier: this.determineBrandTier(component)
           },
-          embellishments: detailedAnalysis.embellishments || {}
+          embellishments: component.embellishments || [],
+          fashionpedia_attributes: component.fashionpedia_attributes || []
         }
-      });
-    }
+      };
+    });
 
     return {
       success: true,
       items: analyzedItems,
-      confidence: analyzedItems.reduce((sum, item) => sum + item.confidence, 0) / analyzedItems.length
+      confidence: detailedAnalysis.confidence,
+      embellishment_summary: result.embellishment_summary || null,
+      fashionpedia_summary: result.fashionpedia_summary || null
     };
 
   } catch (error) {
@@ -433,6 +441,54 @@ async function saveItemToDatabase(item, sessionId, userId) {
   }
 }
 
+// Helper functions for component data extraction
+function extractPrimaryColor(component) {
+  const description = component.description || '';
+  const attributes = component.attributes || [];
+  const text = `${description} ${attributes.join(' ')}`.toLowerCase();
+  
+  const colorTerms = ['black', 'white', 'navy', 'blue', 'red', 'pink', 'green', 'yellow', 'purple', 'orange', 'brown', 'tan', 'beige', 'cream', 'ivory', 'burgundy', 'maroon', 'teal', 'turquoise', 'gray', 'grey'];
+  
+  for (const color of colorTerms) {
+    if (text.includes(color)) {
+      return color;
+    }
+  }
+  
+  return 'unknown';
+}
+
+function extractPrimaryFabric(component) {
+  const description = component.description || '';
+  const attributes = component.attributes || [];
+  const text = `${description} ${attributes.join(' ')}`.toLowerCase();
+  
+  const fabricTerms = ['cotton', 'wool', 'silk', 'linen', 'cashmere', 'polyester', 'nylon', 'rayon', 'viscose', 'spandex', 'leather', 'suede', 'denim', 'tweed', 'velvet', 'corduroy', 'chiffon', 'satin'];
+  
+  for (const fabric of fabricTerms) {
+    if (text.includes(fabric)) {
+      return fabric;
+    }
+  }
+  
+  return 'unknown';
+}
+
+function determineBrandTier(component) {
+  const description = component.description || '';
+  const brand = component.brand || '';
+  const text = `${description} ${brand}`.toLowerCase();
+  
+  if (text.includes('luxury') || text.includes('designer') || text.includes('couture')) {
+    return 'luxury';
+  } else if (text.includes('premium') || text.includes('high-end')) {
+    return 'premium';
+  } else if (text.includes('contemporary') || text.includes('mid-range')) {
+    return 'contemporary';
+  } else {
+    return 'unknown';
+  }
+}
 
 async function updateDetectionSession(sessionId, results) {
   await supabase
