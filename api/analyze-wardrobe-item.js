@@ -102,7 +102,7 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
   return {
     type: 'wardrobe_image',
     items: [{
-      name: result.summary?.itemName || 'Fashion Item',
+      name: result.summary || 'Fashion Item',
       category: result.category || 'unknown',
       colors: result.colors || [],
       fabrics: result.fabrics || [],

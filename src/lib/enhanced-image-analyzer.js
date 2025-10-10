@@ -225,6 +225,9 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
     const stylingContext = this.extractStylingContext(luxuryAnalysisText);
     const investmentAssessment = this.extractInvestmentAssessment(luxuryAnalysisText);
 
+    // Extract item name from detailed analysis
+    const itemName = this.extractItemName(luxuryAnalysisText);
+
     // Generate concise summary
     const summary = this.generateSummary({
       category: category.name,
@@ -234,7 +237,8 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
       priceRange,
       formalityLevel,
       luxuryIndicators,
-      confidence
+      confidence,
+      itemName
     });
 
     return {
@@ -315,30 +319,59 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
     return { name: 'unknown', confidence: 0.1 };
   }
 
+  extractItemName(text) {
+    // Look for specific item descriptions in the detailed analysis
+    const itemPatterns = [
+      /(?:Item|Item name)[:\s]+([^,\n]+)/gi,
+      /(?:Double-breasted|Single-breasted|Buttoned|Zippered|Hooded|Cropped|Oversized|Fitted|Tailored|Relaxed|Structured|Flowing)\s+([^,\n]+?)(?:\s+with|\s+featuring|\s+in|\s+made|\s+constructed|$)/gi,
+      /(?:blazer|jacket|coat|vest|cardigan|dress|skirt|pants|jeans|shorts|shirt|blouse|top|sweater|hoodie|suit|jumpsuit|romper|kimono)(?:\s+[^,\n]+)?/gi
+    ];
+
+    for (const pattern of itemPatterns) {
+      const matches = text.match(pattern);
+      if (matches && matches.length > 0) {
+        const itemName = matches[0].replace(/(?:Item|Item name)[:\s]+/gi, '').trim();
+        if (itemName && itemName.length > 3) {
+          return itemName;
+        }
+      }
+    }
+
+    return null;
+  }
+
   extractColors(text) {
     const foundColors = [];
     const lowerText = text.toLowerCase();
     
-    this.colors.forEach(color => {
-      if (lowerText.includes(color.toLowerCase())) {
-        foundColors.push(color);
-      }
-    });
-
-    // Also look for color descriptions
-    const colorPatterns = [
-      /(\w+)\s+(?:blue|red|green|yellow|purple|orange|pink|brown)/gi,
-      /(?:dark|light|deep|bright|pale|rich)\s+(\w+)/gi
+    // First, try to extract specific color descriptions from the detailed analysis
+    const specificColorPatterns = [
+      /(?:sophisticated|rich|deep|vibrant|muted|subtle)\s+([^,\n]+?)\s+(?:tone|shade|color|hue)/gi,
+      /(?:sage|olive|burgundy|navy|charcoal|ecru|oatmeal|cream|ivory|beige|tan|khaki|mauve|taupe|rust|terracotta|forest|emerald|teal|turquoise|royal|powder|sky|midnight|jet|pearl|champagne|gold|silver|bronze|copper|platinum)/gi,
+      /(?:color|shade|tone|hue)[:\s]+([^,\n]+)/gi,
+      /(?:primary|main|dominant)\s+color[:\s]+([^,\n]+)/gi
     ];
 
-    colorPatterns.forEach(pattern => {
-      const matches = text.matchAll(pattern);
-      for (const match of matches) {
-        if (match[1] && !foundColors.includes(match[1])) {
-          foundColors.push(match[1].toLowerCase());
-        }
+    specificColorPatterns.forEach(pattern => {
+      const matches = text.match(pattern);
+      if (matches) {
+        matches.forEach(match => {
+          const color = match.replace(/(?:sophisticated|rich|deep|vibrant|muted|subtle|color|shade|tone|hue)[:\s]+/gi, '').trim();
+          if (color && color.length > 2 && !foundColors.includes(color)) {
+            foundColors.push(color);
+          }
+        });
       }
     });
+
+    // If no specific colors found, fall back to generic color detection
+    if (foundColors.length === 0) {
+      this.colors.forEach(color => {
+        if (lowerText.includes(color.toLowerCase())) {
+          foundColors.push(color);
+        }
+      });
+    }
 
     return foundColors.length > 0 ? foundColors : ['unknown'];
   }
@@ -347,11 +380,34 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
     const foundFabrics = [];
     const lowerText = text.toLowerCase();
     
-    this.fabrics.forEach(fabric => {
-      if (lowerText.includes(fabric.toLowerCase())) {
-        foundFabrics.push(fabric);
+    // First, try to extract specific fabric descriptions from the detailed analysis
+    const specificFabricPatterns = [
+      /(?:high-quality|premium|luxury|fine|soft|smooth|textured|structured|flowing|draping)\s+([^,\n]+?)\s+(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)/gi,
+      /(?:leather|wool|cotton|silk|cashmere|linen|denim|tweed|velvet|corduroy|chiffon|satin|polyester|nylon|rayon|viscose|spandex|suede)(?:\s+[^,\n]+)?/gi,
+      /(?:material|fabric|textile)[:\s]+([^,\n]+)/gi,
+      /(?:primary|main|dominant)\s+(?:material|fabric)[:\s]+([^,\n]+)/gi
+    ];
+
+    specificFabricPatterns.forEach(pattern => {
+      const matches = text.match(pattern);
+      if (matches) {
+        matches.forEach(match => {
+          const fabric = match.replace(/(?:high-quality|premium|luxury|fine|soft|smooth|textured|structured|flowing|draping|material|fabric|textile)[:\s]+/gi, '').trim();
+          if (fabric && fabric.length > 2 && !foundFabrics.includes(fabric)) {
+            foundFabrics.push(fabric);
+          }
+        });
       }
     });
+
+    // If no specific fabrics found, fall back to generic fabric detection
+    if (foundFabrics.length === 0) {
+      this.fabrics.forEach(fabric => {
+        if (lowerText.includes(fabric.toLowerCase())) {
+          foundFabrics.push(fabric);
+        }
+      });
+    }
 
     return foundFabrics.length > 0 ? foundFabrics : ['unknown'];
   }
@@ -479,19 +535,24 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
     return Math.min(confidence, 0.95);
   }
 
-  generateSummary({ category, colors, fabrics, qualityTier, priceRange, formalityLevel, luxuryIndicators, confidence }) {
+  generateSummary({ category, colors, fabrics, qualityTier, priceRange, formalityLevel, luxuryIndicators, confidence, itemName }) {
     let summary = '';
     
-    // Item description
-    const colorStr = colors.length > 0 && colors[0] !== 'unknown' ? colors.slice(0, 2).join(' and ') : '';
-    const fabricStr = fabrics.length > 0 && fabrics[0] !== 'unknown' ? fabrics.slice(0, 2).join(' and ') : '';
-    
-    if (category !== 'unknown') {
-      summary = category.charAt(0).toUpperCase() + category.slice(1);
-      if (colorStr) summary = `${colorStr} ${summary}`;
-      if (fabricStr) summary += ` in ${fabricStr}`;
+    // Use extracted item name if available, otherwise build from components
+    if (itemName) {
+      summary = itemName;
     } else {
-      summary = 'Fashion item';
+      // Item description
+      const colorStr = colors.length > 0 && colors[0] !== 'unknown' ? colors.slice(0, 2).join(' and ') : '';
+      const fabricStr = fabrics.length > 0 && fabrics[0] !== 'unknown' ? fabrics.slice(0, 2).join(' and ') : '';
+      
+      if (category !== 'unknown') {
+        summary = category.charAt(0).toUpperCase() + category.slice(1);
+        if (colorStr) summary = `${colorStr} ${summary}`;
+        if (fabricStr) summary += ` in ${fabricStr}`;
+      } else {
+        summary = 'Fashion item';
+      }
     }
     
     // Quality and price
