@@ -189,12 +189,22 @@ async function detectAndAnalyzeItems(base64Image, mimeType) {
 }
 
 async function detectClothingItems(base64Image, mimeType = 'image/jpeg') {
-  const prompt = `Analyze this image and detect ALL individual clothing items. For each item found, provide:
+  const prompt = `Analyze this image and detect ALL individual clothing items with special attention to decorative elements and embellishments. For each item found, provide:
 
 1. Item type (shirt, pants, dress, jacket, shoes, accessories, etc.)
 2. Approximate bounding box coordinates (as percentages of image dimensions)
 3. Confidence level (0-1)
-4. Visual description
+4. Visual description including any decorative elements
+
+SPECIAL FOCUS ON EMBELLISHMENTS:
+Look for and describe any decorative elements such as:
+- Sequins, beads, pearls, crystals, rhinestones
+- Embroidery, decorative stitching, appliqué
+- Metallic elements, shiny surfaces, reflective materials
+- Ruffles, pleats, fringe, tassels, bows
+- Hardware details, buttons, zippers, buckles
+- Surface treatments, textures, patterns
+- Any other decorative or embellished features
 
 Focus on detecting SEPARATE clothing items - if someone is wearing a full outfit, identify each piece individually.
 
@@ -209,7 +219,7 @@ Respond with a JSON array in this exact format:
       "height_percent": 45
     },
     "confidence": 0.92,
-    "visual_description": "Navy blue tailored blazer with lapels"
+    "visual_description": "Navy blue tailored blazer with lapels and sequined trim"
   }
 ]
 
@@ -265,9 +275,25 @@ IMPORTANT: Respond ONLY with valid JSON. Do not include any other text.`;
 }
 
 async function analyzeIndividualItem(detectedItem, base64Image, mimeType = 'image/jpeg') {
-  const analysisPrompt = `Analyze this specific clothing item: ${detectedItem.item_type}
+  const analysisPrompt = `Analyze this specific clothing item with special focus on decorative elements and embellishments: ${detectedItem.item_type}
 
 Description: ${detectedItem.visual_description}
+
+EMBELLISHMENT DETECTION:
+Pay special attention to decorative elements and embellishments. Look for and describe:
+- Sequins, beads, pearls, crystals, rhinestones, studs, spangles
+- Embroidery, decorative stitching, appliqué, patches
+- Metallic elements, shiny surfaces, reflective materials, foil, lamé
+- Ruffles, pleats, fringe, tassels, bows, ribbons
+- Hardware details, buttons, zippers, buckles, clasps
+- Surface treatments, textures, embossed, perforated
+- Any other decorative or embellished features
+
+For each decorative element found, specify:
+1. Type and specific terminology
+2. Location on garment
+3. Material and construction
+4. Visual impact and luxury level
 
 Provide analysis in JSON format:
 {
@@ -275,6 +301,14 @@ Provide analysis in JSON format:
   "fabric": "fabric type",
   "pattern": "pattern type",
   "style": "specific style details",
+  "embellishments": {
+    "metallic_elements": ["list of metallic/reflective elements"],
+    "beadwork": ["list of beadwork and sequins"],
+    "embroidery": ["list of embroidery and decorative stitching"],
+    "textural": ["list of textural embellishments"],
+    "hardware": ["list of hardware and functional decorations"],
+    "surface_treatments": ["list of surface treatments"]
+  },
   "formality_level": "casual, smart casual, business formal, black-tie",
   "season": ["applicable seasons"],
   "price_range": "estimated price range",

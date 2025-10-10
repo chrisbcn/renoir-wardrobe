@@ -3,6 +3,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import enhancedImageAnalyzer from '../src/lib/enhanced-image-analyzer.js';
+import componentFocusedAnalyzer from '../src/lib/component-focused-analyzer.js';
+import agentOrchestrator from '../src/lib/agent-orchestrator.js';
 import receiptAnalyzer from '../src/lib/receipt-analyzer.js';
 
 // Initialize Supabase
@@ -83,40 +85,72 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
     throw new Error('No image data provided');
   }
 
-  console.log('🖼️ Analyzing wardrobe image...');
+  console.log('🖼️ Analyzing wardrobe image with agentic approach...');
   
   const imageDataUrl = `data:${imageData.type || 'image/jpeg'};base64,${imageData.base64}`;
   
-  // Use the correct method name
-  const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');
+  // Use the agentic orchestrator for enhanced embellishment detection
+  const analysis = await agentOrchestrator.analyzeImage(imageDataUrl, 'wardrobe');
   
-  // Map the enhanced analyzer response structure correctly
+  if (!analysis.success) {
+    throw new Error(analysis.error || 'Analysis failed');
+  }
+
+  const result = analysis.result;
+  
+  // Map the component-focused analyzer response structure
   return {
     type: 'wardrobe_image',
-    items: [{
-      name: analysis.summary || 'Fashion Item',
-      category: analysis.category || 'unknown',
-      colors: analysis.colors || [],
-      fabrics: analysis.fabrics || [],
-      patterns: analysis.patterns || [],
-      styles: analysis.stylingContext || [],
-      brand: 'Unknown', // Enhanced analyzer doesn't detect brands yet
+    items: result.clothing_components ? result.clothing_components.map(component => ({
+      name: component.name || component.type || 'Fashion Item',
+      category: component.type || 'unknown',
+      colors: extractColors(component),
+      fabrics: extractFabrics(component),
+      patterns: extractPatterns(component),
+      styles: extractStyles(component),
+      brand: component.brand || 'Unknown',
       confidence_score: analysis.confidence || 0.8,
       needs_review: analysis.needsReview || false,
-      details: analysis.detailedAnalysis || '',
+      details: component.description || '',
+      embellishments: component.embellishments || [],
+      has_sequins: component.has_sequins || false,
+      has_beadwork: component.has_beadwork || false,
+      has_embroidery: component.has_embroidery || false,
+      has_metallic: component.has_metallic || false,
       source: 'wardrobe_image',
-      brand_tier: analysis.qualityTier || 'unknown',
-      price_range: analysis.priceRange || 'Unknown'
+      brand_tier: determineBrandTier(component),
+      price_range: estimatePriceRange(component)
+    })) : [{
+      name: 'Fashion Item',
+      category: 'unknown',
+      colors: [],
+      fabrics: [],
+      patterns: [],
+      styles: [],
+      brand: 'Unknown',
+      confidence_score: analysis.confidence || 0.8,
+      needs_review: analysis.needsReview || false,
+      details: '',
+      embellishments: [],
+      has_sequins: false,
+      has_beadwork: false,
+      has_embroidery: false,
+      has_metallic: false,
+      source: 'wardrobe_image',
+      brand_tier: 'unknown',
+      price_range: 'Unknown'
     }],
     metadata: {
       analysisType: analysis.analysisType,
       timestamp: analysis.timestamp,
-      confidence: analysis.confidence
+      confidence: analysis.confidence,
+      embellishment_summary: result.embellishment_summary || null
     },
     summary: {
-      total_items: 1,
-      high_confidence_items: analysis.confidence >= 0.75 ? 1 : 0,
-      overall_confidence: analysis.confidence
+      total_items: result.clothing_components ? result.clothing_components.length : 1,
+      high_confidence_items: analysis.confidence >= 0.75 ? (result.clothing_components ? result.clothing_components.length : 1) : 0,
+      overall_confidence: analysis.confidence,
+      embellishment_detected: result.embellishment_summary ? result.embellishment_summary.total_embellishments > 0 : false
     }
   };
 }
@@ -217,8 +251,103 @@ async function saveAnalysisResults(analysisResult, userId, brandId, analysisType
 }
 
 /**
- * Helper functions
+ * Helper functions for component-focused analysis
  */
+
+// Extract colors from component
+function extractColors(component) {
+  const colors = [];
+  const text = `${component.description || ''} ${(component.attributes || []).join(' ')}`.toLowerCase();
+  
+  const colorTerms = ['black', 'white', 'navy', 'blue', 'red', 'pink', 'green', 'yellow', 'purple', 'orange', 'brown', 'tan', 'beige', 'cream', 'ivory', 'burgundy', 'maroon', 'teal', 'turquoise', 'gray', 'grey'];
+  
+  colorTerms.forEach(color => {
+    if (text.includes(color)) {
+      colors.push(color);
+    }
+  });
+  
+  return colors.length > 0 ? colors : ['unknown'];
+}
+
+// Extract fabrics from component
+function extractFabrics(component) {
+  const fabrics = [];
+  const text = `${component.description || ''} ${(component.attributes || []).join(' ')}`.toLowerCase();
+  
+  const fabricTerms = ['cotton', 'wool', 'silk', 'linen', 'cashmere', 'polyester', 'nylon', 'rayon', 'viscose', 'spandex', 'leather', 'suede', 'denim', 'tweed', 'velvet', 'corduroy', 'chiffon', 'satin'];
+  
+  fabricTerms.forEach(fabric => {
+    if (text.includes(fabric)) {
+      fabrics.push(fabric);
+    }
+  });
+  
+  return fabrics.length > 0 ? fabrics : ['unknown'];
+}
+
+// Extract patterns from component
+function extractPatterns(component) {
+  const patterns = [];
+  const text = `${component.description || ''} ${(component.attributes || []).join(' ')}`.toLowerCase();
+  
+  const patternTerms = ['solid', 'striped', 'checkered', 'plaid', 'polka dot', 'floral', 'geometric', 'abstract', 'cable knit', 'ribbed'];
+  
+  patternTerms.forEach(pattern => {
+    if (text.includes(pattern)) {
+      patterns.push(pattern);
+    }
+  });
+  
+  return patterns.length > 0 ? patterns : ['solid'];
+}
+
+// Extract styles from component
+function extractStyles(component) {
+  const styles = [];
+  const text = `${component.description || ''} ${(component.attributes || []).join(' ')}`.toLowerCase();
+  
+  const styleTerms = ['casual', 'formal', 'business', 'elegant', 'vintage', 'modern', 'classic', 'trendy', 'tailored', 'relaxed'];
+  
+  styleTerms.forEach(style => {
+    if (text.includes(style)) {
+      styles.push(style);
+    }
+  });
+  
+  return styles.length > 0 ? styles : ['casual'];
+}
+
+// Determine brand tier based on component
+function determineBrandTier(component) {
+  const text = `${component.description || ''} ${(component.brand || '')} ${(component.attributes || []).join(' ')}`.toLowerCase();
+  
+  if (text.includes('luxury') || text.includes('designer') || text.includes('couture')) {
+    return 'luxury';
+  } else if (text.includes('premium') || text.includes('high-end')) {
+    return 'premium';
+  } else if (text.includes('contemporary') || text.includes('mid-range')) {
+    return 'contemporary';
+  } else {
+    return 'unknown';
+  }
+}
+
+// Estimate price range based on component
+function estimatePriceRange(component) {
+  const text = `${component.description || ''} ${(component.attributes || []).join(' ')}`.toLowerCase();
+  
+  if (text.includes('luxury') || text.includes('designer') || text.includes('couture')) {
+    return '$500+';
+  } else if (text.includes('premium') || text.includes('high-end')) {
+    return '$200-500';
+  } else if (text.includes('contemporary') || text.includes('mid-range')) {
+    return '$50-200';
+  } else {
+    return 'Unknown';
+  }
+}
+
 // FIXED: base64ToFile function for api/analyze-wardrobe-item.js
 // Replace the existing base64ToFile function with this:
 
