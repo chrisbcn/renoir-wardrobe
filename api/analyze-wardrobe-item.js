@@ -249,8 +249,10 @@ async function saveAnalysisResults(analysisResult, userId, brandId, analysisType
 /**
  * Helper functions
  */
+// FIXED: base64ToFile function for api/analyze-wardrobe-item.js
+// Replace the existing base64ToFile function with this:
+
 function base64ToFile(base64String, filename, mimeType) {
-  // Convert base64 to blob then to File-like object
   const byteCharacters = atob(base64String);
   const byteNumbers = new Array(byteCharacters.length);
   
@@ -261,13 +263,29 @@ function base64ToFile(base64String, filename, mimeType) {
   const byteArray = new Uint8Array(byteNumbers);
   const blob = new Blob([byteArray], { type: mimeType });
   
-  // Add File-like properties
-  blob.name = filename;
-  blob.lastModified = Date.now();
-  blob.size = byteArray.length;
-  blob.type = mimeType;
+  // FIX: Don't try to set read-only properties
+  // Create a File-like object that extends the blob
+  const fileObj = Object.create(blob);
   
-  return blob;
+  // Add File-like properties as non-writable properties
+  Object.defineProperty(fileObj, 'name', {
+    value: filename,
+    writable: false,
+    enumerable: true,
+    configurable: true
+  });
+  
+  Object.defineProperty(fileObj, 'lastModified', {
+    value: Date.now(),
+    writable: false,
+    enumerable: true,
+    configurable: true
+  });
+  
+  // Note: size is already available from the blob and is read-only
+  // type is already available from the blob
+  
+  return fileObj;
 }
 
 function generateItemName(analysis) {
