@@ -351,6 +351,10 @@ function App() {
   // Wardrobe upload handler (simplified)
  // REPLACE ONLY the handleWardrobeUpload function in your App.js with this:
 
+// FRONTEND FIX: Update the wardrobe upload functions to use the correct API endpoint
+
+// Replace the handleWardrobeUpload function in src/App.js with this:
+
 const handleWardrobeUpload = async (e) => {
   const files = Array.from(e.target.files);
   if (!files.length) return;
@@ -376,20 +380,17 @@ const handleWardrobeUpload = async (e) => {
       fileName: first.validation.fileName
     });
     
-    // If ALL files are invalid, stop here
     if (validFiles.length === 0) {
       e.target.value = '';
       return;
     }
     
-    // Otherwise continue with valid files only
     alert(`Skipping ${invalidFiles.length} unsupported file(s). Processing ${validFiles.length} valid files.`);
   }
 
   setIsUploading(true);
   setUploadProgress(0);
   
-  // Continue with valid files only
   const filesToProcess = validFiles.map(item => item.file);
 
   const placeholders = filesToProcess.map((file, index) => ({
@@ -409,36 +410,37 @@ const handleWardrobeUpload = async (e) => {
     setUploadProgress(Math.round(((i + 1) / filesToProcess.length) * 100));
     
     setUploadingItems(prev => prev.map((item, index) => 
-      index === i ? 
-        { ...item, loadingMessage: 'AI analyzing construction & authenticity...' } : item
+      index === i ? { 
+        ...item, 
+        loadingMessage: 'Analyzing luxury details...' 
+      } : item
     ));
-    setCurrentAnalysisStep(`Analyzing item ${i + 1} of ${filesToProcess.length}: ${file.name}`);
 
     try {
-      // Convert to base64
       const base64 = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => {
-          const base64String = reader.result.split(',')[1];
-          resolve(base64String);
+          const result = reader.result.split(',')[1];
+          resolve(result);
         };
         reader.readAsDataURL(file);
       });
 
       setUploadingItems(prev => prev.map((item, index) => 
-        index === i ? 
-          { ...item, loadingMessage: 'AI analyzing construction & authenticity...' } : item
+        index === i ? { 
+          ...item, 
+          loadingMessage: 'AI analyzing construction & authenticity...' 
+        } : item
       ));
 
-      // FIXED: Call the correct API endpoint with correct parameters
+      // FIXED: Use the correct API endpoint and format
       const response = await fetch('/api/analyze-wardrobe-item', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          analysis_type: 'wardrobe_image',  // FIXED: Required field
-          user_id: 'default_user',          // FIXED: Required field
-          brand_id: null,                   // Optional
-          image_data: {                     // FIXED: Correct structure
+          analysis_type: 'wardrobe_image',
+          user_id: 'default_user',
+          image_data: {
             base64: base64,
             filename: file.name,
             type: file.type
@@ -452,65 +454,151 @@ const handleWardrobeUpload = async (e) => {
       }
 
       const result = await response.json();
-      
-      if (result.error) {
-        throw new Error(result.error);
+
+      if (result.success && result.result?.items?.length > 0) {
+        const analysisItem = result.result.items[0];
+        
+        const newItem = {
+          id: Date.now() + Math.random(),
+          imageUrl: `data:image/jpeg;base64,${base64}`,
+          name: analysisItem.name || `Item ${i + 1}`,
+          source: 'uploaded',
+          analysis: {
+            name: analysisItem.name,
+            type: analysisItem.category,
+            colors: analysisItem.colors,
+            fabrics: analysisItem.fabrics,
+            patterns: analysisItem.patterns,
+            styles: analysisItem.styles,
+            confidence: analysisItem.confidence_score,
+            details: analysisItem.details,
+            // Map the detailed analysis for display
+            overallAssessment: {
+              tier: analysisItem.details?.qualityTier || 'unknown'
+            },
+            fabricAnalysis: {
+              colors: analysisItem.colors,
+              weaveStructure: analysisItem.fabrics?.[0] || 'unknown'
+            }
+          }
+        };
+
+        newItems.push(newItem);
+        
+        // Save to database
+        await saveToDatabase(newItem.analysis, base64, 'wardrobe');
+        
+      } else {
+        throw new Error(result.error || 'Analysis failed');
       }
 
-      // FIXED: Extract analysis from the correct response structure
-      const analysis = result.result?.items?.[0] || result.analysis;
-      
-      if (!analysis) {
-        throw new Error('No analysis data received');
-      }
-
-      // Create wardrobe item with analysis
-      const item = {
-        id: Date.now() + Math.random(),
-        imageUrl: `data:image/jpeg;base64,${base64}`,
-        name: analysis.name || `${analysis.category || 'Item'} ${i + 1}`,
-        source: 'uploaded',
-        analysis: {
-          // Map the response to expected structure
-          type: analysis.category,
-          name: analysis.name,
-          brand: analysis.brand || 'Unknown',
-          qualityScore: Math.round((analysis.confidence_score || 0) * 100),
-          tier: analysis.brand_tier || 'Unknown',
-          estimatedValue: analysis.price_range || 'Unknown',
-          authenticityConfidence: analysis.confidence_score >= 0.8 ? 'high' : 'medium',
-          condition: 'excellent',
-          summary: `${analysis.category || 'Item'}`,
-          fabricAnalysis: {
-            colors: analysis.colors || [],
-            materials: analysis.fabrics || []
-          },
-          constructionSignatures: analysis.details || {},
-          brandIdentifiers: { brand: analysis.brand },
-          qualityIndicators: { tier: analysis.brand_tier }
-        }
-      };
-
-      newItems.push(item);
-
-      // Remove processed placeholder
+      // Remove this item from uploading state
       setUploadingItems(prev => prev.filter((_, index) => index !== i));
-      
+
     } catch (error) {
       console.error(`Failed to analyze ${file.name}:`, error);
       alert(`Failed to analyze ${file.name}: ${error.message}`);
-      
-      // Remove failed placeholder
       setUploadingItems(prev => prev.filter((_, index) => index !== i));
     }
   }
-  
+
   // Add new items to wardrobe
   setWardrobe(prev => [...prev, ...newItems]);
   setIsUploading(false);
   setUploadingItems([]);
-  setCurrentAnalysisStep('');
+  setUploadProgress(0);
   e.target.value = null;
+};
+
+// Also update the analyzeSingleItem function to use the new API:
+
+const analyzeSingleItem = async (item) => {
+  if (analyzingItems.has(item.id)) {
+    return;
+  }
+
+  setAnalyzingItems(prev => new Set([...prev, item.id]));
+
+  try {
+    let base64;
+    if (item.imageUrl.startsWith('data:')) {
+      base64 = item.imageUrl.split(',')[1];
+    } else {
+      const response = await fetch(item.imageUrl);
+      const blob = await response.blob();
+      base64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve(reader.result.split(',')[1]);
+        };
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    // FIXED: Use the correct API endpoint and format
+    const analysisResponse = await fetch('/api/analyze-wardrobe-item', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        analysis_type: 'wardrobe_image',
+        user_id: 'default_user',
+        image_data: {
+          base64: base64,
+          filename: item.name || 'item.jpg',
+          type: 'image/jpeg'
+        }
+      })
+    });
+
+    const result = await analysisResponse.json();
+    
+    if (result.success && result.result?.items?.length > 0) {
+      const analysisItem = result.result.items[0];
+      
+      const analysis = {
+        name: analysisItem.name,
+        type: analysisItem.category,
+        colors: analysisItem.colors,
+        fabrics: analysisItem.fabrics,
+        patterns: analysisItem.patterns,
+        styles: analysisItem.styles,
+        confidence: analysisItem.confidence_score,
+        details: analysisItem.details,
+        overallAssessment: {
+          tier: analysisItem.details?.qualityTier || 'unknown'
+        },
+        fabricAnalysis: {
+          colors: analysisItem.colors,
+          weaveStructure: analysisItem.fabrics?.[0] || 'unknown'
+        }
+      };
+
+      // Update the item with analysis
+      setWardrobe(prev => prev.map(w => 
+        w.id === item.id ? { 
+          ...w, 
+          analysis, 
+          name: analysis.name || analysis.type || w.name,
+          needsAnalysis: false 
+        } : w
+      ));
+      
+      // Save to database
+      await saveToDatabase(analysis, base64, 'wardrobe', item.databaseId);
+      
+    } else {
+      throw new Error(result.error || 'Analysis failed');
+    }
+  } catch (error) {
+    console.error(`Failed to analyze item ${item.id}:`, error);
+    alert(`Failed to analyze item: ${error.message}`);
+  } finally {
+    setAnalyzingItems(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(item.id);
+      return newSet;
+    });
+  }
 };
 
   return (
