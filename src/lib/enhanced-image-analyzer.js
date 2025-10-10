@@ -210,8 +210,6 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
 
     // Validate and enhance with Fashionpedia categories
     const category = this.validateCategory(structured.category);
-    const colors = this.extractColors(luxuryAnalysisText);
-    const fabrics = this.extractFabrics(luxuryAnalysisText);
     const patterns = this.extractPatterns(luxuryAnalysisText);
 
     // Calculate confidence based on detailed analysis quality
@@ -253,8 +251,8 @@ Use precise Fashionpedia terminology throughout your analysis. Provide detailed,
       // Add structured Fashionpedia data
       category: category.name,
       categoryConfidence: category.confidence,
-      colors,
-      fabrics,
+      colors: keyDetails.colors,
+      fabrics: keyDetails.fabrics,
       patterns,
       
       // Extract key luxury indicators
