@@ -474,12 +474,16 @@ const handleWardrobeUpload = async (e) => {
             details: analysisItem.details,
             // Map the detailed analysis for display - FIXED
             overallAssessment: {
-              tier: analysisItem.brand_tier || 'unknown'
+              tier: analysisItem.brand_tier || 'unknown',
+              score: Math.round((analysisItem.confidence_score || 0.8) * 10) // Convert confidence to 1-10 scale
             },
             fabricAnalysis: {
               colors: analysisItem.colors,
               weaveStructure: analysisItem.fabrics?.[0] || 'unknown'
-            }
+            },
+            // Add additional fields for better display
+            color: analysisItem.colors?.[0] || 'unknown',
+            material: analysisItem.fabrics?.[0] || 'unknown'
           }
         };
 
@@ -565,12 +569,16 @@ const analyzeSingleItem = async (item) => {
         confidence: analysisItem.confidence_score,
         details: analysisItem.details,
         overallAssessment: {
-          tier: analysisItem.brand_tier || 'unknown'
+          tier: analysisItem.brand_tier || 'unknown',
+          score: Math.round((analysisItem.confidence_score || 0.8) * 10) // Convert confidence to 1-10 scale
         },
         fabricAnalysis: {
           colors: analysisItem.colors,
           weaveStructure: analysisItem.fabrics?.[0] || 'unknown'
-        }
+        },
+        // Add additional fields for better display
+        color: analysisItem.colors?.[0] || 'unknown',
+        material: analysisItem.fabrics?.[0] || 'unknown'
       };
 
       // Update the item with analysis
@@ -1057,7 +1065,7 @@ const analyzeSingleItem = async (item) => {
                         <h3 className="font-semibold mb-2">Item Details</h3>
                         <div className="space-y-2 text-sm">
                           <p><span className="font-medium">Type:</span> {selectedItem.analysis.type}</p>
-                          {selectedItem.analysis.brand && (
+                          {selectedItem.analysis.brand && selectedItem.analysis.brand !== 'Unknown' && (
                             <p><span className="font-medium">Brand:</span> {selectedItem.analysis.brand}</p>
                           )}
                           {selectedItem.analysis.color && (
@@ -1065,6 +1073,12 @@ const analyzeSingleItem = async (item) => {
                           )}
                           {selectedItem.analysis.material && (
                             <p><span className="font-medium">Material:</span> {selectedItem.analysis.material}</p>
+                          )}
+                          {selectedItem.analysis.colors && selectedItem.analysis.colors.length > 1 && (
+                            <p><span className="font-medium">All Colors:</span> {selectedItem.analysis.colors.join(', ')}</p>
+                          )}
+                          {selectedItem.analysis.fabrics && selectedItem.analysis.fabrics.length > 1 && (
+                            <p><span className="font-medium">All Materials:</span> {selectedItem.analysis.fabrics.join(', ')}</p>
                           )}
                         </div>
                       </div>
@@ -1075,6 +1089,15 @@ const analyzeSingleItem = async (item) => {
                           <div className="space-y-2 text-sm">
                             <p><span className="font-medium">Tier:</span> {selectedItem.analysis.overallAssessment.tier}</p>
                             <p><span className="font-medium">Score:</span> {selectedItem.analysis.overallAssessment.score}/10</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedItem.analysis.details && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Detailed Analysis</h3>
+                          <div className="text-sm text-gray-700 max-h-64 overflow-y-auto bg-gray-50 p-3 rounded border">
+                            <pre className="whitespace-pre-wrap font-sans">{selectedItem.analysis.details}</pre>
                           </div>
                         </div>
                       )}
