@@ -1,10 +1,14 @@
 // src/lib/enhanced-image-analyzer.js
-// FIXED VERSION: Correct API key reference and enhanced luxury analysis
+// ENHANCED VERSION: Fashionpedia vocabulary integration for embellishment detection
+
+import FashionpediaVocabulary from './fashionpedia-vocabulary.js';
 
 class EnhancedImageAnalyzer {
   constructor() {
-    // Your original detailed luxury fashion analysis prompt:
-    this.luxuryAnalysisPrompt = `Analyze this luxury fashion item with expert-level detail. Provide comprehensive analysis covering:
+    this.fashionpediaVocabulary = FashionpediaVocabulary;
+    
+    // Enhanced luxury fashion analysis prompt with explicit embellishment detection
+    this.luxuryAnalysisPrompt = `Analyze this luxury fashion item with expert-level detail using Fashionpedia vocabulary. Provide comprehensive analysis covering:
 
 BASIC IDENTIFICATION:
 - Item name (be specific: "Double-breasted wool blazer" not just "jacket")
@@ -17,6 +21,44 @@ DETAILED CONSTRUCTION & MATERIALS:
 - Hardware details (buttons, zippers, buckles - material and finish)
 - Lining type and quality
 - Seaming and finishing techniques
+
+EMBELLISHMENT & DECORATIVE ELEMENTS ANALYSIS:
+Pay special attention to decorative elements and embellishments. Look for:
+
+METALLIC & REFLECTIVE ELEMENTS:
+- metallic, gold, silver, bronze, copper, chrome, platinum, shiny, reflective, mirror, foil, lamé, sequined, beaded
+- Note: metallic finish, shine level, reflective properties
+
+BEADWORK & SEQUINS:
+- sequins, sequined, beaded, beads, pearls, crystals, rhinestones, studs, spangles, paillettes, bugle beads, seed beads, rocailles, crystal beads, pearl beads, glass beads, plastic beads, metal beads
+- Note: size, density, attachment method, color, material
+
+EMBROIDERY & DECORATIVE STITCHING:
+- embroidered, embroidery, stitched, hand-stitched, machine-stitched, cross-stitch, satin stitch, chain stitch, backstitch, running stitch, decorative stitching, appliqué, applied, patched, quilted
+- Note: stitch type, thread material, pattern complexity, hand vs machine work
+
+TEXTURAL EMBELLISHMENTS:
+- ruffled, ruffles, pleated, pleats, gathered, shirred, smocked, tucked, draped, layered, fringed, fringe, tasseled, tassels, pom-poms, pompons, fabric flowers, bow, bows, ribbon, ribbons
+- Note: texture type, placement, construction method
+
+HARDWARE & FUNCTIONAL DECORATIONS:
+- buttons, buttoned, zippered, zipper, buckled, buckles, snaps, hooks, clasps, fasteners, rivets, grommets, eyelets, studs, spikes, chains, rings, loops, D-rings, O-rings
+- Note: material, finish, placement, functionality
+
+PATTERN-BASED DECORATIONS:
+- printed, printed pattern, screen printed, heat transfer, sublimated, dyed, tie-dyed, batik, resist dyed, ombré, gradient, faded, distressed, worn, vintage, retro, antique
+- Note: pattern type, application method, coverage
+
+SURFACE TREATMENTS:
+- glossy, matte, sueded, brushed, napped, fuzzy, furry, leather, suede, patent leather, textured, embossed, debossed, perforated, laser-cut, burned, charred, weathered
+- Note: finish type, texture, visual effect
+
+For each decorative element found, specify:
+1. Type and specific terminology
+2. Location on garment
+3. Material and construction
+4. Visual impact and luxury level
+5. Brand or design signature indicators
 
 DESIGN & STYLING:
 - Silhouette and fit characteristics
@@ -45,7 +87,15 @@ MARKET CONTEXT:
 - Occasion appropriateness
 - Seasonality
 
-Provide detailed, specific observations rather than generic descriptions.`;
+COMPONENT-LEVEL ANALYSIS:
+Break down the garment into specific components:
+1. Base garment structure
+2. Decorative elements and embellishments
+3. Hardware and functional elements
+4. Surface treatments and finishes
+5. Construction details and quality markers
+
+Use precise Fashionpedia terminology throughout your analysis. Provide detailed, specific observations rather than generic descriptions.`;
 
     // Fashionpedia categories for validation
     this.fashionpediaCategories = [
