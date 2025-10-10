@@ -472,9 +472,9 @@ const handleWardrobeUpload = async (e) => {
             styles: analysisItem.styles,
             confidence: analysisItem.confidence_score,
             details: analysisItem.details,
-            // Map the detailed analysis for display
+            // Map the detailed analysis for display - FIXED
             overallAssessment: {
-              tier: analysisItem.details?.qualityTier || 'unknown'
+              tier: analysisItem.brand_tier || 'unknown'
             },
             fabricAnalysis: {
               colors: analysisItem.colors,
@@ -565,7 +565,7 @@ const analyzeSingleItem = async (item) => {
         confidence: analysisItem.confidence_score,
         details: analysisItem.details,
         overallAssessment: {
-          tier: analysisItem.details?.qualityTier || 'unknown'
+          tier: analysisItem.brand_tier || 'unknown'
         },
         fabricAnalysis: {
           colors: analysisItem.colors,
