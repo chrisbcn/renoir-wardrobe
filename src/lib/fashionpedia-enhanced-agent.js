@@ -26,12 +26,29 @@ You should identify:
 For the brand field, provide your best guess based on visible logos, distinctive design elements, or styling. If you cannot identify the brand with any confidence, provide an empty string.
 
 Pay special attention to decorative elements and embellishments using Fashionpedia's comprehensive vocabulary:
-- Sequins, beads, pearls, crystals, rhinestones, studs, spangles, paillettes, bugle beads, seed beads, rocailles
-- Embroidery, decorative stitching, appliqué, patches, hand-stitched details, cross-stitch, satin stitch, chain stitch
-- Metallic elements, shiny surfaces, reflective materials, foil, lamé, mirror, chrome, platinum
+
+SEQUINS AND BEADWORK (HIGH PRIORITY):
+- Sequins, sequined, beaded, beads, pearls, crystals, rhinestones, studs, spangles, paillettes
+- Bugle beads, seed beads, rocailles, crystal beads, pearl beads, glass beads, plastic beads, metal beads
+- Look for: small reflective discs, metallic dots, shiny circular elements, glittery surfaces
+
+EMBROIDERY AND STITCHING:
+- Embroidery, embroidered, decorative stitching, appliqué, patches, hand-stitched details
+- Cross-stitch, satin stitch, chain stitch, backstitch, running stitch, decorative stitching
+
+METALLIC ELEMENTS:
+- Metallic, shiny, reflective, foil, lamé, mirror, chrome, platinum, gold, silver, bronze
+- Look for: reflective surfaces, metallic finishes, shiny materials
+
+TEXTURAL EMBELLISHMENTS:
 - Ruffles, pleats, fringe, tassels, bows, ribbons, fabric flowers, pom-poms, tassels
-- Hardware details, buttons, zippers, buckles, clasps, rivets, grommets, eyelets, studs, spikes
-- Surface treatments, textures, embossed, perforated, laser-cut details, sueded, brushed, napped
+- Ruffled, pleated, gathered, shirred, smocked, tucked, draped, layered
+
+HARDWARE AND FUNCTIONAL:
+- Buttons, zippers, buckles, clasps, rivets, grommets, eyelets, studs, spikes, chains, rings, loops
+
+SURFACE TREATMENTS:
+- Textures, embossed, perforated, laser-cut, sueded, brushed, napped, fuzzy, furry
 
 For each decorative element found, specify:
 1. Type and specific Fashionpedia terminology
@@ -70,11 +87,26 @@ Provide a structured analysis including:
 Make sure you include specific names of descriptors like "Aran", "cable knit", "ribbed collar", "French cuffs", or types of material/color attributes like "wash", "marl", "tone", etc.
 
 For decorative elements, be very specific about:
-- Sequins: size, density, attachment method, color, material, Fashionpedia category
+
+SEQUINS (CRITICAL - Look carefully for these):
+- If you see small reflective discs, metallic dots, or shiny circular elements, call them "sequins" or "sequined"
+- Specify: size (small, medium, large), density (sparse, moderate, dense), attachment method, color, material
+- Look for: individual sequins, sequin patterns, sequin trim, sequin embellishments
+- Use terms: "sequins", "sequined", "spangles", "paillettes" - be explicit!
+
+BEADWORK:
 - Beads: type, size, pattern, attachment, material, Fashionpedia category
-- Embroidery: stitch type, thread material, pattern complexity, hand vs machine work, Fashionpedia category
-- Metallic elements: finish type, shine level, reflective properties, Fashionpedia category
-- Textural details: ruffles, pleats, fringe, tassels, bows, ribbons, Fashionpedia category
+- Look for: individual beads, beaded patterns, beaded trim, beaded embellishments
+
+EMBROIDERY:
+- Stitch type, thread material, pattern complexity, hand vs machine work, Fashionpedia category
+
+METALLIC ELEMENTS:
+- Finish type, shine level, reflective properties, Fashionpedia category
+- Look for: metallic finishes, shiny surfaces, reflective materials
+
+TEXTURAL DETAILS:
+- Ruffles, pleats, fringe, tassels, bows, ribbons, Fashionpedia category
 
 For brands, make your best guess based on visible logos, distinctive designs, or styling characteristics. If you cannot identify a brand with reasonable confidence, use an empty string.
 
