@@ -142,6 +142,7 @@ async function detectAndAnalyzeItems(base64Image, mimeType) {
       console.log(`🔬 Analyzing item ${i + 1}: ${item.item_type}`);
       
       const detailedAnalysis = await analyzeIndividualItem(item, base64Image, mimeType);
+      console.log(`✅ COMPLETED analysis for item ${i + 1}: ${item.item_type}`);
       
       // Debug logging to see what we're getting
       console.log(`🔍 DEBUG - Item ${i + 1} analysis:`, JSON.stringify(detailedAnalysis, null, 2));
@@ -316,6 +317,7 @@ IMPORTANT: Be extremely detailed and specific in your descriptions. Include ever
 }
 
 async function analyzeIndividualItem(detectedItem, base64Image, mimeType = 'image/jpeg') {
+  console.log('🚀 STARTING analyzeIndividualItem for:', detectedItem.item_type);
   const analysisPrompt = `Analyze this specific clothing item with special focus on decorative elements and embellishments: ${detectedItem.item_type}
 
 Description: ${detectedItem.visual_description}
