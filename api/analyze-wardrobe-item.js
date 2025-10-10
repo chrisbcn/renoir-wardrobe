@@ -89,30 +89,59 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
   const imageFile = base64ToFile(imageData.base64, imageData.filename, imageData.type);
   
   // Use enhanced image analyzer
-  const analysis = await enhancedImageAnalyzer.analyzeWardrobeImage(imageFile, userId, brandId);
+  // Fix for api/analyze-wardrobe-item.js - Update the analyzeWardrobeImage function
+
+/**
+ * Analyze wardrobe item image - CORRECTED VERSION
+ */
+async function analyzeWardrobeImage(imageData, userId, brandId) {
+  if (!imageData) {
+    throw new Error('No image data provided');
+  }
+
+  console.log('🖼️ Analyzing wardrobe image...');
   
+  // Create data URL from base64 for the analyzer
+  const imageDataUrl = `data:${imageData.type || 'image/jpeg'};base64,${imageData.base64}`;
+  
+  // FIXED: Use the correct method name from your actual file
+  const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');
+  
+  // FIXED: Map the actual response structure from your analyzer
   return {
     type: 'wardrobe_image',
     items: [{
-      name: generateItemName(analysis.analysis),
-      category: analysis.analysis.category.name,
-      colors: analysis.analysis.attributes.colors,
-      fabrics: analysis.analysis.attributes.fabrics,
-      patterns: analysis.analysis.attributes.patterns,
-      styles: analysis.analysis.attributes.styles,
-      search_terms: analysis.analysis.search_terms,
-      confidence_score: analysis.analysis.confidence_score,
-      needs_review: analysis.analysis.needs_review,
-      details: analysis.analysis.attributes.details,
-      source: 'wardrobe_image'
+      name: analysis.itemName || analysis.summary || 'Fashion Item',
+      category: analysis.category || 'Unknown',
+      colors: analysis.colors || [],
+      fabrics: analysis.fabrics || [],
+      patterns: analysis.patterns || [],
+      styles: [], // Add if available in analysis
+      brand: analysis.brand || 'Unknown',
+      confidence_score: analysis.confidence || 0.8,
+      needs_review: analysis.needsReview || false,
+      details: analysis.detailedAnalysis || analysis,
+      source: 'wardrobe_image',
+      brand_tier: analysis.qualityTier || 'unknown',
+      price_range: analysis.priceRange || 'unknown'
     }],
-    metadata: analysis.metadata,
+    metadata: {
+      analysisType: analysis.analysisType,
+      timestamp: analysis.timestamp
+    },
     summary: {
       total_items: 1,
-      high_confidence_items: analysis.analysis.confidence_score >= 0.75 ? 1 : 0,
-      overall_confidence: analysis.analysis.confidence_score
+      high_confidence_items: (analysis.confidence || 0.8) >= 0.75 ? 1 : 0,
+      overall_confidence: analysis.confidence || 0.8
     }
   };
+}
+
+// ALSO FIX: The base64ToFile function if needed
+function base64ToFile(base64String, filename, mimeType) {
+  // Simple version that works with your analyzer
+  return `data:${mimeType};base64,${base64String}`;
+}
 }
 
 /**
