@@ -484,6 +484,7 @@ Respond ONLY with valid JSON.`;
 }
 
 function buildDetailedDescription(analysis, itemType) {
+  console.log('🔍 Building description for', itemType, 'with analysis:', JSON.stringify(analysis, null, 2));
   const parts = [];
   
   // Start with style or item type
@@ -543,7 +544,9 @@ function buildDetailedDescription(analysis, itemType) {
     }
   }
   
-  return parts.join(' ').trim();
+  const description = parts.join(' ').trim();
+  console.log('🔍 Built description for', itemType, ':', description);
+  return description;
 }
 
 function getBasicItemDetails(detectedItem) {
