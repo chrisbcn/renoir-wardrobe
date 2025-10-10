@@ -153,7 +153,7 @@ async function detectAndAnalyzeItems(base64Image, mimeType) {
           width: item.bounding_box.width_percent,
           height: item.bounding_box.height_percent
         },
-        description: item.visual_description,
+        description: `${detailedAnalysis.style || item.item_type} in ${detailedAnalysis.fabric || 'unknown material'}. ${detailedAnalysis.construction || ''} ${detailedAnalysis.texture || ''} ${detailedAnalysis.fit || ''} ${detailedAnalysis.silhouette || ''}`.trim(),
         color: detailedAnalysis.color,
         brand: 'Unknown',
         material: detailedAnalysis.fabric,
