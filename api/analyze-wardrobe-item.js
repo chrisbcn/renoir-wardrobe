@@ -120,39 +120,52 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
   };
 }
 
-/**
- * Analyze receipt image
- */
-async function analyzeReceiptImage(imageData, userId, brandId) {
+// Replace the analyzeWardrobeImage function in api/analyze-wardrobe-item.js
+
+async function analyzeWardrobeImage(imageData, userId, brandId) {
   if (!imageData) {
     throw new Error('No image data provided');
   }
 
-  console.log('📄 Analyzing receipt image...');
+  console.log('🖼️ Analyzing wardrobe image...');
   
-  const imageFile = base64ToFile(imageData.base64, imageData.filename, imageData.type);
+  // FIXED: Pass base64 data directly to enhanced analyzer
+  const imageDataUrl = `data:${imageData.type};base64,${imageData.base64}`;
   
-  // Use receipt analyzer
-  const analysis = await receiptAnalyzer.analyzeReceipt(imageFile, 'image');
+  // FIXED: Use correct method name and pass correct parameters
+  const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');
   
+  // FIXED: Map the enhanced analyzer response correctly
   return {
-    type: 'receipt_image',
-    items: analysis.items.map(item => ({
-      name: item.description,
-      price: item.price,
-      currency: item.currency,
-      category: item.analysis.category.name,
-      colors: item.analysis.colors,
-      fabrics: item.analysis.fabrics,
-      brand: item.analysis.brand,
-      search_terms: item.analysis.search_terms,
-      confidence_score: item.analysis.confidence_score,
-      needs_review: item.analysis.needs_review,
-      source: 'receipt_image',
-      raw_line: item.raw_line
-    })),
-    receipt_metadata: analysis.receipt_metadata,
-    summary: analysis.summary
+    type: 'wardrobe_image',
+    items: [{
+      name: analysis.summary || 'Fashion Item',
+      category: analysis.category || 'unknown',                    // FIXED: Direct property access
+      colors: analysis.colors || [],                               // FIXED: Direct property access
+      fabrics: analysis.fabrics || [],                             // FIXED: Direct property access
+      patterns: analysis.patterns || [],                           // FIXED: Direct property access
+      styles: analysis.stylingContext || [],                       // FIXED: Map to correct field
+      search_terms: analysis.searchTerms || [],                    // FIXED: Correct property name
+      confidence_score: analysis.confidence || 0.8,                // FIXED: Direct property access
+      needs_review: analysis.needsReview || false,                 // FIXED: Direct property access
+      details: analysis.detailedAnalysis || '',                    // FIXED: The rich detailed analysis
+      source: 'wardrobe_image',
+      
+      // Additional fields for better UI display
+      brand: 'Unknown',  // Enhanced analyzer doesn't detect brands yet
+      brand_tier: analysis.qualityTier || 'unknown',               // FIXED: Map quality tier
+      price_range: analysis.priceRange || 'Unknown'                // FIXED: Map price range
+    }],
+    metadata: {
+      analysisType: analysis.analysisType,
+      timestamp: analysis.timestamp,
+      confidence: analysis.confidence
+    },
+    summary: {
+      total_items: 1,
+      high_confidence_items: analysis.confidence >= 0.75 ? 1 : 0,
+      overall_confidence: analysis.confidence
+    }
   };
 }
 
