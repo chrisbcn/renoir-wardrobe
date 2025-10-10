@@ -85,71 +85,52 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
     throw new Error('No image data provided');
   }
 
-  console.log('🖼️ Analyzing wardrobe image with agentic approach...');
+  console.log('🖼️ Analyzing wardrobe image with enhanced detailed analysis...');
   
   const imageDataUrl = `data:${imageData.type || 'image/jpeg'};base64,${imageData.base64}`;
   
-  // Use the agentic orchestrator for enhanced embellishment detection
-  const analysis = await agentOrchestrator.analyzeImage(imageDataUrl, 'wardrobe');
+  // Use the enhanced image analyzer for detailed analysis
+  const analysis = await enhancedImageAnalyzer.getLuxuryAnalysis(imageDataUrl);
   
   if (!analysis.success) {
     throw new Error(analysis.error || 'Analysis failed');
   }
 
-  const result = analysis.result;
+  const result = analysis;
   
-  // Map the component-focused analyzer response structure
+  // Map the enhanced image analyzer response structure
   return {
     type: 'wardrobe_image',
-    items: result.clothing_components ? result.clothing_components.map(component => ({
-      name: component.name || component.type || 'Fashion Item',
-      category: component.type || 'unknown',
-      colors: extractColors(component),
-      fabrics: extractFabrics(component),
-      patterns: extractPatterns(component),
-      styles: extractStyles(component),
-      brand: component.brand || 'Unknown',
-      confidence_score: analysis.confidence || 0.8,
-      needs_review: analysis.needsReview || false,
-      details: component.description || '',
-      embellishments: component.embellishments || [],
-      has_sequins: component.has_sequins || false,
-      has_beadwork: component.has_beadwork || false,
-      has_embroidery: component.has_embroidery || false,
-      has_metallic: component.has_metallic || false,
-      source: 'wardrobe_image',
-      brand_tier: determineBrandTier(component),
-      price_range: estimatePriceRange(component)
-    })) : [{
-      name: 'Fashion Item',
-      category: 'unknown',
-      colors: [],
-      fabrics: [],
-      patterns: [],
-      styles: [],
+    items: [{
+      name: result.summary?.itemName || 'Fashion Item',
+      category: result.category || 'unknown',
+      colors: result.colors || [],
+      fabrics: result.fabrics || [],
+      patterns: result.patterns || [],
+      styles: result.styles || [],
       brand: 'Unknown',
-      confidence_score: analysis.confidence || 0.8,
-      needs_review: analysis.needsReview || false,
-      details: '',
-      embellishments: [],
-      has_sequins: false,
-      has_beadwork: false,
-      has_embroidery: false,
-      has_metallic: false,
+      confidence_score: result.confidence || 0.8,
+      needs_review: result.confidence < 0.7,
+      details: result.detailedAnalysis || '',
+      embellishments: result.embellishments || [],
+      has_sequins: result.embellishments?.some(e => e.toLowerCase().includes('sequin')) || false,
+      has_beadwork: result.embellishments?.some(e => e.toLowerCase().includes('bead')) || false,
+      has_embroidery: result.embellishments?.some(e => e.toLowerCase().includes('embroidery')) || false,
+      has_metallic: result.embellishments?.some(e => e.toLowerCase().includes('metallic')) || false,
       source: 'wardrobe_image',
-      brand_tier: 'unknown',
-      price_range: 'Unknown'
+      brand_tier: result.qualityTier || 'unknown',
+      price_range: result.priceRange || 'Unknown'
     }],
     metadata: {
-      analysisType: analysis.analysisType,
-      timestamp: analysis.timestamp,
-      confidence: analysis.confidence,
+      analysisType: 'wardrobe',
+      timestamp: new Date().toISOString(),
+      confidence: result.confidence,
       embellishment_summary: result.embellishment_summary || null
     },
     summary: {
-      total_items: result.clothing_components ? result.clothing_components.length : 1,
-      high_confidence_items: analysis.confidence >= 0.75 ? (result.clothing_components ? result.clothing_components.length : 1) : 0,
-      overall_confidence: analysis.confidence,
+      total_items: 1,
+      high_confidence_items: result.confidence >= 0.75 ? 1 : 0,
+      overall_confidence: result.confidence,
       embellishment_detected: result.embellishment_summary ? result.embellishment_summary.total_embellishments > 0 : false
     }
   };
