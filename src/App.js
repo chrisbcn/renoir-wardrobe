@@ -349,56 +349,169 @@ function App() {
   };
 
   // Wardrobe upload handler (simplified)
-  const handleWardrobeUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+ // REPLACE ONLY the handleWardrobeUpload function in your App.js with this:
 
-    setIsUploading(true);
-    setUploadProgress(0);
+const handleWardrobeUpload = async (e) => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+
+  // Validate all files first
+  const invalidFiles = [];
+  const validFiles = [];
+  
+  for (const file of files) {
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      invalidFiles.push({ file, validation });
+    } else {
+      validFiles.push({ file, validation });
+    }
+  }
+
+  // Show error for first invalid file
+  if (invalidFiles.length > 0) {
+    const first = invalidFiles[0];
+    setImageFormatError({
+      error: first.validation.error,
+      fileName: first.validation.fileName
+    });
+    
+    // If ALL files are invalid, stop here
+    if (validFiles.length === 0) {
+      e.target.value = '';
+      return;
+    }
+    
+    // Otherwise continue with valid files only
+    alert(`Skipping ${invalidFiles.length} unsupported file(s). Processing ${validFiles.length} valid files.`);
+  }
+
+  setIsUploading(true);
+  setUploadProgress(0);
+  
+  // Continue with valid files only
+  const filesToProcess = validFiles.map(item => item.file);
+
+  const placeholders = filesToProcess.map((file, index) => ({
+    id: `placeholder-${Date.now()}-${index}`,
+    imageUrl: URL.createObjectURL(file),
+    name: file.name,
+    isLoading: true,
+    loadingMessage: 'Preparing image...'
+  }));
+  
+  setUploadingItems(placeholders);
+  
+  const newItems = [];
+  
+  for (let i = 0; i < filesToProcess.length; i++) {
+    const file = filesToProcess[i];
+    setUploadProgress(Math.round(((i + 1) / filesToProcess.length) * 100));
+    
+    setUploadingItems(prev => prev.map((item, index) => 
+      index === i ? 
+        { ...item, loadingMessage: 'AI analyzing construction & authenticity...' } : item
+    ));
+    setCurrentAnalysisStep(`Analyzing item ${i + 1} of ${filesToProcess.length}: ${file.name}`);
 
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setUploadProgress(((i + 1) / files.length) * 100);
+      // Convert to base64
+      const base64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64String = reader.result.split(',')[1];
+          resolve(base64String);
+        };
+        reader.readAsDataURL(file);
+      });
 
-        const base64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result.split(',')[1]);
-          reader.readAsDataURL(file);
-        });
+      setUploadingItems(prev => prev.map((item, index) => 
+        index === i ? 
+          { ...item, loadingMessage: 'AI analyzing construction & authenticity...' } : item
+      ));
 
-        const response = await fetch('/api/analyze-wardrobe-item', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageData: base64 })
-        });
+      // FIXED: Call the correct API endpoint with correct parameters
+      const response = await fetch('/api/analyze-wardrobe-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysis_type: 'wardrobe_image',  // FIXED: Required field
+          user_id: 'default_user',          // FIXED: Required field
+          brand_id: null,                   // Optional
+          image_data: {                     // FIXED: Correct structure
+            base64: base64,
+            filename: file.name,
+            type: file.type
+          }
+        })
+      });
 
-        const analysis = await response.json();
-
-        if (analysis && !analysis.error) {
-          const databaseId = await saveToDatabase(analysis, base64, 'wardrobe');
-          
-          const wardrobeItem = {
-            id: `wardrobe_${Date.now()}_${i}`,
-            imageUrl: URL.createObjectURL(file),
-            name: analysis.name || analysis.type || file.name.split('.')[0],
-            analysis,
-            needsAnalysis: false,
-            databaseId
-          };
-
-          setWardrobe(prev => [wardrobeItem, ...prev]);
-        }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText}`);
       }
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      // FIXED: Extract analysis from the correct response structure
+      const analysis = result.result?.items?.[0] || result.analysis;
+      
+      if (!analysis) {
+        throw new Error('No analysis data received');
+      }
+
+      // Create wardrobe item with analysis
+      const item = {
+        id: Date.now() + Math.random(),
+        imageUrl: `data:image/jpeg;base64,${base64}`,
+        name: analysis.name || `${analysis.category || 'Item'} ${i + 1}`,
+        source: 'uploaded',
+        analysis: {
+          // Map the response to expected structure
+          type: analysis.category,
+          name: analysis.name,
+          brand: analysis.brand || 'Unknown',
+          qualityScore: Math.round((analysis.confidence_score || 0) * 100),
+          tier: analysis.brand_tier || 'Unknown',
+          estimatedValue: analysis.price_range || 'Unknown',
+          authenticityConfidence: analysis.confidence_score >= 0.8 ? 'high' : 'medium',
+          condition: 'excellent',
+          summary: `${analysis.category || 'Item'}`,
+          fabricAnalysis: {
+            colors: analysis.colors || [],
+            materials: analysis.fabrics || []
+          },
+          constructionSignatures: analysis.details || {},
+          brandIdentifiers: { brand: analysis.brand },
+          qualityIndicators: { tier: analysis.brand_tier }
+        }
+      };
+
+      newItems.push(item);
+
+      // Remove processed placeholder
+      setUploadingItems(prev => prev.filter((_, index) => index !== i));
+      
     } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Upload failed. Please try again.');
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      e.target.value = '';
+      console.error(`Failed to analyze ${file.name}:`, error);
+      alert(`Failed to analyze ${file.name}: ${error.message}`);
+      
+      // Remove failed placeholder
+      setUploadingItems(prev => prev.filter((_, index) => index !== i));
     }
-  };
+  }
+  
+  // Add new items to wardrobe
+  setWardrobe(prev => [...prev, ...newItems]);
+  setIsUploading(false);
+  setUploadingItems([]);
+  setCurrentAnalysisStep('');
+  e.target.value = null;
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
