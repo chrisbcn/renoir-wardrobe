@@ -458,20 +458,27 @@ Respond ONLY with valid JSON.`;
 
   if (data.error) {
     console.warn('Analysis API error:', data.error);
+    console.warn('Falling back to basic details for item:', detectedItem.item_type);
     return getBasicItemDetails(detectedItem);
   }
   
   if (!data.content || !data.content[0]) {
-    console.warn('Unexpected analysis response');
+    console.warn('Unexpected analysis response:', JSON.stringify(data, null, 2));
+    console.warn('Falling back to basic details for item:', detectedItem.item_type);
     return getBasicItemDetails(detectedItem);
   }
   
   try {
     const responseText = data.content[0].text;
+    console.log('Raw Claude response for', detectedItem.item_type, ':', responseText.substring(0, 200) + '...');
     const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    return JSON.parse(cleanedResponse);
+    const parsed = JSON.parse(cleanedResponse);
+    console.log('Successfully parsed analysis for', detectedItem.item_type, ':', JSON.stringify(parsed, null, 2));
+    return parsed;
   } catch (error) {
-    console.warn('Failed to parse analysis:', error);
+    console.warn('Failed to parse analysis for', detectedItem.item_type, ':', error);
+    console.warn('Raw response was:', data.content[0].text);
+    console.warn('Falling back to basic details for item:', detectedItem.item_type);
     return getBasicItemDetails(detectedItem);
   }
 }
