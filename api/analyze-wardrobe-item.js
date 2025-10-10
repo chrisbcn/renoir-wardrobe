@@ -90,71 +90,23 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
   // Use the correct method name
   const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');
   
-  // Map the actual response structure
-  return {
-    type: 'wardrobe_image',
-    items: [{
-      name: analysis.summary || analysis.itemName || 'Fashion Item',
-      category: analysis.category || 'Unknown',
-      colors: analysis.colors || [],
-      fabrics: analysis.fabrics || [],
-      patterns: analysis.patterns || [],
-      styles: analysis.styles || [],
-      brand: analysis.brand || 'Unknown',
-      confidence_score: analysis.confidence || 0.8,
-      needs_review: analysis.needsReview || false,
-      details: analysis.detailedAnalysis || analysis,
-      source: 'wardrobe_image',
-      brand_tier: analysis.qualityTier || 'unknown',
-      price_range: analysis.priceRange || 'unknown'
-    }],
-    metadata: {
-      analysisType: analysis.analysisType,
-      timestamp: analysis.timestamp
-    },
-    summary: {
-      total_items: 1,
-      high_confidence_items: (analysis.confidence || 0.8) >= 0.75 ? 1 : 0,
-      overall_confidence: analysis.confidence || 0.8
-    }
-  };
-}
-
-// Replace the analyzeWardrobeImage function in api/analyze-wardrobe-item.js
-
-async function analyzeWardrobeImage(imageData, userId, brandId) {
-  if (!imageData) {
-    throw new Error('No image data provided');
-  }
-
-  console.log('🖼️ Analyzing wardrobe image...');
-  
-  // FIXED: Pass base64 data directly to enhanced analyzer
-  const imageDataUrl = `data:${imageData.type};base64,${imageData.base64}`;
-  
-  // FIXED: Use correct method name and pass correct parameters
-  const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');
-  
-  // FIXED: Map the enhanced analyzer response correctly
+  // Map the enhanced analyzer response structure correctly
   return {
     type: 'wardrobe_image',
     items: [{
       name: analysis.summary || 'Fashion Item',
-      category: analysis.category || 'unknown',                    // FIXED: Direct property access
-      colors: analysis.colors || [],                               // FIXED: Direct property access
-      fabrics: analysis.fabrics || [],                             // FIXED: Direct property access
-      patterns: analysis.patterns || [],                           // FIXED: Direct property access
-      styles: analysis.stylingContext || [],                       // FIXED: Map to correct field
-      search_terms: analysis.searchTerms || [],                    // FIXED: Correct property name
-      confidence_score: analysis.confidence || 0.8,                // FIXED: Direct property access
-      needs_review: analysis.needsReview || false,                 // FIXED: Direct property access
-      details: analysis.detailedAnalysis || '',                    // FIXED: The rich detailed analysis
+      category: analysis.category || 'unknown',
+      colors: analysis.colors || [],
+      fabrics: analysis.fabrics || [],
+      patterns: analysis.patterns || [],
+      styles: analysis.stylingContext || [],
+      brand: 'Unknown', // Enhanced analyzer doesn't detect brands yet
+      confidence_score: analysis.confidence || 0.8,
+      needs_review: analysis.needsReview || false,
+      details: analysis.detailedAnalysis || '',
       source: 'wardrobe_image',
-      
-      // Additional fields for better UI display
-      brand: 'Unknown',  // Enhanced analyzer doesn't detect brands yet
-      brand_tier: analysis.qualityTier || 'unknown',               // FIXED: Map quality tier
-      price_range: analysis.priceRange || 'Unknown'                // FIXED: Map price range
+      brand_tier: analysis.qualityTier || 'unknown',
+      price_range: analysis.priceRange || 'Unknown'
     }],
     metadata: {
       analysisType: analysis.analysisType,
