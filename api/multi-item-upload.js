@@ -158,25 +158,25 @@ async function detectAndAnalyzeItems(base64Image, mimeType) {
           height: component.bounding_box?.height_percent || 0
         },
         description: component.description || component.visual_description || '',
-        color: this.extractPrimaryColor(component),
+        color: extractPrimaryColor(component),
         brand: component.brand || 'Unknown',
-        material: this.extractPrimaryFabric(component),
+        material: extractPrimaryFabric(component),
         embellishments: component.embellishments || [],
         has_sequins: component.has_sequins || false,
         has_beadwork: component.has_beadwork || false,
         has_embroidery: component.has_embroidery || false,
         has_metallic: component.has_metallic || false,
         analysis: {
-          name: component.name || `${this.extractPrimaryColor(component)} ${component.type}`,
+          name: component.name || `${extractPrimaryColor(component)} ${component.type}`,
           type: component.type,
           colorAnalysis: {
-            dominantColors: [{ name: this.extractPrimaryColor(component), confidence: 0.9 }]
+            dominantColors: [{ name: extractPrimaryColor(component), confidence: 0.9 }]
           },
           fabricAnalysis: {
-            weaveStructure: this.extractPrimaryFabric(component)
+            weaveStructure: extractPrimaryFabric(component)
           },
           overallAssessment: {
-            tier: this.determineBrandTier(component)
+            tier: determineBrandTier(component)
           },
           embellishments: component.embellishments || [],
           fashionpedia_attributes: component.fashionpedia_attributes || []
