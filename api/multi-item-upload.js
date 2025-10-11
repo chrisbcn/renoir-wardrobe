@@ -318,109 +318,47 @@ IMPORTANT: Be extremely detailed and specific in your descriptions. Include ever
 
 async function analyzeIndividualItem(detectedItem, base64Image, mimeType = 'image/jpeg') {
   console.log('🚀 STARTING analyzeIndividualItem for:', detectedItem.item_type);
-  const analysisPrompt = `Analyze this specific clothing item with special focus on decorative elements and embellishments: ${detectedItem.item_type}
+  const analysisPrompt = `Analyze this clothing item in extreme detail: ${detectedItem.item_type}
 
 Description: ${detectedItem.visual_description}
 
-EMBELLISHMENT DETECTION:
-Pay special attention to decorative elements and embellishments. Look for and describe:
+Provide a comprehensive analysis with specific terminology and detailed descriptions. Focus on:
 
-SEQUINS AND BEADWORK (HIGH PRIORITY):
-- Sequins, sequined, beaded, beads, pearls, crystals, rhinestones, studs, spangles, paillettes
-- Bugle beads, seed beads, rocailles, crystal beads, pearl beads, glass beads, plastic beads, metal beads
-- Look for: small reflective discs, metallic dots, shiny circular elements, glittery surfaces
-- Specify: size (small, medium, large), density (sparse, moderate, dense), attachment method, color, material
+1. CONSTRUCTION & FIT: tailored, relaxed, fitted, oversized, cropped, structured, flowing
+2. FABRIC & TEXTURE: smooth, ribbed, textured, cable knit, basketweave, slub-knit, matte, shiny
+3. PATTERN & DETAILS: pinstripes, stripes, texture, geometric patterns, decorative elements
+4. EMBELLISHMENTS: sequins, beads, embroidery, metallic details, hardware, surface treatments
+5. SILHOUETTE: A-line, fitted, boxy, structured, flowing, proportions, length details
 
-EMBROIDERY AND STITCHING:
-- Embroidery, embroidered, decorative stitching, appliqué, patches, hand-stitched details
-- Cross-stitch, satin stitch, chain stitch, backstitch, running stitch, decorative stitching
-- Specify: stitch type, thread material, pattern complexity, hand vs machine work
+Use specific fashion terminology like:
+- "Double-breasted wool blazer with notch lapels"
+- "Fine-gauge wool knit with cable texture"
+- "Tailored fit with French seams and pick stitching"
+- "Structured silhouette with welt pockets"
 
-METALLIC ELEMENTS:
-- Metallic, shiny, reflective, foil, lamé, mirror, chrome, platinum, gold, silver, bronze
-- Look for: reflective surfaces, metallic finishes, shiny materials
-- Specify: finish type, shine level, reflective properties
-
-TEXTURAL EMBELLISHMENTS:
-- Ruffles, pleats, fringe, tassels, bows, ribbons, fabric flowers, pom-poms, tassels
-- Ruffled, pleated, gathered, shirred, smocked, tucked, draped, layered
-- Specify: texture type, placement, construction method
-
-HARDWARE AND FUNCTIONAL:
-- Buttons, zippers, buckles, clasps, rivets, grommets, eyelets, studs, spikes, chains, rings, loops
-- Specify: material, finish, placement, functionality
-
-SURFACE TREATMENTS:
-- Textures, embossed, perforated, laser-cut, sueded, brushed, napped, fuzzy, furry
-- Specify: finish type, texture, visual effect
-
-For each decorative element found, specify:
-1. Type and specific terminology
-2. Location on garment
-3. Material and construction
-4. Visual impact and luxury level
-
-DETAILED DESCRIPTIONS - BE EXTREMELY VERBOSE:
-Use specific terminology and provide comprehensive details:
-
-CONSTRUCTION DETAILS:
-- "Aran" for cable knit textures, "French cuffs" for sleeve details, "cable knit" for patterns
-- "ribbed collar", "wider collars", "high ribbed turtleneck", "notch lapels", "peak lapels"
-- "wide leg", "straight leg", "tailored", "relaxed fit", "cropped", "oversized"
-- "heavy gauge", "intricate cable knit patterns", "fine-gauge knit"
-- "French seams", "flat-fell seams", "pinked seams", "serged seams"
-- "pick stitching", "topstitching", "understitching", "edge stitching"
-
-FABRIC & TEXTURE SPECIFICS:
-- Fabric weight and drape (lightweight, medium weight, heavyweight)
-- Texture details (smooth, ribbed, textured, cable knit, basketweave, slub-knit)
-- Pattern specifics (pinstripes, wide stripes, subtle texture, geometric patterns)
-- Finish details (matte, shiny, structured, flowing, crisp, soft)
-
-COLOR & PATTERN ANALYSIS:
-- Exact color names (navy blue, charcoal grey, ecru, oatmeal marl, burgundy, whiter white)
-- Pattern details (vertical pinstripes, horizontal stripes, subtle texture, etc.)
-- Color variations and undertones
-- Pattern scale and repeat frequency
-
-EMBELLISHMENT SPECIFICS:
-- Size and density of decorative elements
-- Attachment methods and construction
-- Material composition of embellishments
-- Placement and distribution patterns
-- Visual impact and luxury level
-
-SILHOUETTE & FIT DETAILS:
-- Overall silhouette (A-line, fitted, boxy, oversized, etc.)
-- Specific fit characteristics (tailored, relaxed, slim, regular, etc.)
-- Proportions and length details
-- Layering and styling context
-
-Provide analysis in JSON format with EXTREMELY DETAILED descriptions:
+Respond with JSON:
 {
-  "color": "primary color name (be specific: navy blue, ecru, oatmeal marl, burgundy, whiter white)",
-  "fabric": "fabric type and weight (be specific: fine-gauge wool knit, medium-weight cotton, lightweight silk, etc.)",
-  "pattern": "pattern type and details (vertical pinstripes, cable knit, ribbed texture, subtle stripe pattern, etc.)",
-  "style": "specific style details (Double-breasted wool blazer with notch lapels, not just blazer)",
-  "construction": "construction details (tailored fit, French seams, pick stitching, welt pockets, etc.)",
-  "texture": "texture specifics (smooth, ribbed, textured, cable knit, basketweave, slub-knit, etc.)",
-  "fit": "fit characteristics (tailored, relaxed, fitted, oversized, cropped, etc.)",
-  "silhouette": "silhouette details (A-line, fitted, boxy, structured, flowing, etc.)",
+  "color": "specific color name",
+  "fabric": "detailed fabric description",
+  "pattern": "pattern details",
+  "style": "detailed style description",
+  "construction": "construction details",
+  "texture": "texture specifics",
+  "fit": "fit characteristics",
+  "silhouette": "silhouette details",
   "embellishments": {
-    "metallic_elements": ["list of metallic/reflective elements with specific details"],
-    "beadwork": ["list of beadwork and sequins with size, density, and placement details"],
-    "embroidery": ["list of embroidery and decorative stitching with stitch types and patterns"],
-    "textural": ["list of textural embellishments with specific texture types"],
-    "hardware": ["list of hardware and functional decorations with materials and finishes"],
-    "surface_treatments": ["list of surface treatments with specific finish types"]
+    "metallic_elements": [],
+    "beadwork": [],
+    "embroidery": [],
+    "textural": [],
+    "hardware": [],
+    "surface_treatments": []
   },
-  "formality_level": "casual, smart casual, business formal, black-tie",
-  "season": ["applicable seasons"],
-  "price_range": "estimated price range",
-  "brand_tier": "contemporary, premium, luxury, ultra-luxury"
-}
-
-Respond ONLY with valid JSON.`;
+  "formality_level": "casual/smart casual/business formal/black-tie",
+  "season": ["seasons"],
+  "price_range": "price range",
+  "brand_tier": "contemporary/premium/luxury/ultra-luxury"
+}`;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   
