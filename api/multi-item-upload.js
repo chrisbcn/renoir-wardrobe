@@ -486,11 +486,10 @@ Respond ONLY with valid JSON.`;
 }
 
 function buildDetailedDescription(analysis, itemType) {
-  console.log('🔍 Building description for', itemType, 'with analysis:', JSON.stringify(analysis, null, 2));
   const parts = [];
   
   // Start with style or item type
-  if (analysis.style && analysis.style !== itemType) {
+  if (analysis.style && analysis.style !== itemType && analysis.style !== 'Unknown') {
     parts.push(analysis.style);
   } else {
     parts.push(itemType);
@@ -502,27 +501,27 @@ function buildDetailedDescription(analysis, itemType) {
   }
   
   // Add construction details
-  if (analysis.construction) {
+  if (analysis.construction && analysis.construction !== 'Unknown') {
     parts.push(analysis.construction);
   }
   
   // Add texture details
-  if (analysis.texture) {
+  if (analysis.texture && analysis.texture !== 'Unknown') {
     parts.push(analysis.texture);
   }
   
   // Add fit details
-  if (analysis.fit) {
+  if (analysis.fit && analysis.fit !== 'Unknown') {
     parts.push(analysis.fit);
   }
   
   // Add silhouette details
-  if (analysis.silhouette) {
+  if (analysis.silhouette && analysis.silhouette !== 'Unknown') {
     parts.push(analysis.silhouette);
   }
   
   // Add pattern details
-  if (analysis.pattern && analysis.pattern !== 'solid') {
+  if (analysis.pattern && analysis.pattern !== 'solid' && analysis.pattern !== 'Unknown') {
     parts.push(`with ${analysis.pattern} pattern`);
   }
   
@@ -546,9 +545,21 @@ function buildDetailedDescription(analysis, itemType) {
     }
   }
   
-  const description = parts.join(' ').trim();
-  console.log('🔍 Built description for', itemType, ':', description);
-  return description;
+  // If we only have basic info, try to make it more descriptive
+  if (parts.length <= 2) {
+    // Add some descriptive terms based on the item type
+    if (itemType === 'vest') {
+      parts.push('sleeveless', 'structured');
+    } else if (itemType === 'shirt') {
+      parts.push('collared', 'button-up');
+    } else if (itemType === 'pants') {
+      parts.push('tailored', 'fitted');
+    } else if (itemType === 'dress') {
+      parts.push('elegant', 'structured');
+    }
+  }
+  
+  return parts.join(' ').trim();
 }
 
 function getBasicItemDetails(detectedItem) {
