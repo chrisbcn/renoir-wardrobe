@@ -158,6 +158,7 @@ async function detectAndAnalyzeItems(base64Image, mimeType) {
           height: item.bounding_box.height_percent
         },
         description: buildDetailedDescription(detailedAnalysis, item.item_type),
+        debug_analysis: detailedAnalysis, // Add this for debugging
         color: detailedAnalysis.color,
         brand: 'Unknown',
         material: detailedAnalysis.fabric,
@@ -494,6 +495,24 @@ function buildDetailedDescription(analysis, itemType) {
       parts.push('tailored', 'fitted');
     } else if (itemType === 'dress') {
       parts.push('elegant', 'structured');
+    }
+  }
+  
+  // If we still don't have enough detail, add more descriptive terms
+  if (parts.length <= 3) {
+    // Add more specific descriptive terms
+    if (itemType === 'vest') {
+      parts.push('knitted', 'sleeveless', 'structured', 'tailored');
+    } else if (itemType === 'shirt') {
+      parts.push('collared', 'button-up', 'long-sleeved', 'crisp');
+    } else if (itemType === 'pants') {
+      parts.push('tailored', 'fitted', 'cropped', 'cuffed');
+    } else if (itemType === 'dress') {
+      parts.push('elegant', 'structured', 'fitted', 'flowing');
+    } else if (itemType === 'shoes') {
+      parts.push('flat', 'leather', 'comfortable', 'stylish');
+    } else if (itemType === 'handbag') {
+      parts.push('leather', 'structured', 'spacious', 'designer');
     }
   }
   
