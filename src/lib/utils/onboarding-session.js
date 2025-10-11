@@ -199,6 +199,9 @@ export class OnboardingSession {
         this.uploadMethods.receipt.used = true;
         this.uploadMethods.receipt.itemCount += itemCount;
         break;
+      default:
+        console.warn(`Unknown upload method: ${method}`);
+        break;
     }
   }
 

@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Camera, Instagram, FileText, Users, ArrowRight } from 'lucide-react';
+import { Camera, FileText, Users, ArrowRight } from 'lucide-react';
 
 export const MethodSelector = ({ onMethodSelect, progress, isLoading = false }) => {
   const methods = [
