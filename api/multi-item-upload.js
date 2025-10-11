@@ -157,7 +157,7 @@ async function detectAndAnalyzeItems(base64Image, mimeType) {
           width: item.bounding_box.width_percent,
           height: item.bounding_box.height_percent
         },
-        description: buildDetailedDescription(detailedAnalysis, item.item_type),
+        description: `TEST: ${detailedAnalysis.color} ${item.item_type} - ${JSON.stringify(detailedAnalysis).substring(0, 100)}...`,
         color: detailedAnalysis.color,
         brand: 'Unknown',
         material: detailedAnalysis.fabric,
