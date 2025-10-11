@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import MultiItemDetectionDisplay from './MultiItemDetectionDisplay';
 import ItemRecreationWorkflow from './ItemRecreationWorkflow';
+import OnboardingFlow from './screens/onboarding/OnboardingFlow';
 
 // Image format validation
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png'];
@@ -618,6 +619,17 @@ const analyzeSingleItem = async (item) => {
           
           <nav className="space-y-2">
             <button
+              onClick={() => setActiveSection('onboarding')}
+              className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+                activeSection === 'onboarding'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              📱 Mobile Onboarding
+            </button>
+            
+            <button
               onClick={() => setActiveSection('multi-item')}
               className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
                 activeSection === 'multi-item'
@@ -655,6 +667,13 @@ const analyzeSingleItem = async (item) => {
 
       {/* Main Content */}
       <div className="flex-1 p-8">
+        {/* Mobile Onboarding Section */}
+        {activeSection === 'onboarding' && (
+          <div className="max-w-7xl mx-auto">
+            <OnboardingFlow />
+          </div>
+        )}
+
         {/* Multi-Item Detection Section */}
         {activeSection === 'multi-item' && (
           <div className="max-w-7xl mx-auto">
