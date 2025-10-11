@@ -3,8 +3,8 @@
  * Single endpoint that handles all wardrobe upload methods for mobile app
  */
 
-import { UnifiedWardrobeAnalyzer } from '../../lib/analyzers/unified-analyzer.js';
-import { OnboardingSession } from '../../lib/utils/onboarding-session.js';
+import { UnifiedWardrobeAnalyzer } from '../src/lib/analyzers/unified-analyzer.js';
+import { OnboardingSession } from '../src/lib/utils/onboarding-session.js';
 
 // In-memory session storage (in production, use Redis or database)
 const sessions = new Map();

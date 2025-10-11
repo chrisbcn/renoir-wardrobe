@@ -3,16 +3,16 @@
  * Consolidates all analysis methods into a single, mobile-first interface
  */
 
-import { EnhancedImageAnalyzer } from './enhanced-image-analyzer.js';
-import { ReceiptAnalyzer } from './receipt-analyzer.js';
-import { MultiItemDetector } from './multi-item-detector.js';
+import enhancedImageAnalyzer from './enhanced-image-analyzer.js';
+import receiptAnalyzer from './receipt-analyzer.js';
+import enhancedDetailedAnalyzer from './enhanced-detailed-analyzer.js';
 import { ImageStandardizer } from '../standardization/image-standardizer.js';
 
 export class UnifiedWardrobeAnalyzer {
   constructor() {
-    this.enhancedImageAnalyzer = new EnhancedImageAnalyzer();
-    this.receiptAnalyzer = new ReceiptAnalyzer();
-    this.multiItemDetector = new MultiItemDetector();
+    this.enhancedImageAnalyzer = enhancedImageAnalyzer;
+    this.receiptAnalyzer = receiptAnalyzer;
+    this.enhancedDetailedAnalyzer = enhancedDetailedAnalyzer;
     this.imageStandardizer = new ImageStandardizer();
   }
 
@@ -81,55 +81,48 @@ export class UnifiedWardrobeAnalyzer {
   async processOutfitImage(imageData, options = {}) {
     console.log('👗 Processing outfit image...');
     
-    // First detect all items in the outfit
-    const detectedItems = await this.multiItemDetector.detectClothingItems(imageData);
-    
-    if (!detectedItems || detectedItems.length === 0) {
-      throw new Error('No clothing items detected in outfit image');
-    }
-
-    console.log(`🔍 Found ${detectedItems.length} items, analyzing each...`);
-    
-    const analyzedItems = [];
-    
-    // Analyze each detected item individually
-    for (let i = 0; i < detectedItems.length; i++) {
-      const detectedItem = detectedItems[i];
-      console.log(`🔬 Analyzing item ${i + 1}/${detectedItems.length}: ${detectedItem.item_type}`);
+    try {
+      // Use the existing multi-item detection logic
+      const detectedItems = await this.detectClothingItems(imageData);
       
-      try {
-        // Extract the item from the original image using bounding box
-        const itemImage = await this.extractItemFromImage(imageData, detectedItem);
-        
-        // Analyze the extracted item
-        const analysis = await this.enhancedImageAnalyzer.getLuxuryAnalysis(itemImage);
-        
-        if (analysis.success) {
-          // Generate standardized image
-          const standardizedImage = await this.imageStandardizer.generateStandardImage(analysis);
-          
-          const item = this.formatAnalysisResult(analysis, standardizedImage, 'outfit_image', {
-            originalDetection: detectedItem,
-            itemIndex: i
-          });
-          
-          analyzedItems.push(item);
-        } else {
-          console.warn(`⚠️ Failed to analyze item ${i + 1}: ${detectedItem.item_type}`);
-        }
-      } catch (error) {
-        console.warn(`⚠️ Error analyzing item ${i + 1}:`, error.message);
+      if (!detectedItems || detectedItems.length === 0) {
+        throw new Error('No clothing items detected in outfit image');
       }
-    }
 
-    return {
-      success: true,
-      items: analyzedItems,
-      source: 'outfit_image',
-      totalDetected: detectedItems.length,
-      successfullyAnalyzed: analyzedItems.length,
-      processingTime: Date.now() - (options.startTime || Date.now())
-    };
+      console.log(`🔍 Found ${detectedItems.length} items, analyzing each...`);
+      
+      const analyzedItems = [];
+      
+      // Analyze each detected item
+      for (let i = 0; i < detectedItems.length; i++) {
+        const detectedItem = detectedItems[i];
+        console.log(`🔬 Analyzing item ${i + 1}/${detectedItems.length}: ${detectedItem.item_type}`);
+        
+        try {
+          const detailedAnalysis = await this.analyzeIndividualItem(detectedItem, imageData);
+          
+          // Generate standardized image
+          const standardizedImage = await this.imageStandardizer.generateStandardImage(detailedAnalysis);
+          
+          const item = this.formatMultiItemResult(detailedAnalysis, standardizedImage, detectedItem, i);
+          analyzedItems.push(item);
+        } catch (error) {
+          console.warn(`⚠️ Error analyzing item ${i + 1}:`, error.message);
+        }
+      }
+
+      return {
+        success: true,
+        items: analyzedItems,
+        source: 'outfit_image',
+        totalDetected: detectedItems.length,
+        successfullyAnalyzed: analyzedItems.length,
+        processingTime: Date.now() - (options.startTime || Date.now())
+      };
+    } catch (error) {
+      console.error('❌ Outfit processing failed:', error);
+      throw new Error(`Failed to process outfit image: ${error.message}`);
+    }
   }
 
   /**
@@ -336,5 +329,347 @@ export class UnifiedWardrobeAnalyzer {
    */
   generateId() {
     return 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * Detect clothing items in an outfit image (copied from multi-item-upload.js)
+   */
+  async detectClothingItems(base64Image, mimeType = 'image/jpeg') {
+    const prompt = `Analyze this image and detect ALL individual clothing items with EXTREME attention to detail and decorative elements. For each item found, provide:
+
+1. Item type (shirt, pants, dress, jacket, shoes, accessories, etc.)
+2. Approximate bounding box coordinates (as percentages of image dimensions)
+3. Confidence level (0-1)
+4. HIGHLY DETAILED visual description including ALL decorative elements, textures, patterns, and construction details
+
+DETAILED ANALYSIS REQUIREMENTS:
+For each clothing item, provide an extremely detailed description that includes:
+
+CONSTRUCTION & FIT:
+- Specific cut and silhouette (tailored, relaxed, fitted, oversized, cropped, etc.)
+- Neckline type (crew neck, V-neck, scoop neck, turtleneck, etc.)
+- Sleeve details (long sleeves, short sleeves, sleeveless, French cuffs, etc.)
+- Length and proportions (crop length, full length, high-waisted, etc.)
+- Closure details (buttons, zippers, ties, etc.)
+
+FABRIC & TEXTURE:
+- Fabric type and weight (wool, cotton, silk, cashmere, denim, etc.)
+- Texture details (cable knit, ribbed, smooth, textured, etc.)
+- Pattern specifics (stripes, checks, floral, geometric, etc.)
+- Finish and drape (matte, shiny, structured, flowing, etc.)
+
+COLOR & PATTERN ANALYSIS:
+- Exact color descriptions (navy blue, charcoal grey, ecru, etc.)
+- Pattern details (pinstripes, wide stripes, subtle texture, etc.)
+- Color variations and undertones
+- Pattern scale and repeat
+
+EMBELLISHMENTS & DECORATIVE ELEMENTS (HIGH PRIORITY):
+- Sequins, beads, pearls, crystals, rhinestones, studs, spangles, paillettes
+- Embroidery, decorative stitching, appliqué, patches, hand-stitched details
+- Metallic elements, shiny surfaces, reflective materials, foil, lamé
+- Ruffles, pleats, fringe, tassels, bows, ribbons, fabric flowers
+- Hardware details, buttons, zippers, buckles, clasps, rivets, grommets
+- Surface treatments, textures, embossed, perforated, laser-cut details
+
+SPECIFIC TERMINOLOGY:
+Use precise fashion terminology like:
+- "Aran" for cable knit textures
+- "French cuffs" for sleeve details
+- "cable knit" for patterns
+- "ribbed collar", "notch lapels", "peak lapels"
+- "wide leg", "straight leg", "tailored", "relaxed fit"
+- "heavy gauge", "intricate cable knit patterns"
+- "French seams", "flat-fell seams", "pinked seams"
+- "pick stitching", "topstitching", "understitching"
+
+Focus on detecting SEPARATE clothing items - if someone is wearing a full outfit, identify each piece individually.
+
+Respond with a JSON array in this exact format:
+[
+  {
+    "item_type": "vest",
+    "bounding_box": {
+      "x_percent": 15,
+      "y_percent": 10,
+      "width_percent": 35,
+      "height_percent": 45
+    },
+    "confidence": 0.92,
+    "visual_description": "Dark navy blue sleeveless V-neck vest with subtle vertical pinstripes, tailored fit, welt pockets, five-button front closure, fine-gauge knit fabric with textured stripe pattern, structured silhouette, worn over white collared shirt"
+  }
+]
+
+IMPORTANT: Be extremely detailed and specific in your descriptions. Include every visible detail that would help recreate the item accurately. Respond ONLY with valid JSON.`;
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mimeType,
+                  data: base64Image
+                }
+              },
+              {
+                type: 'text',
+                text: prompt
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const content = data.content[0].text;
+    
+    // Parse the JSON response
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      throw new Error('No valid JSON found in Claude response');
+    }
+
+    const detectedItems = JSON.parse(jsonMatch[0]);
+    return detectedItems;
+  }
+
+  /**
+   * Analyze individual item in detail (copied from multi-item-upload.js)
+   */
+  async analyzeIndividualItem(detectedItem, base64Image, mimeType = 'image/jpeg') {
+    const analysisPrompt = `Analyze this clothing item in extreme detail: ${detectedItem.item_type}
+
+Description: ${detectedItem.visual_description}
+
+Provide a comprehensive analysis with specific terminology and detailed descriptions. Focus on:
+
+1. CONSTRUCTION & FIT: tailored, relaxed, fitted, oversized, cropped, structured, flowing
+2. FABRIC & TEXTURE: smooth, ribbed, textured, cable knit, basketweave, slub-knit, matte, shiny
+3. PATTERN & DETAILS: pinstripes, stripes, texture, geometric patterns, decorative elements
+4. EMBELLISHMENTS: sequins, beads, embroidery, metallic details, hardware, surface treatments
+5. SILHOUETTE: A-line, fitted, boxy, structured, flowing, proportions, length details
+
+Use specific fashion terminology like:
+- "Double-breasted wool blazer with notch lapels"
+- "Fine-gauge wool knit with cable texture"
+- "Tailored fit with French seams and pick stitching"
+- "Structured silhouette with welt pockets"
+
+Respond with JSON:
+{
+  "color": "specific color name",
+  "fabric": "detailed fabric description",
+  "pattern": "pattern details",
+  "style": "detailed style description",
+  "construction": "construction details",
+  "texture": "texture specifics",
+  "fit": "fit characteristics",
+  "silhouette": "silhouette details",
+  "embellishments": {
+    "metallic_elements": [],
+    "beadwork": [],
+    "embroidery": [],
+    "textural": [],
+    "hardware": [],
+    "surface_treatments": []
+  },
+  "formality_level": "casual/smart casual/business formal/black-tie",
+  "season": ["seasons"],
+  "price_range": "price range",
+  "brand_tier": "contemporary/premium/luxury/ultra-luxury"
+}`;
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mimeType,
+                  data: base64Image
+                }
+              },
+              {
+                type: 'text',
+                text: analysisPrompt
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const content = data.content[0].text;
+    
+    // Parse the JSON response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No valid JSON found in Claude response');
+    }
+
+    const analysis = JSON.parse(jsonMatch[0]);
+    return analysis;
+  }
+
+  /**
+   * Format multi-item result (adapted from multi-item-upload.js)
+   */
+  formatMultiItemResult(detailedAnalysis, standardizedImage, detectedItem, index) {
+    return {
+      id: this.generateId(),
+      name: `${detailedAnalysis.color} ${detectedItem.item_type}`,
+      category: detectedItem.item_type,
+      colors: [detailedAnalysis.color],
+      fabrics: [detailedAnalysis.fabric],
+      patterns: detailedAnalysis.pattern ? [detailedAnalysis.pattern] : [],
+      styles: [detailedAnalysis.style],
+      brand: 'Unknown',
+      confidence: detectedItem.confidence,
+      needsReview: detectedItem.confidence < 0.7,
+      details: this.buildDetailedDescription(detailedAnalysis, detectedItem.item_type),
+      embellishments: this.extractEmbellishments(detailedAnalysis.embellishments),
+      hasSequins: detailedAnalysis.embellishments?.beadwork?.length > 0 || false,
+      hasBeadwork: detailedAnalysis.embellishments?.beadwork?.length > 0 || false,
+      hasEmbroidery: detailedAnalysis.embellishments?.embroidery?.length > 0 || false,
+      hasMetallic: detailedAnalysis.embellishments?.metallic_elements?.length > 0 || false,
+      source: 'outfit_image',
+      brandTier: detailedAnalysis.brand_tier || 'unknown',
+      priceRange: detailedAnalysis.price_range || 'Unknown',
+      originalImage: null,
+      standardizedImage: standardizedImage,
+      metadata: {
+        processedAt: new Date().toISOString(),
+        analyzerVersion: '1.0.0',
+        source: 'outfit_image',
+        originalDetection: detectedItem,
+        itemIndex: index
+      }
+    };
+  }
+
+  /**
+   * Build detailed description (copied from multi-item-upload.js)
+   */
+  buildDetailedDescription(analysis, itemType) {
+    const parts = [];
+
+    if (analysis.style && analysis.style !== itemType && analysis.style !== 'Unknown') {
+      parts.push(analysis.style);
+    } else {
+      parts.push(itemType);
+    }
+
+    if (analysis.fabric && analysis.fabric !== 'Unknown') {
+      parts.push(`in ${analysis.fabric}`);
+    }
+
+    if (analysis.construction && analysis.construction !== 'Unknown') {
+      parts.push(analysis.construction);
+    }
+
+    if (analysis.texture && analysis.texture !== 'Unknown') {
+      parts.push(analysis.texture);
+    }
+
+    if (analysis.fit && analysis.fit !== 'Unknown') {
+      parts.push(analysis.fit);
+    }
+
+    if (analysis.silhouette && analysis.silhouette !== 'Unknown') {
+      parts.push(analysis.silhouette);
+    }
+
+    if (analysis.pattern && analysis.pattern !== 'solid' && analysis.pattern !== 'Unknown') {
+      parts.push(`with ${analysis.pattern} pattern`);
+    }
+
+    if (analysis.embellishments) {
+      const embellishmentTypes = [];
+      if (analysis.embellishments.metallic_elements?.length > 0) {
+        embellishmentTypes.push('metallic details');
+      }
+      if (analysis.embellishments.beadwork?.length > 0) {
+        embellishmentTypes.push('beadwork');
+      }
+      if (analysis.embellishments.embroidery?.length > 0) {
+        embellishmentTypes.push('embroidery');
+      }
+      if (analysis.embellishments.textural?.length > 0) {
+        embellishmentTypes.push('textural embellishments');
+      }
+      if (embellishmentTypes.length > 0) {
+        parts.push(`featuring ${embellishmentTypes.join(', ')}`);
+      }
+    }
+
+    return parts.join(' ').trim();
+  }
+
+  /**
+   * Extract embellishments from analysis
+   */
+  extractEmbellishments(embellishments) {
+    if (!embellishments) return [];
+    
+    const result = [];
+    if (embellishments.metallic_elements?.length > 0) {
+      result.push(...embellishments.metallic_elements);
+    }
+    if (embellishments.beadwork?.length > 0) {
+      result.push(...embellishments.beadwork);
+    }
+    if (embellishments.embroidery?.length > 0) {
+      result.push(...embellishments.embroidery);
+    }
+    if (embellishments.textural?.length > 0) {
+      result.push(...embellishments.textural);
+    }
+    if (embellishments.hardware?.length > 0) {
+      result.push(...embellishments.hardware);
+    }
+    if (embellishments.surface_treatments?.length > 0) {
+      result.push(...embellishments.surface_treatments);
+    }
+    
+    return result;
   }
 }
