@@ -63,7 +63,7 @@ export const CameraUpload = ({
 
   const removeImage = (index) => {
     const newImages = selectedImages.filter((_, i) => i !== index);
-    const newPreviews = previews.filter((_, i) => i !== index);
+    const newPreviews = previewImages.filter((_, i) => i !== index);
     
     // Revoke object URL to prevent memory leaks
     URL.revokeObjectURL(previewImages[index].url);
