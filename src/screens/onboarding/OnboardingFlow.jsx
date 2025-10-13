@@ -65,62 +65,10 @@ const OnboardingFlow = () => {
   };
 
   const handleUpload = async (uploadData) => {
-    if (!session) {
-      setError('Session not initialized');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      console.log('📤 Uploading data:', uploadData.type);
-      
-      // Call unified upload API
-      const response = await fetch('/api/upload/unified-upload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: 'onboarding_user', // TODO: Get from auth context
-          input_type: uploadData.type,
-          image_data: uploadData.images?.[0], // For now, send first image
-          session_id: session.sessionId,
-          options: {
-            startTime: Date.now()
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Upload failed');
-      }
-
-      console.log('✅ Upload successful:', result.items.length, 'items processed');
-      
-      // Update session with new items
-      await session.addItems(result.items, uploadData.type);
-      
-      // Update local state
-      setItems(session.getItems());
-      setProgress(session.getProgress());
-      
-      // Go back to wardrobe view
-      setCurrentStep('wardrobe_review');
-      
-    } catch (error) {
-      console.error('❌ Upload error:', error);
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
+    // TODO: Implement unified upload API integration
+    // For now, show "Coming Soon" message
+    setError('Mobile onboarding upload is coming soon! Please use the existing "Multi-Item Detection" or "My Wardrobe" sections for now.');
+    setCurrentStep('method_selection');
   };
 
   const handleEditItem = (itemId) => {
@@ -281,11 +229,28 @@ const OnboardingFlow = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Work in Progress Banner */}
+      <div className="bg-blue-50 border-b border-blue-200 p-4">
+        <div className="max-w-7xl mx-auto flex items-center space-x-3">
+          <div className="text-blue-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h3 className="font-medium text-blue-800">Mobile Onboarding - Coming Soon!</h3>
+            <p className="text-sm text-blue-700">
+              This unified mobile onboarding experience is under development. Please use <strong>"🔍 Multi-Item Detection"</strong> or <strong>"👚 My Wardrobe"</strong> for now.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Error Display */}
       {error && (
-        <div className="fixed top-4 left-4 right-4 z-50 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start space-x-3">
+        <div className="fixed top-20 left-4 right-4 z-50 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start space-x-3">
           <div className="flex-1">
-            <h3 className="font-medium text-red-800">Error</h3>
+            <h3 className="font-medium text-red-800">Notice</h3>
             <p className="text-sm text-red-700 mt-1">{error}</p>
           </div>
           <button
