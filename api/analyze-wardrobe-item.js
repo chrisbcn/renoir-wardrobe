@@ -90,7 +90,7 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
   const imageDataUrl = `data:${imageData.type || 'image/jpeg'};base64,${imageData.base64}`;
   
   // Use the enhanced image analyzer for detailed analysis
-  const analysis = await enhancedImageAnalyzer.getLuxuryAnalysis(imageDataUrl);
+  const analysis = await enhancedImageAnalyzer.analyzeImage(imageDataUrl, 'wardrobe');
   
   if (!analysis.success) {
     throw new Error(analysis.error || 'Analysis failed');
