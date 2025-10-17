@@ -4,6 +4,8 @@ import './App.css';
 import MultiItemDetectionDisplay from './MultiItemDetectionDisplay';
 import ItemRecreationWorkflow from './ItemRecreationWorkflow';
 import OnboardingFlow from './screens/onboarding/OnboardingFlow';
+import EnhancedWardrobeUpload from './components/EnhancedWardrobeUpload';
+
 
 // Image format validation
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png'];
@@ -514,7 +516,11 @@ const handleWardrobeUpload = async (e) => {
   setUploadProgress(0);
   e.target.value = null;
 };
-
+<EnhancedWardrobeUpload 
+  onItemAdded={(item) => console.log('New item added:', item)}
+  wardrobe={wardrobe}
+  setWardrobe={setWardrobe}
+/>
 // Also update the analyzeSingleItem function to use the new API:
 
 const analyzeSingleItem = async (item) => {
