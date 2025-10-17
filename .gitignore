@@ -4,4 +4,5 @@ node_modules
 api/simple_api_test.js
 api/test-claude.js
 config/vertex-ai-key.json
+src/config/vertex-ai-key.json
 *.json
