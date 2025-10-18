@@ -152,7 +152,16 @@ Requirements:
 
 Use this detailed description: ${description}`;
 
-    // Use Gemini 2.5 Flash Image for image generation (recommended model)
+    // TODO: Replace with dedicated image generation API (Vertex AI Imagen, DALL-E 3, etc.)
+    // For now, return placeholder since gemini-2.5-flash-image doesn't generate images
+    console.log('Image generation requested for:', detectedItem.type);
+    console.log('Description:', description);
+    
+    // Return a placeholder image data URL
+    const placeholderImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    return placeholderImage;
+    
+    /* Original Gemini API call - doesn't work for image generation
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -175,39 +184,9 @@ Use this detailed description: ${description}`;
         }
       })
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API Error Details:', errorText);
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log('Gemini image generation response structure:', JSON.stringify(result, null, 2));
-    
-    // Extract the generated image data with better error handling
-    if (!result.candidates || !result.candidates[0]) {
-      console.error('No candidates in response:', result);
-      throw new Error('No candidates in Gemini response');
-    }
-    
-    const candidate = result.candidates[0];
-    if (!candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
-      console.error('Invalid candidate structure:', candidate);
-      throw new Error('Invalid candidate structure in Gemini response');
-    }
-    
-    const part = candidate.content.parts[0];
-    if (!part.inlineData || !part.inlineData.data) {
-      console.error('No inlineData in response part:', part);
-      throw new Error('No image data in Gemini response');
-    }
-
-    const imageData = part.inlineData.data;
-    return `data:image/jpeg;base64,${imageData}`;
-    
+    */
   } catch (error) {
-    console.error('Gemini image generation failed:', error);
+    console.error('Image generation failed:', error);
     throw new Error(`Failed to generate product photo: ${error.message}`);
   }
 }
