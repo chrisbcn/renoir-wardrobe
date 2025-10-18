@@ -133,69 +133,83 @@ export default async function handler(req, res) {
 
 async function generateProductPhoto(description, detectedItem, originalImageData) {
   try {
-    console.log('🎨 Attempting image generation with Gemini 2.5 Flash Image...');
+    // Check if we have the required environment variables for Vertex AI
+    if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_CLIENT_EMAIL) {
+      console.warn('Vertex AI credentials not found, using placeholder image');
+      console.log('Missing:', {
+        hasProjectId: !!process.env.GOOGLE_CLOUD_PROJECT_ID,
+        hasPrivateKey: !!process.env.GOOGLE_PRIVATE_KEY,
+        hasClientEmail: !!process.env.GOOGLE_CLIENT_EMAIL
+      });
+      return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    }
+
+    // Create a proper e-commerce product shot prompt based on the description
+    const prompt = `${description}
+
+E-commerce product photography: ghost mannequin style, clean white studio background, professional lighting, high resolution, product thumbnail, no person, only the garment visible`;
+
+    // Use Vertex AI Imagen for image generation
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
+    const location = 'us-central1';
+    const model = 'imagen-4.0-generate-001';
     
-    // Use Gemini 2.5 Flash Image for image generation (more widely available than Imagen)
-    const prompt = `Create a professional e-commerce product photography image based on this description:
-
-${description}
-
-Requirements:
-- Ghost mannequin style (no person visible)
-- Clean white studio background
-- Professional lighting
-- High resolution
-- Product thumbnail format
-- E-commerce ready
-- Only the garment visible`;
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    // Use the publishers endpoint instead of models endpoint
+    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateImages`;
+    
+    console.log('🎨 Attempting image generation with Vertex AI Imagen...');
+    console.log('URL:', url);
+    
+    const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${await getAccessToken()}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt }
-          ]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 32,
-          topP: 0.8,
-          maxOutputTokens: 4096,
-        }
+        instances: [{
+          prompt: prompt,
+          parameters: {
+            sampleCount: 1,
+            aspectRatio: "1:1",
+            safetyFilterLevel: "block_few", // Less restrictive for testing
+            personGeneration: "dont_allow"
+          }
+        }]
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini image generation failed:', errorText);
-      throw new Error(`Gemini image generation failed: ${response.status} - ${errorText}`);
+      console.error('Vertex AI Imagen Error:', errorText);
+      throw new Error(`Vertex AI Imagen error: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
-    console.log('Gemini image response structure:', JSON.stringify(result, null, 2));
+    console.log("Raw API Response:", JSON.stringify(result, null, 2));
 
-    if (result.candidates && result.candidates.length > 0) {
-      const candidate = result.candidates[0];
-      
-      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-        const part = candidate.content.parts[0];
-        
-        if (part.inlineData && part.inlineData.data) {
-          console.log('✅ Successfully generated image with Gemini!');
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        } else {
-          console.error('No image data in Gemini response:', part);
-          throw new Error('No image data found in Gemini response');
-        }
+    if (result.predictions && result.predictions.length > 0) {
+      const prediction = result.predictions[0];
+
+      // Check for safety filter blocking
+      if (prediction.safetyAttributes && prediction.safetyAttributes.blocked) {
+        console.error('Image generation blocked by safety filters!');
+        console.error('Safety categories:', prediction.safetyAttributes.categories);
+        throw new Error(`Image blocked due to safety concerns: ${prediction.safetyAttributes.categories.join(', ')}`);
+      }
+
+      if (prediction.bytesBase64Encoded && prediction.mimeType) {
+        const imageData = prediction.bytesBase64Encoded;
+        console.log('✅ Successfully generated image with Vertex AI Imagen!');
+        console.log('Found valid image data, length:', imageData.length);
+        console.log('MIME type:', prediction.mimeType);
+        return `data:${prediction.mimeType};base64,${imageData}`;
       } else {
-        console.error('No content parts in Gemini response');
-        throw new Error('No content parts in Gemini response');
+        console.error('Unexpected prediction structure: Missing bytesBase64Encoded or mimeType', prediction);
+        throw new Error('Image data not found in a valid format.');
       }
     } else {
-      console.error('No candidates in Gemini response');
-      throw new Error('No candidates in Gemini response');
+      throw new Error('No predictions found in the Vertex AI Imagen response.');
     }
 
   } catch (error) {
