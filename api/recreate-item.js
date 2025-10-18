@@ -214,7 +214,19 @@ E-commerce product photography: ghost mannequin style, clean white studio backgr
 // Helper function to get access token for Vertex AI
 async function getAccessToken() {
   try {
-    const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+    console.log('GOOGLE_APPLICATION_CREDENTIALS_JSON length:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.length);
+    console.log('First 100 chars:', process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.substring(0, 100));
+    
+    // Clean the JSON string - remove any potential line breaks or extra whitespace
+    const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+      .replace(/\\n/g, '\n')  // Convert literal \n to actual newlines
+      .replace(/\n/g, '')     // Remove newlines
+      .trim();                // Remove leading/trailing whitespace
+    
+    console.log('Cleaned JSON length:', credentialsJson.length);
+    console.log('First 100 chars of cleaned:', credentialsJson.substring(0, 100));
+    
+    const credentials = JSON.parse(credentialsJson);
     const { GoogleAuth } = await import('google-auth-library');
     const auth = new GoogleAuth({
       credentials: credentials,
@@ -225,6 +237,7 @@ async function getAccessToken() {
     return accessToken.token;
   } catch (error) {
     console.error('Error getting access token:', error);
-    throw new Error('Failed to get access token for Vertex AI');
+    console.error('JSON parse error details:', error.message);
+    throw new Error(`Failed to get access token for Vertex AI: ${error.message}`);
   }
 }
