@@ -25,19 +25,12 @@ export default async function handler(req, res) {
       // Step 1: Generate detailed description using Gemini Vision
       const description = await generateDetailedDescription(detectedItem, originalImageData);
       
-      // Step 2: Try Gemini image generation, fallback to DALL-E
-      let recreatedImage;
-      try {
-        recreatedImage = await generateWithGemini(description, detectedItem, originalImageData);
-        console.log('✅ Generated with Gemini');
-      } catch (geminiError) {
-        console.log('Gemini failed, falling back to DALL-E:', geminiError.message);
-        recreatedImage = await generateWithDALLE(description, detectedItem);
-        console.log('✅ Generated with DALL-E fallback');
-      }
-  
+      // Step 2: Generate image with Gemini (no fallback)
+      const recreatedImage = await generateWithGemini(description, detectedItem, originalImageData);
+      console.log('✅ Generated with Gemini');
+
       console.log(`✅ Recreation complete for ${detectedItem.type}`);
-  
+
       res.status(200).json({
         success: true,
         originalItem: detectedItem,
@@ -45,7 +38,11 @@ export default async function handler(req, res) {
         recreatedImageUrl: recreatedImage,
         metadata: {
           timestamp: new Date().toISOString(),
-          userId: userId || 'demo'
+          userId: userId || 'demo',
+          models: {
+            description: 'gemini-1.5-flash',
+            imageGeneration: 'gemini-2.5-flash-image'
+          }
         }
       });
   
@@ -166,30 +163,3 @@ export default async function handler(req, res) {
     return `data:image/jpeg;base64,${imageData}`;
   }
   
-  async function generateWithDALLE(description, detectedItem) {
-    const dallePrompt = `Professional product photography: ${description}. Shot on clean white background with studio lighting, high resolution, e-commerce style, front view, no person, isolated ${detectedItem.type} only, preserve exact patterns and colors.`;
-  
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'dall-e-3',
-        prompt: dallePrompt,
-        size: '1024x1024',
-        quality: 'hd',
-        style: 'natural',
-        n: 1
-      })
-    });
-  
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`DALL-E API error: ${response.status} - ${error}`);
-    }
-  
-    const result = await response.json();
-    return result.data[0].url;
-  }

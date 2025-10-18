@@ -111,7 +111,10 @@ async function analyzeWardrobeImage(imageData, userId, brandId) {
     metadata: {
       analysisType: analysis.analysisType,
       timestamp: analysis.timestamp,
-      confidence: analysis.confidence
+      confidence: analysis.confidence,
+      models: {
+        analysis: 'claude-sonnet-4-20250514'
+      }
     },
     summary: {
       total_items: 1,
@@ -150,7 +153,12 @@ async function analyzeReceiptText(receiptText, userId, brandId) {
       raw_line: item.raw_line
     })),
     receipt_metadata: analysis.receipt_metadata,
-    summary: analysis.summary
+    summary: analysis.summary,
+    metadata: {
+      models: {
+        analysis: 'claude-sonnet-4-20250514'
+      }
+    }
   };
 }
 
