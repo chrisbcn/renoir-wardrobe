@@ -170,13 +170,25 @@ Use this detailed description: ${description}`;
     const result = await response.json();
     console.log('Gemini image generation response structure:', JSON.stringify(result, null, 2));
     
-    // Extract the generated image data
-    if (!result.candidates || !result.candidates[0] || !result.candidates[0].content) {
-      console.error('Unexpected Gemini image response structure:', result);
-      throw new Error('Invalid response structure from Gemini API');
+    // Extract the generated image data with better error handling
+    if (!result.candidates || !result.candidates[0]) {
+      console.error('No candidates in response:', result);
+      throw new Error('No candidates in Gemini response');
+    }
+    
+    const candidate = result.candidates[0];
+    if (!candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
+      console.error('Invalid candidate structure:', candidate);
+      throw new Error('Invalid candidate structure in Gemini response');
+    }
+    
+    const part = candidate.content.parts[0];
+    if (!part.inline_data || !part.inline_data.data) {
+      console.error('No inline_data in response part:', part);
+      throw new Error('No image data in Gemini response');
     }
 
-    const imageData = result.candidates[0].content.parts[0].inline_data.data;
+    const imageData = part.inline_data.data;
     return `data:image/jpeg;base64,${imageData}`;
     
   } catch (error) {
