@@ -59,17 +59,7 @@ export default async function handler(req, res) {
 
 async function generateDetailedDescription(detectedItem, originalImageData) {
   try {
-    const prompt = `Analyze this image and create a detailed product description for recreating the ${detectedItem.type}. 
-
-Focus only on the ${detectedItem.type} in the image and provide:
-- Exact colors and color combinations
-- Specific patterns, prints, or textures  
-- Fabric type and appearance
-- Design details (buttons, collars, sleeves, etc.)
-- Fit and silhouette
-- Any unique styling elements
-
-Be very specific about visual details that would help recreate this exact item as a professional product photo.`;
+    const prompt = `Describe the ${detectedItem.type} in this image. Include: colors, pattern, fabric, and key design details. Be specific about visual elements.`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
@@ -104,7 +94,7 @@ Be very specific about visual details that would help recreate this exact item a
     console.log('Gemini response structure:', JSON.stringify(result, null, 2));
     
     // Check if we have candidates
-    if (!result.candidates || !result.candidates[0]) {
+    if (!result.candidates || !result.candidates.length) {
       console.error('No candidates in Gemini response:', result);
       throw new Error('No candidates in Gemini response');
     }
@@ -114,11 +104,14 @@ Be very specific about visual details that would help recreate this exact item a
     // Check if the response was truncated due to token limit
     if (candidate.finishReason === 'MAX_TOKENS') {
       console.warn('Response truncated due to MAX_TOKENS limit');
+      if (result.usageMetadata && result.usageMetadata.thoughtsTokenCount) {
+        console.error('DEBUG: Internal thought tokens may have been exhausted.');
+      }
     }
     
     // Check if we have content with parts
-    if (!candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
-      console.error('No content parts in Gemini response:', candidate);
+    if (!candidate.content || !candidate.content.parts || !candidate.content.parts.length) {
+      console.error('No content parts in Gemini response. finishReason:', candidate.finishReason);
       throw new Error('No content parts in Gemini response');
     }
     
