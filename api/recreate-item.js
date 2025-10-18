@@ -133,84 +133,74 @@ export default async function handler(req, res) {
 
 async function generateProductPhoto(description, detectedItem, originalImageData) {
   try {
-    // Check if we have the required environment variables for Vertex AI
-    if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_CLIENT_EMAIL) {
-      console.warn('Vertex AI credentials not found, using placeholder image');
-      console.log('Missing:', {
-        hasProjectId: !!process.env.GOOGLE_CLOUD_PROJECT_ID,
-        hasPrivateKey: !!process.env.GOOGLE_PRIVATE_KEY,
-        hasClientEmail: !!process.env.GOOGLE_CLIENT_EMAIL
-      });
-      return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-    }
-
-    // Create a proper e-commerce product shot prompt based on the description
-    // This is the correct approach: use text description to generate new image
-    const prompt = `${description}
-
-E-commerce product photography: ghost mannequin style, clean white studio background, professional lighting, high resolution, product thumbnail, no person, only the garment visible`;
-
-    // Use Vertex AI Imagen for image generation
-    const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
-    const location = 'us-central1'; // Imagen is available in us-central1
-    const model = 'imagen-4.0-generate-001';
+    console.log('🎨 Attempting image generation with Gemini 2.5 Flash Image...');
     
-    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateImages`;
-    
-    const response = await fetch(url, {
+    // Use Gemini 2.5 Flash Image for image generation (more widely available than Imagen)
+    const prompt = `Create a professional e-commerce product photography image based on this description:
+
+${description}
+
+Requirements:
+- Ghost mannequin style (no person visible)
+- Clean white studio background
+- Professional lighting
+- High resolution
+- Product thumbnail format
+- E-commerce ready
+- Only the garment visible`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${await getAccessToken()}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        instances: [{
-          prompt: prompt,
-        parameters: {
-          sampleCount: 1,
-          aspectRatio: "1:1",
-          safetyFilterLevel: "block_few", // Less restrictive for testing
-          personGeneration: "dont_allow"
+        contents: [{
+          parts: [
+            { text: prompt }
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 32,
+          topP: 0.8,
+          maxOutputTokens: 4096,
         }
-        }]
       })
     });
-  
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Vertex AI Imagen Error:', errorText);
-      throw new Error(`Vertex AI Imagen error: ${response.status} - ${errorText}`);
+      console.error('Gemini image generation failed:', errorText);
+      throw new Error(`Gemini image generation failed: ${response.status} - ${errorText}`);
     }
-  
+
     const result = await response.json();
-    console.log("Raw API Response:", JSON.stringify(result, null, 2)); // Log the full response for debugging
+    console.log('Gemini image response structure:', JSON.stringify(result, null, 2));
 
-    if (result.predictions && result.predictions.length > 0) {
-      const prediction = result.predictions[0];
-
-      // Check for safety filter blocking
-      if (prediction.safetyAttributes && prediction.safetyAttributes.blocked) {
-        console.error('Image generation blocked by safety filters!');
-        console.error('Safety categories:', prediction.safetyAttributes.categories);
-        throw new Error(`Image blocked due to safety concerns: ${prediction.safetyAttributes.categories.join(', ')}`);
-      }
-
-      if (prediction.bytesBase64Encoded && prediction.mimeType) {
-        const imageData = prediction.bytesBase64Encoded;
-        console.log('Found valid image data, length:', imageData.length);
-        console.log('MIME type:', prediction.mimeType);
-        // Use the mimeType from the response for dynamic data URI creation
-        return `data:${prediction.mimeType};base64,${imageData}`;
+    if (result.candidates && result.candidates.length > 0) {
+      const candidate = result.candidates[0];
+      
+      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+        const part = candidate.content.parts[0];
+        
+        if (part.inlineData && part.inlineData.data) {
+          console.log('✅ Successfully generated image with Gemini!');
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        } else {
+          console.error('No image data in Gemini response:', part);
+          throw new Error('No image data found in Gemini response');
+        }
       } else {
-        console.error('Unexpected prediction structure: Missing bytesBase64Encoded or mimeType', prediction);
-        throw new Error('Image data not found in a valid format.');
+        console.error('No content parts in Gemini response');
+        throw new Error('No content parts in Gemini response');
       }
     } else {
-      throw new Error('No predictions found in the Vertex AI Imagen response.');
+      console.error('No candidates in Gemini response');
+      throw new Error('No candidates in Gemini response');
     }
-    
+
   } catch (error) {
     console.error('Image generation failed:', error);
+    console.log('🔄 Falling back to placeholder image');
     // Return placeholder on error
     return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
   }
