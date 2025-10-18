@@ -172,8 +172,7 @@ Use this detailed description: ${description}`;
           temperature: 0.4,
           topK: 40,
           topP: 0.95,
-        },
-        responseModalities: ["Image"]
+        }
       })
     });
 
