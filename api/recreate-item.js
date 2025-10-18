@@ -139,13 +139,11 @@ async function generateProductPhoto(description, detectedItem, originalImageData
       return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     }
 
-    // Try a simpler prompt first to test basic functionality
-    const simplePrompt = `A simple ${detectedItem.type} on a white background, e-commerce style, no person`;
-    
-    // Use the detailed prompt for now, but we can switch to simplePrompt for testing
-    const prompt = `Professional product photography of a ${detectedItem.type}: ${description}
+    // Create a proper e-commerce product shot prompt based on the description
+    // This is the correct approach: use text description to generate new image
+    const prompt = `${description}
 
-Style: Clean white background, studio lighting, e-commerce style, high resolution, sharp focus, front-facing view, no person, only the garment`;
+E-commerce product photography: ghost mannequin style, clean white studio background, professional lighting, high resolution, product thumbnail, no person, only the garment visible`;
 
     // Use Vertex AI Imagen for image generation
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
@@ -163,12 +161,12 @@ Style: Clean white background, studio lighting, e-commerce style, high resolutio
       body: JSON.stringify({
         instances: [{
           prompt: prompt,
-          parameters: {
-            sampleCount: 1,
-            aspectRatio: "1:1",
-            safetyFilterLevel: "block_some",
-            personGeneration: "dont_allow"
-          }
+        parameters: {
+          sampleCount: 1,
+          aspectRatio: "1:1",
+          safetyFilterLevel: "block_few", // Less restrictive for testing
+          personGeneration: "dont_allow"
+        }
         }]
       })
     });
