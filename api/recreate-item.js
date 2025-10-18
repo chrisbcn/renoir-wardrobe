@@ -154,8 +154,8 @@ E-commerce product photography: ghost mannequin style, clean white studio backgr
     const location = 'us-central1';
     const model = 'imagen-4.0-generate-001';
     
-    // Use the publishers endpoint instead of models endpoint
-    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateImages`;
+    // Use the correct publishers endpoint with :predict
+    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:predict`;
     
     console.log('🎨 Attempting image generation with Vertex AI Imagen...');
     console.log('URL:', url);
@@ -168,14 +168,11 @@ E-commerce product photography: ghost mannequin style, clean white studio backgr
       },
       body: JSON.stringify({
         instances: [{
-          prompt: prompt,
-          parameters: {
-            sampleCount: 1,
-            aspectRatio: "1:1",
-            safetyFilterLevel: "block_few", // Less restrictive for testing
-            personGeneration: "dont_allow"
-          }
-        }]
+          prompt: prompt
+        }],
+        parameters: {
+          sampleCount: 1
+        }
       })
     });
 
