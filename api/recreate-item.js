@@ -1,64 +1,64 @@
 // api/recreate-item.js - Complete API endpoint for clothing item recreation
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  try {
-    const { originalImageData, detectedItem, userId } = req.body;
-
-    if (!originalImageData || !detectedItem) {
-      return res.status(400).json({ error: 'Missing required data' });
+    // CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
     }
-
-    console.log(`🎨 Starting recreation for ${detectedItem.type}`);
+  
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+  
+    try {
+      const { originalImageData, detectedItem, userId } = req.body;
+  
+      if (!originalImageData || !detectedItem) {
+        return res.status(400).json({ error: 'Missing required data' });
+      }
+  
+      console.log(`🎨 Starting recreation for ${detectedItem.type}`);
 
     // Check environment variables
     console.log('Environment check:', {
       hasGeminiKey: !!process.env.GEMINI_API_KEY,
       keyLength: process.env.GEMINI_API_KEY?.length,
     });
-
-    // Step 1: Generate detailed description using Gemini Vision
-    const description = await generateDetailedDescription(detectedItem, originalImageData);
-    
+  
+      // Step 1: Generate detailed description using Gemini Vision
+      const description = await generateDetailedDescription(detectedItem, originalImageData);
+      
     // Step 2: Generate product photo using Imagen
     const recreatedImage = await generateProductPhoto(description, detectedItem, originalImageData);
-
-    console.log(`✅ Recreation complete for ${detectedItem.type}`);
-
-    res.status(200).json({
-      success: true,
-      originalItem: detectedItem,
-      description: description,
-      recreatedImageUrl: recreatedImage,
-      metadata: {
-        timestamp: new Date().toISOString(),
-        userId: userId || 'demo'
-      }
-    });
-
-  } catch (error) {
-    console.error('❌ Recreation failed:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Recreation failed',
-      message: error.message
-    });
+  
+      console.log(`✅ Recreation complete for ${detectedItem.type}`);
+  
+      res.status(200).json({
+        success: true,
+        originalItem: detectedItem,
+        description: description,
+        recreatedImageUrl: recreatedImage,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          userId: userId || 'demo'
+        }
+      });
+  
+    } catch (error) {
+      console.error('❌ Recreation failed:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Recreation failed',
+        message: error.message
+      });
+    }
   }
-}
-
-async function generateDetailedDescription(detectedItem, originalImageData) {
-  try {
+  
+  async function generateDetailedDescription(detectedItem, originalImageData) {
+    try {
     const prompt = `Describe the ${detectedItem.type} in this image. Include: colors, pattern, fabric, and key design details. Be specific about visual elements.`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
@@ -84,12 +84,12 @@ async function generateDetailedDescription(detectedItem, originalImageData) {
         }
       })
     });
-
+  
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Gemini description failed: ${response.status} - ${errorText}`);
     }
-
+  
     const result = await response.json();
     console.log('Gemini response structure:', JSON.stringify(result, null, 2));
     
@@ -175,13 +175,13 @@ E-commerce product photography: ghost mannequin style, clean white studio backgr
         }]
       })
     });
-
+  
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Vertex AI Imagen Error:', errorText);
       throw new Error(`Vertex AI Imagen error: ${response.status} - ${errorText}`);
     }
-
+  
     const result = await response.json();
     console.log("Raw API Response:", JSON.stringify(result, null, 2)); // Log the full response for debugging
 
@@ -247,6 +247,21 @@ async function getAccessToken() {
     console.log('Private Key contains \\n:', process.env.GOOGLE_PRIVATE_KEY?.includes('\\n'));
     console.log('Private Key contains actual newlines:', process.env.GOOGLE_PRIVATE_KEY?.includes('\n'));
     console.log('Processed Private Key starts with:', credentials.private_key?.substring(0, 50));
+
+    // Fix the private key format - it needs proper line breaks
+    if (credentials.private_key && !credentials.private_key.includes('\n')) {
+      console.log('Private key is on one line, fixing format...');
+      // Insert newlines every 64 characters for proper PEM format
+      const fixedKey = credentials.private_key
+        .replace(/-----BEGIN PRIVATE KEY-----/, '-----BEGIN PRIVATE KEY-----\n')
+        .replace(/-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----')
+        .replace(/(.{64})/g, '$1\n')
+        .replace(/\n\n/g, '\n')
+        .trim();
+      
+      credentials.private_key = fixedKey;
+      console.log('Fixed private key starts with:', credentials.private_key.substring(0, 100));
+    }
     
     const { GoogleAuth } = await import('google-auth-library');
     const auth = new GoogleAuth({
@@ -284,4 +299,4 @@ async function getAccessToken() {
     
     throw new Error(`Failed to get access token for Vertex AI: ${error.message}`);
   }
-}
+  }
