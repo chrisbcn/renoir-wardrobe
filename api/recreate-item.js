@@ -198,12 +198,12 @@ Use this detailed description: ${description}`;
     }
     
     const part = candidate.content.parts[0];
-    if (!part.inline_data || !part.inline_data.data) {
-      console.error('No inline_data in response part:', part);
+    if (!part.inlineData || !part.inlineData.data) {
+      console.error('No inlineData in response part:', part);
       throw new Error('No image data in Gemini response');
     }
 
-    const imageData = part.inline_data.data;
+    const imageData = part.inlineData.data;
     return `data:image/jpeg;base64,${imageData}`;
     
   } catch (error) {
