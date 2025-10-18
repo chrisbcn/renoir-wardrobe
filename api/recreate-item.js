@@ -224,7 +224,10 @@ async function getAccessToken() {
       type: "service_account",
       project_id: process.env.GOOGLE_CLOUD_PROJECT_ID,
       private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'), // Convert \n to actual newlines
+      private_key: process.env.GOOGLE_PRIVATE_KEY
+        ?.replace(/\\n/g, '\n')  // Convert literal \n to actual newlines
+        ?.replace(/\n/g, '\n')   // Ensure proper line breaks
+        ?.trim(),                // Remove extra whitespace
       client_email: process.env.GOOGLE_CLIENT_EMAIL,
       client_id: process.env.GOOGLE_CLIENT_ID,
       auth_uri: "https://accounts.google.com/o/oauth2/auth",
@@ -240,6 +243,10 @@ async function getAccessToken() {
     console.log('Client ID:', process.env.GOOGLE_CLIENT_ID);
     console.log('Private Key length:', process.env.GOOGLE_PRIVATE_KEY?.length);
     console.log('Private Key starts with:', process.env.GOOGLE_PRIVATE_KEY?.substring(0, 50));
+    console.log('Private Key ends with:', process.env.GOOGLE_PRIVATE_KEY?.substring(-50));
+    console.log('Private Key contains \\n:', process.env.GOOGLE_PRIVATE_KEY?.includes('\\n'));
+    console.log('Private Key contains actual newlines:', process.env.GOOGLE_PRIVATE_KEY?.includes('\n'));
+    console.log('Processed Private Key starts with:', credentials.private_key?.substring(0, 50));
     
     const { GoogleAuth } = await import('google-auth-library');
     const auth = new GoogleAuth({
