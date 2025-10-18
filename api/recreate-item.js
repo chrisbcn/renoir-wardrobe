@@ -153,7 +153,7 @@ E-commerce product photography: ghost mannequin style, clean white studio backgr
     // Use Vertex AI Imagen for image generation
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
     const location = 'us-central1'; // Imagen is available in us-central1
-    const model = 'imagegeneration';
+    const model = 'imagen-3.0-generate-001';
     
     const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateImages`;
     
