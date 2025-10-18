@@ -101,6 +101,13 @@ Be very specific about visual details that would help recreate this exact item a
     }
 
     const result = await response.json();
+    console.log('Gemini response structure:', JSON.stringify(result, null, 2));
+    
+    if (!result.candidates || !result.candidates[0] || !result.candidates[0].content || !result.candidates[0].content.parts || !result.candidates[0].content.parts[0]) {
+      console.error('Unexpected Gemini response structure:', result);
+      throw new Error('Invalid response structure from Gemini API');
+    }
+    
     return result.candidates[0].content.parts[0].text;
 
   } catch (error) {
@@ -161,9 +168,11 @@ Use this detailed description: ${description}`;
     }
 
     const result = await response.json();
+    console.log('Gemini image generation response structure:', JSON.stringify(result, null, 2));
     
     // Extract the generated image data
     if (!result.candidates || !result.candidates[0] || !result.candidates[0].content) {
+      console.error('Unexpected Gemini image response structure:', result);
       throw new Error('Invalid response structure from Gemini API');
     }
 
