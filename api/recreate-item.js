@@ -139,6 +139,10 @@ async function generateProductPhoto(description, detectedItem, originalImageData
       return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     }
 
+    // Try a simpler prompt first to test basic functionality
+    const simplePrompt = `A simple ${detectedItem.type} on a white background, e-commerce style, no person`;
+    
+    // Use the detailed prompt for now, but we can switch to simplePrompt for testing
     const prompt = `Professional product photography of a ${detectedItem.type}: ${description}
 
 Style: Clean white background, studio lighting, e-commerce style, high resolution, sharp focus, front-facing view, no person, only the garment`;
@@ -176,53 +180,30 @@ Style: Clean white background, studio lighting, e-commerce style, high resolutio
     }
 
     const result = await response.json();
-    console.log('Vertex AI Imagen full response:', JSON.stringify(result, null, 2));
-    
-    // Check if we have predictions
-    if (!result.predictions || !result.predictions[0]) {
-      console.error('No predictions in Vertex AI response:', result);
-      throw new Error('No predictions in Vertex AI response');
-    }
-    
-    const prediction = result.predictions[0];
-    console.log('First prediction structure:', JSON.stringify(prediction, null, 2));
-    
-    // Check for different possible response structures
-    let imageData = null;
-    
-    if (prediction.bytesBase64Encoded) {
-      imageData = prediction.bytesBase64Encoded;
-      console.log('Found bytesBase64Encoded, length:', imageData.length);
-    } else if (prediction.generatedImages && prediction.generatedImages[0]) {
-      const generatedImage = prediction.generatedImages[0];
-      console.log('Found generatedImages[0]:', JSON.stringify(generatedImage, null, 2));
-      
-      if (generatedImage.bytesBase64Encoded) {
-        imageData = generatedImage.bytesBase64Encoded;
-        console.log('Found bytesBase64Encoded in generatedImages, length:', imageData.length);
-      } else if (generatedImage.image) {
-        imageData = generatedImage.image;
-        console.log('Found image field, length:', imageData.length);
+    console.log("Raw API Response:", JSON.stringify(result, null, 2)); // Log the full response for debugging
+
+    if (result.predictions && result.predictions.length > 0) {
+      const prediction = result.predictions[0];
+
+      // Check for safety filter blocking
+      if (prediction.safetyAttributes && prediction.safetyAttributes.blocked) {
+        console.error('Image generation blocked by safety filters!');
+        console.error('Safety categories:', prediction.safetyAttributes.categories);
+        throw new Error(`Image blocked due to safety concerns: ${prediction.safetyAttributes.categories.join(', ')}`);
       }
-    } else if (prediction.images && prediction.images[0]) {
-      const image = prediction.images[0];
-      console.log('Found images[0]:', JSON.stringify(image, null, 2));
-      
-      if (image.bytesBase64Encoded) {
-        imageData = image.bytesBase64Encoded;
-        console.log('Found bytesBase64Encoded in images, length:', imageData.length);
-      } else if (image.data) {
-        imageData = image.data;
-        console.log('Found data field, length:', imageData.length);
+
+      if (prediction.bytesBase64Encoded && prediction.mimeType) {
+        const imageData = prediction.bytesBase64Encoded;
+        console.log('Found valid image data, length:', imageData.length);
+        console.log('MIME type:', prediction.mimeType);
+        // Use the mimeType from the response for dynamic data URI creation
+        return `data:${prediction.mimeType};base64,${imageData}`;
+      } else {
+        console.error('Unexpected prediction structure: Missing bytesBase64Encoded or mimeType', prediction);
+        throw new Error('Image data not found in a valid format.');
       }
-    }
-    
-    if (imageData) {
-      console.log('Using image data, first 100 chars:', imageData.substring(0, 100));
-      return `data:image/jpeg;base64,${imageData}`;
     } else {
-      console.error('No image data found in any expected field. Full prediction:', prediction);
-      throw new Error('No image data found in Vertex AI response');
+      throw new Error('No predictions found in the Vertex AI Imagen response.');
     }
     
   } catch (error) {
