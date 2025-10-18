@@ -152,8 +152,8 @@ Requirements:
 
 Use this detailed description: ${description}`;
 
-    // Use Gemini 2.5 Flash Image for image generation
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    // Use Gemini 2.0 Flash for image generation
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -172,7 +172,8 @@ Use this detailed description: ${description}`;
           temperature: 0.4,
           topK: 40,
           topP: 0.95,
-        }
+        },
+        responseModalities: ["Image"]
       })
     });
 
