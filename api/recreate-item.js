@@ -236,6 +236,10 @@ async function getAccessToken() {
     console.log('Using individual env vars for authentication');
     console.log('Project ID:', process.env.GOOGLE_CLOUD_PROJECT_ID);
     console.log('Client Email:', process.env.GOOGLE_CLIENT_EMAIL);
+    console.log('Private Key ID:', process.env.GOOGLE_PRIVATE_KEY_ID);
+    console.log('Client ID:', process.env.GOOGLE_CLIENT_ID);
+    console.log('Private Key length:', process.env.GOOGLE_PRIVATE_KEY?.length);
+    console.log('Private Key starts with:', process.env.GOOGLE_PRIVATE_KEY?.substring(0, 50));
     
     const { GoogleAuth } = await import('google-auth-library');
     const auth = new GoogleAuth({
@@ -246,7 +250,31 @@ async function getAccessToken() {
     const accessToken = await client.getAccessToken();
     return accessToken.token;
   } catch (error) {
-    console.error('Error getting access token:', error);
+    console.error('Error getting access token with individual vars:', error);
+    
+    // Fallback: try the JSON approach if individual variables fail
+    try {
+      console.log('Trying fallback JSON approach...');
+      if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+        const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+          .replace(/\\n/g, '\n')
+          .trim();
+        const credentials = JSON.parse(credentialsJson);
+        
+        const { GoogleAuth } = await import('google-auth-library');
+        const auth = new GoogleAuth({
+          credentials: credentials,
+          scopes: ['https://www.googleapis.com/auth/cloud-platform']
+        });
+        const client = await auth.getClient();
+        const accessToken = await client.getAccessToken();
+        console.log('Fallback JSON approach succeeded');
+        return accessToken.token;
+      }
+    } catch (fallbackError) {
+      console.error('Fallback JSON approach also failed:', fallbackError);
+    }
+    
     throw new Error(`Failed to get access token for Vertex AI: ${error.message}`);
   }
 }
