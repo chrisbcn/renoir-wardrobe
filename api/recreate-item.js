@@ -176,14 +176,53 @@ Style: Clean white background, studio lighting, e-commerce style, high resolutio
     }
 
     const result = await response.json();
-    console.log('Vertex AI Imagen response:', JSON.stringify(result, null, 2));
+    console.log('Vertex AI Imagen full response:', JSON.stringify(result, null, 2));
     
-    if (result.predictions && result.predictions[0] && result.predictions[0].bytesBase64Encoded) {
-      const imageData = result.predictions[0].bytesBase64Encoded;
+    // Check if we have predictions
+    if (!result.predictions || !result.predictions[0]) {
+      console.error('No predictions in Vertex AI response:', result);
+      throw new Error('No predictions in Vertex AI response');
+    }
+    
+    const prediction = result.predictions[0];
+    console.log('First prediction structure:', JSON.stringify(prediction, null, 2));
+    
+    // Check for different possible response structures
+    let imageData = null;
+    
+    if (prediction.bytesBase64Encoded) {
+      imageData = prediction.bytesBase64Encoded;
+      console.log('Found bytesBase64Encoded, length:', imageData.length);
+    } else if (prediction.generatedImages && prediction.generatedImages[0]) {
+      const generatedImage = prediction.generatedImages[0];
+      console.log('Found generatedImages[0]:', JSON.stringify(generatedImage, null, 2));
+      
+      if (generatedImage.bytesBase64Encoded) {
+        imageData = generatedImage.bytesBase64Encoded;
+        console.log('Found bytesBase64Encoded in generatedImages, length:', imageData.length);
+      } else if (generatedImage.image) {
+        imageData = generatedImage.image;
+        console.log('Found image field, length:', imageData.length);
+      }
+    } else if (prediction.images && prediction.images[0]) {
+      const image = prediction.images[0];
+      console.log('Found images[0]:', JSON.stringify(image, null, 2));
+      
+      if (image.bytesBase64Encoded) {
+        imageData = image.bytesBase64Encoded;
+        console.log('Found bytesBase64Encoded in images, length:', imageData.length);
+      } else if (image.data) {
+        imageData = image.data;
+        console.log('Found data field, length:', imageData.length);
+      }
+    }
+    
+    if (imageData) {
+      console.log('Using image data, first 100 chars:', imageData.substring(0, 100));
       return `data:image/jpeg;base64,${imageData}`;
     } else {
-      console.error('Unexpected Vertex AI response structure:', result);
-      throw new Error('No image data in Vertex AI response');
+      console.error('No image data found in any expected field. Full prediction:', prediction);
+      throw new Error('No image data found in Vertex AI response');
     }
     
   } catch (error) {
