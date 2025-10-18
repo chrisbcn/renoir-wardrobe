@@ -90,7 +90,7 @@ Be very specific about visual details that would help recreate this exact item a
           temperature: 0.3,
           topK: 32,
           topP: 0.8,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 4096,
         }
       })
     });
@@ -103,12 +103,34 @@ Be very specific about visual details that would help recreate this exact item a
     const result = await response.json();
     console.log('Gemini response structure:', JSON.stringify(result, null, 2));
     
-    if (!result.candidates || !result.candidates[0] || !result.candidates[0].content || !result.candidates[0].content.parts || !result.candidates[0].content.parts[0]) {
-      console.error('Unexpected Gemini response structure:', result);
-      throw new Error('Invalid response structure from Gemini API');
+    // Check if we have candidates
+    if (!result.candidates || !result.candidates[0]) {
+      console.error('No candidates in Gemini response:', result);
+      throw new Error('No candidates in Gemini response');
     }
     
-    return result.candidates[0].content.parts[0].text;
+    const candidate = result.candidates[0];
+    
+    // Check if the response was truncated due to token limit
+    if (candidate.finishReason === 'MAX_TOKENS') {
+      console.warn('Response truncated due to MAX_TOKENS limit');
+    }
+    
+    // Check if we have content with parts
+    if (!candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
+      console.error('No content parts in Gemini response:', candidate);
+      throw new Error('No content parts in Gemini response');
+    }
+    
+    const textPart = candidate.content.parts[0];
+    
+    // Check if the part has text content
+    if (!textPart.text) {
+      console.error('No text content in response part:', textPart);
+      throw new Error('No text content in Gemini response');
+    }
+    
+    return textPart.text;
 
   } catch (error) {
     console.error('Description generation failed:', error);
