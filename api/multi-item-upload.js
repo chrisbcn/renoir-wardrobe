@@ -35,11 +35,8 @@ export default async function handler(req, res) {
     console.log('📸 Multi-item upload request received');
     console.log('🎨 Image MIME type:', mimeType);
 
-    // Use a consistent default user ID that we'll ensure exists
-    const effectiveUserId = userId || "default_user";
-    
-    // Ensure the default user exists in the database
-    await ensureDefaultUserExists(effectiveUserId);
+    // Use a simple string ID that doesn't require user creation
+    const effectiveUserId = userId || "demo_user";
     
     const sessionId = await createDetectionSession(effectiveUserId, imageData, mimeType);
     console.log('📋 Created detection session:', sessionId);
@@ -418,40 +415,4 @@ async function updateSessionStatus(sessionId, status, errorMessage = null) {
       error_message: errorMessage
     })
     .eq('id', sessionId);
-}
-
-async function ensureDefaultUserExists(userId) {
-  try {
-    // Check if user exists
-    const { data: existingUser, error: checkError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', userId)
-      .single();
-
-    if (checkError && checkError.code === 'PGRST116') {
-      // User doesn't exist, create it
-      console.log(`Creating default user: ${userId}`);
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert({
-          id: userId,
-          email: `${userId}@example.com`,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-
-      if (insertError) {
-        console.error('Error creating default user:', insertError);
-        // Don't throw error, just log it
-      } else {
-        console.log(`✅ Created default user: ${userId}`);
-      }
-    } else if (existingUser) {
-      console.log(`✅ User exists: ${userId}`);
-    }
-  } catch (error) {
-    console.error('Error ensuring user exists:', error);
-    // Don't throw error, just log it
-  }
 }
