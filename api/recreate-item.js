@@ -133,60 +133,80 @@ async function generateDetailedDescription(detectedItem, originalImageData) {
 
 async function generateProductPhoto(description, detectedItem, originalImageData) {
   try {
-    // Check if API key exists
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not found in environment variables');
+    // Check if we have the required environment variables for Vertex AI
+    if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      console.warn('Vertex AI credentials not found, using placeholder image');
+      return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     }
 
-    const prompt = `Create a professional product photography image of the ${detectedItem.type} from this reference image. 
+    const prompt = `Professional product photography of a ${detectedItem.type}: ${description}
 
-Requirements:
-- Clean white or light gray background
-- Professional studio lighting with soft shadows
-- High resolution e-commerce style presentation
-- Show only the ${detectedItem.type}, no person or distracting background
-- Preserve the exact colors, patterns, and design details from the reference
-- Front-facing product view suitable for online retail
-- Professional fashion photography quality
-- Sharp focus and high detail
+Style: Clean white background, studio lighting, e-commerce style, high resolution, sharp focus, front-facing view, no person, only the garment`;
 
-Use this detailed description: ${description}`;
-
-    // TODO: Replace with dedicated image generation API (Vertex AI Imagen, DALL-E 3, etc.)
-    // For now, return placeholder since gemini-2.5-flash-image doesn't generate images
-    console.log('Image generation requested for:', detectedItem.type);
-    console.log('Description:', description);
+    // Use Vertex AI Imagen for image generation
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
+    const location = 'us-central1'; // Imagen is available in us-central1
+    const model = 'imagegeneration@005';
     
-    // Return a placeholder image data URL
-    const placeholderImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-    return placeholderImage;
+    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateImages`;
     
-    /* Original Gemini API call - doesn't work for image generation
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${await getAccessToken()}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            {
-              inline_data: {
-                mime_type: "image/jpeg",
-                data: originalImageData
-              }
-            }
-          ]
-        }],
-        generationConfig: {
-          temperature: 0.4,
-          topK: 40,
-          topP: 0.95,
-        }
+        instances: [{
+          prompt: prompt,
+          parameters: {
+            sampleCount: 1,
+            aspectRatio: "1:1",
+            safetyFilterLevel: "block_some",
+            personGeneration: "dont_allow"
+          }
+        }]
       })
     });
-    */
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Vertex AI Imagen Error:', errorText);
+      throw new Error(`Vertex AI Imagen error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('Vertex AI Imagen response:', JSON.stringify(result, null, 2));
+    
+    if (result.predictions && result.predictions[0] && result.predictions[0].bytesBase64Encoded) {
+      const imageData = result.predictions[0].bytesBase64Encoded;
+      return `data:image/jpeg;base64,${imageData}`;
+    } else {
+      console.error('Unexpected Vertex AI response structure:', result);
+      throw new Error('No image data in Vertex AI response');
+    }
+    
   } catch (error) {
     console.error('Image generation failed:', error);
-    throw new Error(`Failed to generate product photo: ${error.message}`);
+    // Return placeholder on error
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  }
+}
+
+// Helper function to get access token for Vertex AI
+async function getAccessToken() {
+  try {
+    const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+    const { GoogleAuth } = await import('google-auth-library');
+    const auth = new GoogleAuth({
+      credentials: credentials,
+      scopes: ['https://www.googleapis.com/auth/cloud-platform']
+    });
+    const client = await auth.getClient();
+    const accessToken = await client.getAccessToken();
+    return accessToken.token;
+  } catch (error) {
+    console.error('Error getting access token:', error);
+    throw new Error('Failed to get access token for Vertex AI');
   }
 }
