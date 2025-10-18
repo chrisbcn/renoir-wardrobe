@@ -358,6 +358,7 @@ async function saveItemToDatabase(item, sessionId, userId) {
       user_id: userId,
       name: item.analysis?.name || `${item.color} ${item.type}`,
       garment_type: item.type,
+      image_url: item.imageUrl || 'data:image/jpeg;base64,placeholder', // ✅ FIX: Add required image_url field
       colors: JSON.stringify([{
         name: item.color,
         primary: true,
