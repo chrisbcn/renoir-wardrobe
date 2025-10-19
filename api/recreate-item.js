@@ -73,7 +73,7 @@ async function generateProductPhoto(detectedItem, originalImageData) {
             {
               inline_data: {
                 mime_type: "image/jpeg",
-                data: originalImageData
+                data: originalImageData.replace(/^data:image\/[a-z]+;base64,/, '')
               }
             }
           ]
