@@ -61,7 +61,7 @@ async function generateProductPhoto(detectedItem, originalImageData) {
     // Use Gemini 2.5 Flash Image directly (same as Studio)
     const prompt = `recreate in a ghost mannequin style the ${detectedItem.type} in this photo`;
     
-    console.log('🎨 Using Gemini 2.0 Flash Preview Image Generation for direct recreation...');
+    console.log('🎨 Using Gemini 2.5 Flash Image for direct recreation...');
     console.log('Prompt:', prompt);
     
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${process.env.GEMINI_API_KEY}`, {
@@ -84,8 +84,7 @@ async function generateProductPhoto(detectedItem, originalImageData) {
           topK: 32,
           topP: 0.95,
           maxOutputTokens: 32768,
-        },
-        responseModalities: ["TEXT", "IMAGE"]
+        }
       })
     });
 
