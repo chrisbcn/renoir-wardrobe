@@ -59,15 +59,15 @@ export default async function handler(req, res) {
   
   async function generateDetailedDescription(detectedItem, originalImageData) {
     try {
-    const prompt = `Analyze this ${detectedItem.type} in detail. Provide a comprehensive description including:
+    const prompt = `Analyze this ${detectedItem.type} in extreme detail for the purpose of high-fidelity image recreation. Provide a comprehensive, vivid, and precise description, focusing on visual elements that an image generation AI can interpret. Include:
 
-1. EXACT COLORS: Base color and all pattern colors with specific shades
-2. PATTERN DETAILS: Precise description of any patterns, prints, or designs - describe every element
-3. FABRIC TYPE: Material appearance, texture, weight, drape
-4. DESIGN ELEMENTS: Collar style, sleeve length, fit, buttons, seams, any distinctive features
-5. VISUAL CHARACTERISTICS: How it looks when worn, the overall aesthetic
+1. EXACT COLORS: Identify the base color and all colors present in any patterns or designs. Use specific color names (e.g., "pastel pink," "forest green," "off-white").
+2. PATTERN DETAILS: Describe the pattern with meticulous precision. Detail every element, its shape, size, arrangement, and spacing. For floral patterns, describe the type of flowers, leaves, stems, and their artistic style (e.g., "stylized botanical illustration," "realistic watercolor," "abstract geometric").
+3. FABRIC TYPE & TEXTURE: Describe the material's appearance, texture (e.g., "smooth cotton," "ribbed knit," "sheer chiffon"), weight, and how it drapes.
+4. DESIGN ELEMENTS: Detail all structural and stylistic features: collar style, sleeve length and cuff design, fit (e.g., "relaxed," "tailored," "oversized"), button type and placement, seam details, pockets, and any other distinctive embellishments.
+5. OVERALL AESTHETIC: Describe the garment's general look and feel, its style (e.g., "casual," "formal," "bohemian," "modern minimalist").
 
-Be extremely specific and detailed - this description will be used to recreate the garment exactly.`;
+The goal is to provide a description so accurate and complete that an image generation AI can recreate the garment perfectly, capturing every nuance of the original.`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
@@ -141,97 +141,28 @@ Be extremely specific and detailed - this description will be used to recreate t
 
 async function generateProductPhoto(description, detectedItem, originalImageData) {
   try {
-    console.log('🎨 Attempting image generation with Gemini 2.0 Flash...');
-    
-    // Try Gemini 2.0 Flash with image generation capabilities first
-    const prompt = `Recreate this ${detectedItem.type} in a ghost mannequin style, exactly as you see it in the photo. Pay very close attention to patterns, style, fit, and fabric. 
-
-CRITICAL REQUIREMENTS:
-- Ghost mannequin style (invisible wearer, perfect garment drape)
-- Exact pattern reproduction with precise colors and details
-- Professional e-commerce product photography
-- Clean white studio background
-- High resolution, retail-ready quality
-- No person visible, only the garment`;
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            {
-              inline_data: {
-                mime_type: "image/jpeg",
-                data: originalImageData
-              }
-            }
-          ]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          topK: 32,
-          topP: 0.8,
-          maxOutputTokens: 4096,
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini 2.0 Flash Error:', errorText);
-      throw new Error(`Gemini 2.0 Flash error: ${response.status} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log("Gemini 2.0 Flash Response:", JSON.stringify(result, null, 2));
-
-    // Check if we have candidates with image data
-    if (result.candidates && result.candidates.length > 0) {
-      const candidate = result.candidates[0];
-      
-      if (candidate.content && candidate.content.parts) {
-        for (const part of candidate.content.parts) {
-          if (part.inline_data && part.inline_data.data) {
-            console.log('✅ Successfully generated image with Gemini 2.0 Flash!');
-            return `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`;
-          }
-        }
-      }
-    }
-
-    // Fallback to Vertex AI Imagen if Gemini doesn't generate image
-    console.log('🔄 Gemini 2.0 Flash didn\'t generate image, falling back to Vertex AI Imagen...');
-    return await generateWithVertexAI(description, detectedItem, originalImageData);
-
-  } catch (error) {
-    console.error('Gemini 2.0 Flash image generation failed:', error);
-    console.log('🔄 Falling back to Vertex AI Imagen...');
-    return await generateWithVertexAI(description, detectedItem, originalImageData);
-  }
-}
-
-async function generateWithVertexAI(description, detectedItem, originalImageData) {
-  try {
     // Check if we have the required environment variables for Vertex AI
     if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_CLIENT_EMAIL) {
       console.warn('Vertex AI credentials not found, using placeholder image');
+      console.log('Missing:', {
+        hasProjectId: !!process.env.GOOGLE_CLOUD_PROJECT_ID,
+        hasPrivateKey: !!process.env.GOOGLE_PRIVATE_KEY,
+        hasClientEmail: !!process.env.GOOGLE_CLIENT_EMAIL
+      });
       return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     }
 
     // Create a detailed recreation prompt that matches Google Gemini's approach
-    const prompt = `Recreate this ${detectedItem.type} in a ghost mannequin style, exactly as described: ${description}
+    const prompt = `Recreate this ${detectedItem.type} in a ghost mannequin style, as if from a high-fidelity reference image, based on the following detailed description: ${description}
 
-CRITICAL REQUIREMENTS:
-- Ghost mannequin style (invisible wearer, perfect garment drape)
-- Exact pattern reproduction with precise colors and details
-- Professional e-commerce product photography
-- Clean white studio background
-- High resolution, retail-ready quality
-- No person visible, only the garment
-- Pay very close attention to patterns, style, fit, and fabric texture
-- Ensure the garment appears naturally worn but without a visible model`;
+CRITICAL REQUIREMENTS FOR IMAGE GENERATION:
+- Ghost mannequin style (invisible wearer, perfect garment drape, realistic folds)
+- EXACT pattern reproduction with precise colors, shapes, and intricate details as described
+- Professional e-commerce product photography, studio quality
+- Pristine white studio background with subtle, natural shadows
+- Ultra high resolution 4K quality, retail-ready appearance
+- No person visible, only the garment displayed elegantly and accurately
+- Premium fashion photography aesthetic, clean, minimalist, and hyper-realistic presentation`;
 
     // Use Vertex AI Imagen for image generation
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
@@ -297,12 +228,13 @@ CRITICAL REQUIREMENTS:
     }
 
   } catch (error) {
-    console.error('Vertex AI Imagen generation failed:', error);
+    console.error('Image generation failed:', error);
     console.log('🔄 Falling back to placeholder image');
     // Return placeholder on error
     return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
   }
 }
+
 
 // Helper function to get access token for Vertex AI
 async function getAccessToken() {
