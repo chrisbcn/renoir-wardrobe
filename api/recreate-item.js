@@ -94,13 +94,18 @@ async function generateProductPhoto(detectedItem, originalImageData) {
     }
 
     const result = await response.json();
-    console.log("Gemini API Response structure:", JSON.stringify(result, null, 2));
+    console.log("🔍 FULL Gemini API Response:", JSON.stringify(result, null, 2));
 
     if (result.candidates && result.candidates.length > 0) {
       const candidate = result.candidates[0];
+      console.log("🔍 Candidate structure:", JSON.stringify(candidate, null, 2));
       
       if (candidate.content && candidate.content.parts) {
-        for (const part of candidate.content.parts) {
+        console.log("🔍 Parts found:", candidate.content.parts.length);
+        for (let i = 0; i < candidate.content.parts.length; i++) {
+          const part = candidate.content.parts[i];
+          console.log(`🔍 Part ${i}:`, JSON.stringify(part, null, 2));
+          
           if (part.inline_data && part.inline_data.data) {
             console.log('✅ Successfully generated image with Gemini 2.5 Flash Image!');
             console.log('Found image data, length:', part.inline_data.data.length);
@@ -110,10 +115,11 @@ async function generateProductPhoto(detectedItem, originalImageData) {
         }
       }
       
-      console.error('No image data found in Gemini response');
-      console.error('Response structure:', JSON.stringify(result, null, 2));
+      console.error('❌ No image data found in Gemini response');
+      console.error('❌ Response structure:', JSON.stringify(result, null, 2));
       throw new Error('No image data found in Gemini response');
     } else {
+      console.error('❌ No candidates found in Gemini response');
       throw new Error('No candidates found in Gemini response');
     }
 
