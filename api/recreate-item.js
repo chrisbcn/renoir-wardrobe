@@ -59,9 +59,17 @@ export default async function handler(req, res) {
   
   async function generateDetailedDescription(detectedItem, originalImageData) {
     try {
-    const prompt = `Describe the ${detectedItem.type} in this image. Include: colors, pattern, fabric, and key design details. Be specific about visual elements.`;
+    const prompt = `Analyze this ${detectedItem.type} in detail. Provide a comprehensive description including:
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+1. EXACT COLORS: Base color and all pattern colors with specific shades
+2. PATTERN DETAILS: Precise description of any patterns, prints, or designs - describe every element
+3. FABRIC TYPE: Material appearance, texture, weight, drape
+4. DESIGN ELEMENTS: Collar style, sleeve length, fit, buttons, seams, any distinctive features
+5. VISUAL CHARACTERISTICS: How it looks when worn, the overall aesthetic
+
+Be extremely specific and detailed - this description will be used to recreate the garment exactly.`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -144,10 +152,18 @@ async function generateProductPhoto(description, detectedItem, originalImageData
       return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     }
 
-    // Create a premium e-commerce product shot prompt for Ultra model
-    const prompt = `${description}
+    // Create a detailed recreation prompt that matches Google Gemini's approach
+    const prompt = `Recreate this ${detectedItem.type} in a ghost mannequin style, exactly as described: ${description}
 
-Professional e-commerce product photography: ghost mannequin style, pristine white studio background, professional studio lighting with soft shadows, high resolution 4K quality, product thumbnail format, no person visible, only the garment displayed elegantly, premium fashion photography aesthetic, clean and minimalist presentation, perfect for online retail`;
+CRITICAL REQUIREMENTS:
+- Ghost mannequin style (invisible wearer, perfect garment drape)
+- Exact pattern reproduction with precise colors and details
+- Professional e-commerce product photography
+- Clean white studio background
+- High resolution, retail-ready quality
+- No person visible, only the garment
+- Pay very close attention to patterns, style, fit, and fabric texture
+- Ensure the garment appears naturally worn but without a visible model`;
 
     // Use Vertex AI Imagen for image generation
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
