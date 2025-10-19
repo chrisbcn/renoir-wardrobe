@@ -106,11 +106,12 @@ async function generateProductPhoto(detectedItem, originalImageData) {
           const part = candidate.content.parts[i];
           console.log(`🔍 Part ${i}:`, JSON.stringify(part, null, 2));
           
-          if (part.inline_data && part.inline_data.data) {
+          // Check for 'data' and 'mimeType' directly within the 'part'
+          if (part.data && part.mimeType) {
             console.log('✅ Successfully generated image with Gemini 2.5 Flash Image!');
-            console.log('Found image data, length:', part.inline_data.data.length);
-            console.log('MIME type:', part.inline_data.mime_type);
-            return `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`;
+            console.log('Found image data, length:', part.data.length);
+            console.log('MIME type:', part.mimeType);
+            return `data:${part.mimeType};base64,${part.data}`;
           }
         }
       }
