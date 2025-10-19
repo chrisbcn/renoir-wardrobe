@@ -144,15 +144,15 @@ async function generateProductPhoto(description, detectedItem, originalImageData
       return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     }
 
-    // Create a proper e-commerce product shot prompt based on the description
+    // Create a premium e-commerce product shot prompt for Ultra model
     const prompt = `${description}
 
-E-commerce product photography: ghost mannequin style, clean white studio background, professional lighting, high resolution, product thumbnail, no person, only the garment visible`;
+Professional e-commerce product photography: ghost mannequin style, pristine white studio background, professional studio lighting with soft shadows, high resolution 4K quality, product thumbnail format, no person visible, only the garment displayed elegantly, premium fashion photography aesthetic, clean and minimalist presentation, perfect for online retail`;
 
     // Use Vertex AI Imagen for image generation
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
     const location = 'us-central1';
-    const model = 'imagen-4.0-generate-001';
+    const model = 'imagen-4.0-ultra-generate-001';
     
     // Use the correct publishers endpoint with :predict
     const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:predict`;
@@ -171,7 +171,10 @@ E-commerce product photography: ghost mannequin style, clean white studio backgr
           prompt: prompt
         }],
         parameters: {
-          sampleCount: 1
+          sampleCount: 1,
+          aspectRatio: "1:1",
+          safetyFilterLevel: "block_few",
+          personGeneration: "dont_allow"
         }
       })
     });
