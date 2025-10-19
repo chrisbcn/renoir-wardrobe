@@ -56,17 +56,43 @@ export default async function handler(req, res) {
   }
   
 
+async function getAccessToken() {
+  const { GoogleAuth } = require('google-auth-library');
+  
+  const auth = new GoogleAuth({
+    credentials: {
+      type: 'service_account',
+      project_id: process.env.GOOGLE_CLOUD_PROJECT_ID,
+      private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+      token_uri: 'https://oauth2.googleapis.com/token',
+    },
+    scopes: ['https://www.googleapis.com/auth/cloud-platform']
+  });
+
+  const accessToken = await auth.getAccessToken();
+  return accessToken.token;
+}
+
 async function generateProductPhoto(detectedItem, originalImageData) {
   try {
-    // Use Gemini 2.5 Flash Image directly (same as Studio)
+    // Use Gemini 2.5 Flash Image via Vertex AI
     const prompt = `recreate in a ghost mannequin style the ${detectedItem.type} in this photo`;
     
-    console.log('🎨 Using Gemini 2.5 Flash Image for direct recreation...');
+    console.log('🎨 Using Gemini 2.5 Flash Image via Vertex AI for direct recreation...');
     console.log('Prompt:', prompt);
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const accessToken = await getAccessToken();
+    
+    const response = await fetch(`https://us-central1-aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_CLOUD_PROJECT_ID}/locations/us-central1/publishers/google/models/gemini-2.5-flash-image:generateContent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
       body: JSON.stringify({
         contents: [{
           parts: [

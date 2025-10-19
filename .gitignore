@@ -3,3 +3,4 @@ node_modules
 
 api/simple_api_test.js
 api/test-claude.js
+.vercel
