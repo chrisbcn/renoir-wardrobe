@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       // Step 1: Generate detailed description using Gemini Vision
       const description = await generateDetailedDescription(detectedItem, originalImageData);
       
-    // Step 2: Generate product photo using Imagen
+    // Step 2: Generate product photo using Imagen with direct image reference
     const recreatedImage = await generateProductPhoto(description, detectedItem, originalImageData);
   
       console.log(`✅ Recreation complete for ${detectedItem.type}`);
@@ -141,14 +141,82 @@ Be extremely specific and detailed - this description will be used to recreate t
 
 async function generateProductPhoto(description, detectedItem, originalImageData) {
   try {
+    console.log('🎨 Attempting image generation with Gemini 2.0 Flash...');
+    
+    // Try Gemini 2.0 Flash with image generation capabilities first
+    const prompt = `Recreate this ${detectedItem.type} in a ghost mannequin style, exactly as you see it in the photo. Pay very close attention to patterns, style, fit, and fabric. 
+
+CRITICAL REQUIREMENTS:
+- Ghost mannequin style (invisible wearer, perfect garment drape)
+- Exact pattern reproduction with precise colors and details
+- Professional e-commerce product photography
+- Clean white studio background
+- High resolution, retail-ready quality
+- No person visible, only the garment`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            {
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: originalImageData
+              }
+            }
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          topK: 32,
+          topP: 0.8,
+          maxOutputTokens: 4096,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini 2.0 Flash Error:', errorText);
+      throw new Error(`Gemini 2.0 Flash error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log("Gemini 2.0 Flash Response:", JSON.stringify(result, null, 2));
+
+    // Check if we have candidates with image data
+    if (result.candidates && result.candidates.length > 0) {
+      const candidate = result.candidates[0];
+      
+      if (candidate.content && candidate.content.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.inline_data && part.inline_data.data) {
+            console.log('✅ Successfully generated image with Gemini 2.0 Flash!');
+            return `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`;
+          }
+        }
+      }
+    }
+
+    // Fallback to Vertex AI Imagen if Gemini doesn't generate image
+    console.log('🔄 Gemini 2.0 Flash didn\'t generate image, falling back to Vertex AI Imagen...');
+    return await generateWithVertexAI(description, detectedItem, originalImageData);
+
+  } catch (error) {
+    console.error('Gemini 2.0 Flash image generation failed:', error);
+    console.log('🔄 Falling back to Vertex AI Imagen...');
+    return await generateWithVertexAI(description, detectedItem, originalImageData);
+  }
+}
+
+async function generateWithVertexAI(description, detectedItem, originalImageData) {
+  try {
     // Check if we have the required environment variables for Vertex AI
     if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_CLIENT_EMAIL) {
       console.warn('Vertex AI credentials not found, using placeholder image');
-      console.log('Missing:', {
-        hasProjectId: !!process.env.GOOGLE_CLOUD_PROJECT_ID,
-        hasPrivateKey: !!process.env.GOOGLE_PRIVATE_KEY,
-        hasClientEmail: !!process.env.GOOGLE_CLIENT_EMAIL
-      });
       return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     }
 
@@ -229,7 +297,7 @@ CRITICAL REQUIREMENTS:
     }
 
   } catch (error) {
-    console.error('Image generation failed:', error);
+    console.error('Vertex AI Imagen generation failed:', error);
     console.log('🔄 Falling back to placeholder image');
     // Return placeholder on error
     return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
