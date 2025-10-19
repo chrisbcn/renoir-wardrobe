@@ -61,10 +61,10 @@ async function generateProductPhoto(detectedItem, originalImageData) {
     // Use Gemini 2.5 Flash Image directly (same as Studio)
     const prompt = `recreate in a ghost mannequin style the ${detectedItem.type} in this photo`;
     
-    console.log('🎨 Using Gemini 2.5 Flash Image for direct recreation...');
+    console.log('🎨 Using Gemini 2.0 Flash Preview Image Generation for direct recreation...');
     console.log('Prompt:', prompt);
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -84,7 +84,8 @@ async function generateProductPhoto(detectedItem, originalImageData) {
           topK: 32,
           topP: 0.95,
           maxOutputTokens: 32768,
-        }
+        },
+        responseModalities: ["TEXT", "IMAGE"]
       })
     });
 
@@ -107,19 +108,23 @@ async function generateProductPhoto(detectedItem, originalImageData) {
           const part = candidate.content.parts[i];
           console.log(`🔍 Part ${i}:`, JSON.stringify(part, null, 2));
           
-          // Check for text response from Gemini 1.5 Flash
+          // Check for image data in inlineData
+          if (part.inlineData && part.inlineData.data) {
+            console.log('✅ Successfully generated image with Gemini 2.0 Flash Preview Image Generation!');
+            console.log('Found image data, length:', part.inlineData.data.length);
+            console.log('MIME type:', part.inlineData.mimeType);
+            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+          }
+          // Check for text response (for debugging)
           if (part.text) {
-            console.log('✅ Successfully generated text with Gemini 1.5 Flash!');
             console.log('Generated text:', part.text);
-            // For now, return a placeholder since this model generates text, not images
-            return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
           }
         }
       }
       
-      console.error('❌ No text data found in Gemini response');
+      console.error('❌ No image data found in Gemini response');
       console.error('❌ Response structure:', JSON.stringify(result, null, 2));
-      throw new Error('No text data found in Gemini response');
+      throw new Error('No image data found in Gemini response');
     } else {
       console.error('❌ No candidates found in Gemini response');
       throw new Error('No candidates found in Gemini response');
