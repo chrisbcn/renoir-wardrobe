@@ -14,7 +14,9 @@ export default async function handler(req, res) {
       GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
       SUPABASE_URL: !!process.env.SUPABASE_URL,
       SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
-      NODE_ENV: process.env.NODE_ENV
+      NODE_ENV: process.env.NODE_ENV,
+      GEMINI_API_KEY_LENGTH: process.env.GEMINI_API_KEY?.length || 0,
+      ANTHROPIC_API_KEY_LENGTH: process.env.ANTHROPIC_API_KEY?.length || 0
     };
 
     const missingVars = Object.entries(envCheck)
