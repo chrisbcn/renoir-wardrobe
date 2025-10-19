@@ -69,7 +69,7 @@ export default async function handler(req, res) {
 
 The goal is to provide a description so accurate and complete that an image generation AI can recreate the garment perfectly, capturing every nuance of the original.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -153,19 +153,16 @@ async function generateProductPhoto(description, detectedItem, originalImageData
     }
 
     // Create a detailed recreation prompt that matches Google Gemini's approach
-    const prompt = `Create a professional e-commerce product photo of this ${detectedItem.type} in ghost mannequin style. 
+    const prompt = `Recreate this ${detectedItem.type} in a ghost mannequin style, as if from a high-fidelity reference image, based on the following detailed description: ${description}
 
-DESCRIPTION: ${description}
-
-VISUAL REQUIREMENTS:
-- Ghost mannequin display (invisible wearer, natural garment drape)
-- Exact pattern reproduction with all colors and details
-- Professional studio lighting on white background
-- High resolution, retail quality
-- No person visible, only the garment
-- Clean, minimalist presentation
-
-Focus on recreating the exact pattern, colors, and fabric details as described.`;
+CRITICAL REQUIREMENTS FOR IMAGE GENERATION:
+- Ghost mannequin style (invisible wearer, perfect garment drape, realistic folds)
+- EXACT pattern reproduction with precise colors, shapes, and intricate details as described
+- Professional e-commerce product photography, studio quality
+- Pristine white studio background with subtle, natural shadows
+- Ultra high resolution 4K quality, retail-ready appearance
+- No person visible, only the garment displayed elegantly and accurately
+- Premium fashion photography aesthetic, clean, minimalist, and hyper-realistic presentation`;
 
     // Use Vertex AI Imagen for image generation
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
