@@ -97,7 +97,7 @@ async function generateProductPhoto(detectedItem, originalImageData) {
     // Clean the base64 data
     const cleanImageData = originalImageData.replace(/^data:image\/[a-z]+;base64,/, '');
     
-    // Use Gemini 2.5 Flash Image - KEY: Must specify responseModalities: ["IMAGE"]
+    // Use Gemini 2.5 Flash Image via Vertex AI generateContent endpoint
     const response = await fetch(`https://us-central1-aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_CLOUD_PROJECT_ID}/locations/us-central1/publishers/google/models/gemini-2.5-flash-image:generateContent`, {
       method: 'POST',
       headers: { 
@@ -118,12 +118,10 @@ async function generateProductPhoto(detectedItem, originalImageData) {
           ]
         }],
         generationConfig: {
-          temperature: 1.0,
+          temperature: 0.8,
           topK: 40,
           topP: 0.95,
-          maxOutputTokens: 8192,
-          responseModalities: ["IMAGE"],  // CRITICAL: This tells Gemini to return an image!
-          responseMimeType: "image/jpeg"
+          maxOutputTokens: 32768
         }
       })
     });
