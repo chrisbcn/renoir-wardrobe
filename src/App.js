@@ -5,6 +5,8 @@ import './MobileApp.css';
 import MultiItemDetectionDisplay from './MultiItemDetectionDisplay';
 import ItemRecreationWorkflow from './ItemRecreationWorkflow';
 import BottomNav from './components/shared/BottomNav';
+import DetectedItemCard from './components/shared/DetectedItemCard';
+import ItemDetailModal from './components/shared/ItemDetailModal';
 
 // Image format validation
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png'];
@@ -66,6 +68,7 @@ function App() {
   const [recreationSelectedItem, setRecreationSelectedItem] = useState(null);
   const [recreatingItems, setRecreatingItems] = useState(new Set());
   const [recreatedItems, setRecreatedItems] = useState({});
+  const [detailViewItem, setDetailViewItem] = useState(null); // For full-screen detail view
 
   // Keep all existing functions (loadWardrobeItems, saveToDatabase, etc.)
   useEffect(() => {
@@ -711,138 +714,37 @@ const analyzeSingleItem = async (item) => {
               </div>
             )}
 
-            {/* Detection Results */}
+            {/* Detection Results - Mobile Optimized */}
             {multiItemDetectionResult && (
-              <div className="bg-white rounded-lg shadow-sm border">
-                <div className="p-6 border-b">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-semibold">
-                      Detection Results ({multiItemDetectionResult.detectedItems.length} items found)
-                    </h3>
-                    
-                    <button
-                      onClick={handleRecreateAllItems}
-                      className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all"
-                    >
-                      🎨 Recreate All Items
-                    </button>
-                  </div>
+              <div className="mobile-section">
+                {/* Header with count and Recreate All */}
+                <div className="mb-2xl">
+                  <h2 className="heading-2 mb-lg">
+                    {multiItemDetectionResult.detectedItems.length} {multiItemDetectionResult.detectedItems.length === 1 ? 'Item' : 'Items'} Detected
+                  </h2>
+                  
+                  <button
+                    onClick={handleRecreateAllItems}
+                    className="btn btn-full"
+                    disabled={multiItemDetectionResult.detectedItems.every(item => recreatedItems[item.id])}
+                  >
+                    🎨 Recreate All Items
+                  </button>
                 </div>
 
-                <div className="p-6">
-                  <div className="grid lg:grid-cols-2 gap-8">
-                    {/* Original Image */}
-                    <div>
-                      <h4 className="font-medium mb-3">Original Photo</h4>
-                      <div className="relative border rounded-lg overflow-hidden">
-                        <img
-                          src={multiItemDetectionResult.originalImage}
-                          alt="Original outfit"
-                          className="w-full h-auto"
-                        />
-                        
-                        {/* Bounding boxes */}
-                        {multiItemDetectionResult.detectedItems.map((item, index) => (
-                          <div
-                            key={item.id}
-                            className="absolute border-2 border-red-400 bg-red-400 bg-opacity-20"
-                            style={{
-                              left: `${item.boundingBox.left}%`,
-                              top: `${item.boundingBox.top}%`,
-                              width: `${item.boundingBox.width}%`,
-                              height: `${item.boundingBox.height}%`,
-                            }}
-                          >
-                            <div className="absolute -top-2 -left-2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                              {index + 1}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Items List */}
-                    <div>
-                      <h4 className="font-medium mb-3">Detected Items</h4>
-                      <div className="space-y-4">
-                        {multiItemDetectionResult.detectedItems.map((item, index) => (
-                          <div key={item.id} className="border rounded-lg p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <span className="w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                                  {index + 1}
-                                </span>
-                                <div>
-                                  <h5 className="font-medium">{item.type}</h5>
-                                  <p className="text-sm text-gray-500">{item.color} • {item.confidence}% confidence</p>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {item.description && (
-                              <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                            )}
-
-                            {/* Recreation Results */}
-                            {recreatedItems[item.id] && (
-                              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
-                                <div className="flex items-center gap-3">
-                                  <img 
-                                    src={recreatedItems[item.id].recreatedImageUrl}
-                                    alt="Recreated"
-                                    className="w-16 h-16 object-cover rounded border"
-                                  />
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium text-green-800">✅ Recreation Complete</p>
-                                    <p className="text-xs text-green-600">
-                                      Generated: {new Date(recreatedItems[item.id].timestamp).toLocaleTimeString()}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-2 mt-3">
-                              <button
-                                onClick={() => handleRecreateItem(item)}
-                                disabled={recreatingItems.has(item.id) || recreatedItems[item.id]}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-all"
-                              >
-                                {recreatingItems.has(item.id) ? (
-                                  <>
-                                    <span className="inline-block w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                                    Recreating...
-                                  </>
-                                ) : recreatedItems[item.id] ? (
-                                  '✅ Recreated'
-                                ) : (
-                                  '🎨 Recreate'
-                                )}
-                              </button>
-                              
-                              <button
-                                onClick={() => handleAddToWardrobe(item, false)}
-                                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-all"
-                              >
-                                Add Original
-                              </button>
-                              
-                              {recreatedItems[item.id] && (
-                                <button
-                                  onClick={() => handleAddToWardrobe(item, true)}
-                                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all"
-                                >
-                                  Add Recreated
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {/* Detected Items as Cards - NO original image */}
+                {multiItemDetectionResult.detectedItems.map((item, index) => (
+                  <DetectedItemCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    isRecreating={recreatingItems.has(item.id)}
+                    isRecreated={!!recreatedItems[item.id]}
+                    recreatedData={recreatedItems[item.id]}
+                    onRecreate={handleRecreateItem}
+                    onViewRecreation={() => setDetailViewItem(item)}
+                  />
+                ))}
               </div>
             )}
 
@@ -1120,6 +1022,18 @@ const analyzeSingleItem = async (item) => {
         </div>
       )}
       </div>
+
+      {/* Item Detail Modal - Full screen view of recreated items */}
+      {detailViewItem && (
+        <ItemDetailModal
+          item={detailViewItem}
+          recreatedData={recreatedItems}
+          allRecreatedItems={multiItemDetectionResult?.detectedItems.filter(item => recreatedItems[item.id])}
+          onClose={() => setDetailViewItem(null)}
+          onAddToWardrobe={handleAddToWardrobe}
+          onSkip={() => console.log('Skipped')}
+        />
+      )}
 
       {/* Bottom Navigation */}
       <BottomNav 
