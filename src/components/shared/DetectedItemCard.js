@@ -22,38 +22,20 @@ const DetectedItemCard = ({
       {isRecreated && recreatedData ? (
         <button
           onClick={() => onViewRecreation(item)}
-          style={{ 
-            width: '100%', 
-            padding: 0, 
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            marginBottom: '12px'
-          }}
+          className="item-image-button"
         >
           <img 
             src={recreatedData.recreatedImageUrl}
             alt={`Recreated ${item.type}`}
-            style={{ width: '100%', display: 'block', border: '1px solid #232323' }}
+            className="item-image"
           />
         </button>
       ) : (
-        <div style={{ 
-          width: '100%', 
-          aspectRatio: '1',
-          background: '#F6F6EF',
-          marginBottom: '12px',
-          border: '1px solid #232323'
-        }} />
+        <div className="item-placeholder" />
       )}
 
       {/* Compact Description */}
-      <p className="body-small" style={{ 
-        color: '#232323', 
-        marginBottom: '12px',
-        lineHeight: '1.4',
-        minHeight: '40px'
-      }}>
+      <p className="body-small item-description">
         {truncateText(item.description || `${item.color || ''} ${item.type || ''}`.trim())}
       </p>
 
@@ -63,15 +45,6 @@ const DetectedItemCard = ({
           onClick={() => onRecreate(item)}
           disabled={isRecreating}
           className="btn-compact"
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            fontSize: '14px',
-            border: '1px solid #232323',
-            background: 'transparent',
-            cursor: isRecreating ? 'not-allowed' : 'pointer',
-            opacity: isRecreating ? 0.5 : 1
-          }}
         >
           {isRecreating ? 'Recreating...' : 'Recreate'}
         </button>

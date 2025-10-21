@@ -682,7 +682,7 @@ const analyzeSingleItem = async (item) => {
           <div className="mobile-container">
             <div className="mobile-section">
               <h2 className="heading-2 mb-md">Upload Outfit</h2>
-              <p className="body-text mb-2xl" style={{ color: '#666' }}>
+              <p className="body-text mb-2xl text-secondary">
                 Upload a photo to detect and recreate individual items
               </p>
               
@@ -693,7 +693,7 @@ const analyzeSingleItem = async (item) => {
                     type="file" 
                     accept={ACCEPT_STRING}
                     onChange={handleMultiItemUpload}
-                    style={{ display: 'none' }}
+                    className="hidden"
                   />
                   📷 Choose Photo
                 </label>
@@ -702,11 +702,11 @@ const analyzeSingleItem = async (item) => {
               {/* Image Preview + Analyze Button */}
               {uploadedImagePreview && !multiItemDetectionResult && (
                 <div>
-                  <div className="mb-2xl" style={{ border: '1px solid #232323' }}>
+                  <div className="mb-2xl image-border">
                     <img 
                       src={uploadedImagePreview}
                       alt="Uploaded outfit"
-                      style={{ width: '100%', display: 'block' }}
+                      className="full-width-image"
                     />
                   </div>
                   
@@ -717,7 +717,7 @@ const analyzeSingleItem = async (item) => {
                   >
                     {isProcessingMultiItem ? (
                       <span className="flex items-center justify-center gap-2">
-                        <span className="spinner" style={{ borderColor: 'white', borderTopColor: 'transparent' }}></span>
+                        <span className="spinner spinner-white"></span>
                         Analyzing...
                       </span>
                     ) : (
@@ -756,12 +756,12 @@ const analyzeSingleItem = async (item) => {
             {multiItemDetectionResult && (
               <div className="mobile-section-compact">
                 {/* Header */}
-                <h2 className="heading-2" style={{ marginBottom: '16px' }}>
+                <h2 className="heading-2 section-header">
                   Extracted garments
                 </h2>
                 
                 {/* 2-Column Grid of Items */}
-                <div className="items-grid" style={{ marginBottom: '16px' }}>
+                <div className="items-grid section-content">
                   {multiItemDetectionResult.detectedItems.map((item, index) => (
                     <DetectedItemCard
                       key={item.id}
@@ -779,16 +779,14 @@ const analyzeSingleItem = async (item) => {
                 {/* Bottom Actions */}
                 <button
                   onClick={handleRecreateAllItems}
-                  className="btn btn-full"
+                  className="btn btn-full btn-medium mb-md"
                   disabled={multiItemDetectionResult.detectedItems.every(item => recreatedItems[item.id])}
-                  style={{ marginBottom: '12px', padding: '12px 16px', fontSize: '15px' }}
                 >
                   🎨 Recreate all items
                 </button>
 
                 <button 
-                  className="btn btn-full"
-                  style={{ padding: '12px 16px', fontSize: '15px' }}
+                  className="btn btn-full btn-medium"
                 >
                   View each item
                 </button>
