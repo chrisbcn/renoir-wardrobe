@@ -752,37 +752,46 @@ const analyzeSingleItem = async (item) => {
               </div>
             )}
 
-            {/* Detection Results - Mobile Optimized */}
+            {/* Detection Results - 2-Column Grid */}
             {multiItemDetectionResult && (
-              <div className="mobile-section">
-                {/* Header with count and Recreate All */}
-                <div className="mb-2xl">
-                  <h2 className="heading-2 mb-lg">
-                    {multiItemDetectionResult.detectedItems.length} {multiItemDetectionResult.detectedItems.length === 1 ? 'Item' : 'Items'} Detected
-                  </h2>
-                  
-                  <button
-                    onClick={handleRecreateAllItems}
-                    className="btn btn-full"
-                    disabled={multiItemDetectionResult.detectedItems.every(item => recreatedItems[item.id])}
-                  >
-                    🎨 Recreate All Items
-                  </button>
+              <div className="mobile-section-compact">
+                {/* Header */}
+                <h2 className="heading-2" style={{ marginBottom: '16px' }}>
+                  Extracted garments
+                </h2>
+                
+                {/* 2-Column Grid of Items */}
+                <div className="items-grid" style={{ marginBottom: '16px' }}>
+                  {multiItemDetectionResult.detectedItems.map((item, index) => (
+                    <DetectedItemCard
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      isRecreating={recreatingItems.has(item.id)}
+                      isRecreated={!!recreatedItems[item.id]}
+                      recreatedData={recreatedItems[item.id]}
+                      onRecreate={handleRecreateItem}
+                      onViewRecreation={() => setDetailViewItem(item)}
+                    />
+                  ))}
                 </div>
 
-                {/* Detected Items as Cards - NO original image */}
-                {multiItemDetectionResult.detectedItems.map((item, index) => (
-                  <DetectedItemCard
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    isRecreating={recreatingItems.has(item.id)}
-                    isRecreated={!!recreatedItems[item.id]}
-                    recreatedData={recreatedItems[item.id]}
-                    onRecreate={handleRecreateItem}
-                    onViewRecreation={() => setDetailViewItem(item)}
-                  />
-                ))}
+                {/* Bottom Actions */}
+                <button
+                  onClick={handleRecreateAllItems}
+                  className="btn btn-full"
+                  disabled={multiItemDetectionResult.detectedItems.every(item => recreatedItems[item.id])}
+                  style={{ marginBottom: '12px', padding: '12px 16px', fontSize: '15px' }}
+                >
+                  🎨 Recreate all items
+                </button>
+
+                <button 
+                  className="btn btn-full"
+                  style={{ padding: '12px 16px', fontSize: '15px' }}
+                >
+                  View each item
+                </button>
               </div>
             )}
             </div>

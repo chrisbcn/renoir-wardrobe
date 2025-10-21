@@ -81,8 +81,13 @@
 }
 
 .mobile-section {
-  padding: var(--spacing-xl);
+  padding: 16px;
   padding-bottom: 80px; /* Space for bottom nav */
+}
+
+.mobile-section-compact {
+  padding: 12px;
+  padding-bottom: 80px;
 }
 
 /* Spacing utilities */
@@ -118,6 +123,18 @@
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   padding: var(--spacing-xl);
+}
+
+.card-compact {
+  background: #F6F6EF;
+  padding: 12px;
+}
+
+/* 2-Column Grid for Items */
+.items-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 /* Buttons */
