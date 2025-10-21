@@ -291,25 +291,32 @@ function App() {
       if (useRecreated && recreatedItems[item.id]) {
         console.log('💾 Saving recreated item to database...');
         
-        const response = await fetch('/api/save-recreated-item', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            detectedItem: item,
-            originalImageUrl: recreationOriginalImage,
-            recreatedImageUrl: recreatedItems[item.id].recreatedImageUrl,
-            recreationMetadata: recreatedItems[item.id]
-          })
-        });
+        try {
+          const response = await fetch('/api/save-recreated-item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              detectedItem: item,
+              originalImageUrl: recreationOriginalImage,
+              recreatedImageUrl: recreatedItems[item.id].recreatedImageUrl,
+              recreationMetadata: recreatedItems[item.id]
+            })
+          });
 
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log('✅ Recreated item saved to database:', result.itemId);
-          // Add the database ID to the item
-          itemToAdd.id = result.itemId;
-          itemToAdd.savedToDb = true;
-        } else {
+          const result = await response.json();
+          
+          if (result.success) {
+            console.log('✅ Recreated item saved to database:', result.itemId);
+            // Add the database ID to the item
+            itemToAdd.id = result.itemId;
+            itemToAdd.savedToDb = true;
+          } else {
+            console.error('❌ Database save failed:', result.message);
+            console.error('   Error details:', result);
+            console.warn('⚠️ Failed to save to database, adding to local state only');
+          }
+        } catch (dbError) {
+          console.error('❌ Error calling save API:', dbError);
           console.warn('⚠️ Failed to save to database, adding to local state only');
         }
       }

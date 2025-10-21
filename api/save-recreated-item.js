@@ -23,7 +23,14 @@ export default async function handler(req, res) {
       recreationMetadata      // Metadata from recreation API
     } = req.body;
 
+    console.log('📥 Received request to save recreated item');
+    console.log('   - Has detectedItem:', !!detectedItem);
+    console.log('   - Has originalImageUrl:', !!originalImageUrl);
+    console.log('   - Has recreatedImageUrl:', !!recreatedImageUrl);
+    console.log('   - DetectedItem type:', detectedItem?.type);
+    
     if (!detectedItem || !originalImageUrl || !recreatedImageUrl) {
+      console.error('❌ Missing required data');
       return res.status(400).json({ 
         error: 'Missing required data: detectedItem, originalImageUrl, recreatedImageUrl' 
       });
@@ -32,10 +39,16 @@ export default async function handler(req, res) {
     console.log(`💾 Saving recreated item: ${detectedItem.type}`);
 
     // Initialize Supabase
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+      console.error('❌ Supabase credentials missing');
+      throw new Error('Supabase not configured');
+    }
+    
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_ANON_KEY
     );
+    console.log('✅ Supabase client initialized');
 
     // Prepare item data for database
     const itemData = {
@@ -87,6 +100,9 @@ export default async function handler(req, res) {
     };
 
     console.log('📝 Inserting recreated item into database...');
+    console.log('   - Item name:', itemData.name);
+    console.log('   - Has recreated image:', !!itemData.recreated_image_url);
+    console.log('   - Recreated image length:', itemData.recreated_image_url?.length);
 
     // Insert into database
     const { data, error } = await supabase
@@ -97,6 +113,9 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('❌ Database insert error:', error);
+      console.error('   - Error code:', error.code);
+      console.error('   - Error message:', error.message);
+      console.error('   - Error details:', error.details);
       throw error;
     }
 
@@ -111,10 +130,16 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ Error saving recreated item:', error);
+    console.error('   - Error name:', error.name);
+    console.error('   - Error message:', error.message);
+    console.error('   - Error stack:', error.stack);
+    
     return res.status(500).json({
       success: false,
       error: 'Failed to save recreated item',
-      message: error.message
+      message: error.message,
+      errorType: error.name,
+      details: error.details || error.hint || null
     });
   }
 }
