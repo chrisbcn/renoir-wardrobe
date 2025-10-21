@@ -61,6 +61,8 @@ function App() {
   const [multiItemDetectionResult, setMultiItemDetectionResult] = useState(null);
   const [isProcessingMultiItem, setIsProcessingMultiItem] = useState(false);
   const [imageFormatError, setImageFormatError] = useState(null);
+  const [uploadedImagePreview, setUploadedImagePreview] = useState(null);
+  const [uploadedImageFile, setUploadedImageFile] = useState(null);
 
   // Recreation workflow state
   const [showRecreationWorkflow, setShowRecreationWorkflow] = useState(false);
@@ -130,7 +132,7 @@ function App() {
     return null;
   };
 
-  // Multi-item upload handler
+  // Multi-item upload handler - Step 1: Select file and show preview
   const handleMultiItemUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -146,14 +148,25 @@ function App() {
     }
 
     setImageFormatError(null);
+    setUploadedImageFile(file);
+    setUploadedImagePreview(URL.createObjectURL(file));
+    setMultiItemDetectionResult(null); // Clear previous results
+    e.target.value = '';
+  };
+
+  // Analyze outfit handler - Step 2: Analyze the uploaded image
+  const handleAnalyzeOutfit = async () => {
+    if (!uploadedImageFile) return;
+
     setIsProcessingMultiItem(true);
-    setMultiItemDetectionResult(null);
 
     try {
+      const validation = validateImageFile(uploadedImageFile);
+      
       const base64 = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(uploadedImageFile);
       });
 
       const response = await fetch('/api/multi-item-upload', {
@@ -174,7 +187,7 @@ function App() {
 
       if (result.success && result.detectedItems && result.detectedItems.length > 0) {
         const detectionResult = {
-          originalImage: URL.createObjectURL(file),
+          originalImage: uploadedImagePreview,
           detectedItems: result.detectedItems.map(item => ({
             id: `detected_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             type: item.type || 'Unknown Item',
@@ -195,7 +208,7 @@ function App() {
         };
 
         setMultiItemDetectionResult(detectionResult);
-        setRecreationOriginalImage(URL.createObjectURL(file));
+        setRecreationOriginalImage(uploadedImagePreview);
       } else {
         throw new Error(result.error || 'No items detected');
       }
@@ -204,7 +217,6 @@ function App() {
       alert(`Multi-item detection failed: ${error.message}`);
     } finally {
       setIsProcessingMultiItem(false);
-      e.target.value = '';
     }
   };
 
@@ -667,37 +679,63 @@ const analyzeSingleItem = async (item) => {
       <div className="mobile-content">
         {/* Multi-Item Detection Section */}
         {activeSection === 'multi-item' && (
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-800">Multi-Item Detection</h2>
-                <p className="text-gray-600 mt-1">Upload an outfit photo to detect and recreate individual items</p>
-              </div>
+          <div className="mobile-container">
+            <div className="mobile-section">
+              <h2 className="heading-2 mb-md">Upload Outfit</h2>
+              <p className="body-text mb-2xl" style={{ color: '#666' }}>
+                Upload a photo to detect and recreate individual items
+              </p>
               
-              <label className="btn-primary">
-                <input 
-                  type="file" 
-                  accept={ACCEPT_STRING}
-                  onChange={handleMultiItemUpload}
-                  className="hidden"
-                />
-                <span className="flex items-center gap-2">
-                  {isProcessingMultiItem ? (
-                    <>
-                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Upload Outfit Photo
-                    </>
-                  )}
-                </span>
-              </label>
-            </div>
+              {/* Upload Button */}
+              {!uploadedImagePreview && (
+                <label className="btn btn-full">
+                  <input 
+                    type="file" 
+                    accept={ACCEPT_STRING}
+                    onChange={handleMultiItemUpload}
+                    style={{ display: 'none' }}
+                  />
+                  📷 Choose Photo
+                </label>
+              )}
+
+              {/* Image Preview + Analyze Button */}
+              {uploadedImagePreview && !multiItemDetectionResult && (
+                <div>
+                  <div className="mb-2xl" style={{ border: '1px solid #232323' }}>
+                    <img 
+                      src={uploadedImagePreview}
+                      alt="Uploaded outfit"
+                      style={{ width: '100%', display: 'block' }}
+                    />
+                  </div>
+                  
+                  <button
+                    onClick={handleAnalyzeOutfit}
+                    disabled={isProcessingMultiItem}
+                    className="btn btn-primary btn-full mb-lg"
+                  >
+                    {isProcessingMultiItem ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="spinner" style={{ borderColor: 'white', borderTopColor: 'transparent' }}></span>
+                        Analyzing...
+                      </span>
+                    ) : (
+                      '🔍 Analyze Outfit'
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setUploadedImagePreview(null);
+                      setUploadedImageFile(null);
+                    }}
+                    className="btn btn-full"
+                  >
+                    Choose Different Photo
+                  </button>
+                </div>
+              )}
 
             {/* Error Display */}
             {imageFormatError && (
@@ -747,17 +785,7 @@ const analyzeSingleItem = async (item) => {
                 ))}
               </div>
             )}
-
-            {/* No Results State */}
-            {!multiItemDetectionResult && !isProcessingMultiItem && (
-              <div className="text-center py-12 bg-white rounded-lg border">
-                <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p className="text-gray-500 font-medium">Upload an outfit photo to get started</p>
-                <p className="text-sm text-gray-400 mt-1">We'll detect individual clothing items and recreate them as product photos</p>
-              </div>
-            )}
+            </div>
           </div>
         )}
 

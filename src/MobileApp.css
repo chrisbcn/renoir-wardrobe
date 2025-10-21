@@ -60,11 +60,23 @@
 }
 
 /* Layout */
-.mobile-container {
+.mobile-app {
   max-width: var(--max-width-mobile);
   margin: 0 auto;
   background: var(--color-bg);
   min-height: 100vh;
+  position: relative;
+}
+
+.mobile-content {
+  background: var(--color-bg);
+  min-height: 100vh;
+}
+
+.mobile-container {
+  max-width: var(--max-width-mobile);
+  margin: 0 auto;
+  background: var(--color-bg);
   position: relative;
 }
 
