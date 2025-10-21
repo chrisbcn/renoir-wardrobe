@@ -1,8 +1,10 @@
 // Complete redesigned App.js with side navigation and streamlined UX
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import './MobileApp.css';
 import MultiItemDetectionDisplay from './MultiItemDetectionDisplay';
 import ItemRecreationWorkflow from './ItemRecreationWorkflow';
+import BottomNav from './components/shared/BottomNav';
 
 // Image format validation
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png'];
@@ -657,51 +659,9 @@ const analyzeSingleItem = async (item) => {
 };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
-      {/* Side Navigation */}
-      <div className="w-64 bg-white shadow-lg border-r">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-8">My Wardrobe</h1>
-          
-          <nav className="space-y-2">
-            <button
-              onClick={() => setActiveSection('multi-item')}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
-                activeSection === 'multi-item'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              🔍 Multi-Item Detection
-            </button>
-            
-            <button
-              onClick={() => setActiveSection('look-matcher')}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
-                activeSection === 'look-matcher'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              👗 Look Matcher
-            </button>
-            
-            <button
-              onClick={() => setActiveSection('wardrobe')}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
-                activeSection === 'wardrobe'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              👚 My Wardrobe
-            </button>
-          </nav>
-        </div>
-      </div>
-
+    <div className="mobile-app">
       {/* Main Content */}
-      <div className="flex-1 p-8">
+      <div className="mobile-content">
         {/* Multi-Item Detection Section */}
         {activeSection === 'multi-item' && (
           <div className="max-w-7xl mx-auto">
@@ -1077,11 +1037,10 @@ const analyzeSingleItem = async (item) => {
             )}
           </div>
         )}
-      </div>
 
       {/* Item Detail Modal */}
       {selectedItem && (
-        <div className="fixed inset-0 bg-black flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
@@ -1160,6 +1119,13 @@ const analyzeSingleItem = async (item) => {
           </div>
         </div>
       )}
+      </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav 
+        activeSection={activeSection}
+        onNavigate={setActiveSection}
+      />
     </div>
   );
 }
