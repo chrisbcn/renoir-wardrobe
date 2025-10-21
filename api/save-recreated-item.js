@@ -119,7 +119,7 @@ export default async function handler(req, res) {
       source: 'recreation',
       needs_review: false,  // Recreated items are approved
       bounding_box: detectedItem.boundingBox || null,
-      item_position: detectedItem.id,
+      item_position: null,  // We don't have a numeric position for recreated items
       
       // Timestamps
       created_at: new Date().toISOString(),
@@ -130,6 +130,12 @@ export default async function handler(req, res) {
     console.log('   - Item name:', itemData.name);
     console.log('   - Has recreated image:', !!itemData.recreated_image_url);
     console.log('   - Recreated image length:', itemData.recreated_image_url?.length);
+    console.log('   - Confidence values:', {
+      ai_confidence: itemData.ai_confidence,
+      confidence_score: itemData.confidence_score,
+      detection_confidence: itemData.detection_confidence
+    });
+    console.log('   - Item position:', itemData.item_position);
 
     // Insert into database
     const { data, error } = await supabase
