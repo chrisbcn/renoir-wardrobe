@@ -262,8 +262,20 @@ IMPORTANT: Respond ONLY with valid JSON. Do not include any other text.`;
   }
   
   const responseText = data.content[0].text;
+  console.log('📝 Raw Claude response (first 500 chars):', responseText.substring(0, 500));
+  
   const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-  return JSON.parse(cleanedResponse);
+  console.log('🧹 Cleaned response (first 500 chars):', cleanedResponse.substring(0, 500));
+  
+  try {
+    const parsed = JSON.parse(cleanedResponse);
+    console.log('✅ Successfully parsed detection JSON');
+    return parsed;
+  } catch (parseError) {
+    console.error('❌ JSON parse error in detectClothingItems:', parseError.message);
+    console.error('❌ Failed to parse (first 1000 chars):', cleanedResponse.substring(0, 1000));
+    throw new Error(`Failed to parse Claude response: ${parseError.message}. Response: ${cleanedResponse.substring(0, 200)}...`);
+  }
 }
 
 async function analyzeIndividualItem(detectedItem, base64Image, mimeType = 'image/jpeg') {
