@@ -786,7 +786,18 @@ const analyzeSingleItem = async (item) => {
                 </button>
 
                 <button 
+                  onClick={() => {
+                    // Find the first recreated item, or the first item if none are recreated
+                    const firstRecreatedItem = multiItemDetectionResult.detectedItems.find(item => recreatedItems[item.id]);
+                    if (firstRecreatedItem) {
+                      setDetailViewItem(firstRecreatedItem);
+                    } else {
+                      // If no items are recreated yet, alert user
+                      alert('Please recreate at least one item first');
+                    }
+                  }}
                   className="btn btn-full btn-medium"
+                  disabled={!multiItemDetectionResult.detectedItems.some(item => recreatedItems[item.id])}
                 >
                   View each item
                 </button>
