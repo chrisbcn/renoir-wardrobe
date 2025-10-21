@@ -1,6 +1,16 @@
 // api/save-recreated-item.js - Save recreated wardrobe item to database
 import { createClient } from '@supabase/supabase-js';
 
+// Helper function to normalize confidence values (handles both 0-1 and 0-100 ranges)
+function normalizeConfidence(value) {
+  if (!value) return null;
+  // If value is > 1, assume it's a percentage (0-100) and convert to 0-1
+  if (value > 1) {
+    return value / 100;
+  }
+  return value;
+}
+
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -62,6 +72,11 @@ export default async function handler(req, res) {
     );
     console.log('✅ Supabase client initialized');
 
+    // Log and normalize confidence
+    console.log('📊 Raw confidence value:', detectedItem.confidence);
+    const normalizedConfidence = normalizeConfidence(detectedItem.confidence) || 0.85;
+    console.log('📊 Normalized confidence:', normalizedConfidence);
+
     // Prepare item data for database
     const itemData = {
       // Required fields
@@ -89,13 +104,13 @@ export default async function handler(req, res) {
       colors: detectedItem.color ? [{
         name: detectedItem.color,
         primary: true,
-        confidence: detectedItem.confidence || 0.9
+        confidence: 0.9
       }] : null,
       
-      // Confidence scores
-      ai_confidence: detectedItem.confidence || 0.85,
-      confidence_score: detectedItem.confidence || 0.85,
-      detection_confidence: detectedItem.confidence || 0.85,
+      // Confidence scores - use pre-normalized value
+      ai_confidence: normalizedConfidence,
+      confidence_score: normalizedConfidence,
+      detection_confidence: normalizedConfidence,
       
       // Visual description
       visual_description: detectedItem.description || `${detectedItem.color || ''} ${detectedItem.type || 'item'}`.trim(),
