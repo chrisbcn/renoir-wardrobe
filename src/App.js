@@ -287,6 +287,33 @@ function App() {
         originalImageUrl: useRecreated ? recreationOriginalImage : undefined
       };
 
+      // If this is a recreated item, save to database
+      if (useRecreated && recreatedItems[item.id]) {
+        console.log('💾 Saving recreated item to database...');
+        
+        const response = await fetch('/api/save-recreated-item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            detectedItem: item,
+            originalImageUrl: recreationOriginalImage,
+            recreatedImageUrl: recreatedItems[item.id].recreatedImageUrl,
+            recreationMetadata: recreatedItems[item.id]
+          })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('✅ Recreated item saved to database:', result.itemId);
+          // Add the database ID to the item
+          itemToAdd.id = result.itemId;
+          itemToAdd.savedToDb = true;
+        } else {
+          console.warn('⚠️ Failed to save to database, adding to local state only');
+        }
+      }
+
       setWardrobe(prev => [itemToAdd, ...prev]);
       alert(`${itemToAdd.name} added to wardrobe!`);
     } catch (error) {

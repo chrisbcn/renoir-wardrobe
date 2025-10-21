@@ -32,6 +32,12 @@ export default async function handler(req, res) {
       source: 'database',
       databaseId: item.id,
       needsAnalysis: false,
+      // Recreation data
+      isRecreated: item.is_recreated || false,
+      originalImageUrl: item.original_image_url,
+      recreatedImageUrl: item.recreated_image_url,
+      recreationMetadata: item.recreation_metadata,
+      savedToDb: true,
       analysis: {
         type: item.garment_type || 'unknown',
         name: item.name,
