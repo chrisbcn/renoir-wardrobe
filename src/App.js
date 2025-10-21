@@ -291,16 +291,29 @@ function App() {
       if (useRecreated && recreatedItems[item.id]) {
         console.log('💾 Saving recreated item to database...');
         
+        // Check payload size
+        const payload = {
+          detectedItem: item,
+          originalImageUrl: recreationOriginalImage,
+          recreatedImageUrl: recreatedItems[item.id].recreatedImageUrl,
+          recreationMetadata: recreatedItems[item.id]
+        };
+        
+        const payloadSize = JSON.stringify(payload).length;
+        const payloadSizeMB = (payloadSize / 1024 / 1024).toFixed(2);
+        console.log(`📦 Payload size: ${payloadSizeMB} MB (${payloadSize} bytes)`);
+        
+        if (payloadSize > 4500000) { // 4.5MB limit
+          console.error('❌ Payload too large! Vercel limit is 4.5MB');
+          alert('Images are too large to save. Try with smaller images.');
+          return;
+        }
+        
         try {
           const response = await fetch('/api/save-recreated-item', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              detectedItem: item,
-              originalImageUrl: recreationOriginalImage,
-              recreatedImageUrl: recreatedItems[item.id].recreatedImageUrl,
-              recreationMetadata: recreatedItems[item.id]
-            })
+            body: JSON.stringify(payload)
           });
 
           const result = await response.json();
