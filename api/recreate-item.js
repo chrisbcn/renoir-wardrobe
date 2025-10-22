@@ -69,7 +69,7 @@ async function generateProductPhoto(detectedItem, originalImageData) {
       detectedItem.material
     ].filter(Boolean).join(', ');
     
-    const prompt = `Create a professional product photo of this ${itemDescription} displayed on an invisible ghost mannequin. The clothing should be shown in a clean, studio lighting setup with a pure white background. The garment should appear floating and properly shaped as if worn, with all details clearly visible. High-quality fashion e-commerce photography style.`;
+    const prompt = `Create a professional product photo of ONLY this ${itemDescription} in ghost mannequin style. CRITICAL: Show ONLY the clothing item itself - absolutely NO visible mannequin, NO body parts, NO torso, NO arms, NO legs, NO head forms. The garment must appear floating and naturally shaped as if worn by an invisible person. Pure white background. Clean studio lighting. The clothing should maintain its 3D shape and form but be completely isolated with nothing else visible. Professional e-commerce product photography. IMPORTANT: If this is pants/jeans/trousers, show ONLY the pants with no leg forms visible inside.`;
     
     console.log('🎨 Using Gemini 2.5 Flash Image via Google AI Studio API...');
     console.log('Prompt:', prompt);
