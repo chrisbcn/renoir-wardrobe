@@ -196,9 +196,11 @@ async function detectClothingItems(base64Image, mimeType = 'image/jpeg') {
 1. Item type (shirt, pants, dress, jacket, shoes, accessories, etc.)
 2. Approximate bounding box coordinates (as percentages of image dimensions)
 3. Confidence level (0-1)
-4. Visual description
+4. Visual description (be detailed and specific about color, style, material, patterns, brand indicators)
 
 Focus on detecting SEPARATE clothing items - if someone is wearing a full outfit, identify each piece individually.
+
+IMPORTANT: Treat pairs of shoes/boots as ONE item, not two separate items.
 
 Respond with a JSON array in this exact format:
 [
@@ -211,67 +213,78 @@ Respond with a JSON array in this exact format:
       "height_percent": 45
     },
     "confidence": 0.92,
-    "visual_description": "Navy blue tailored blazer with lapels"
+    "visual_description": "Navy blue tailored blazer with notch lapels, structured shoulders, and silver buttons"
   }
 ]
 
 IMPORTANT: Respond ONLY with valid JSON. Do not include any other text.`;
 
-  console.log('🔍 Using Gemini 2.0 Flash for clothing detection...');
+  console.log('🔍 Using Claude Sonnet 4 for clothing detection...');
   
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      contents: [{
-        role: "user",
-        parts: [
-          { text: prompt },
-          {
-            inline_data: {
-              mime_type: mimeType,
-              data: base64Image
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mimeType,
+                data: base64Image
+              }
+            },
+            {
+              type: 'text',
+              text: prompt
             }
-          }
-        ]
-      }],
-      generationConfig: {
-        temperature: 0.4,
-        topK: 32,
-        topP: 0.95,
-        maxOutputTokens: 8192
-      }
+          ]
+        }
+      ]
     })
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('❌ Gemini API Error:', errorText);
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+    console.error('❌ Claude API Error:', errorText);
+    throw new Error(`Claude API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
 
-  if (!data.candidates || !data.candidates[0]) {
-    throw new Error(`Unexpected Gemini API response: ${JSON.stringify(data)}`);
+  if (data.error) {
+    throw new Error(`Claude API error: ${data.error.message || data.error}`);
   }
   
-  const responseText = data.candidates[0].content.parts[0].text;
-  console.log('📝 Raw Gemini response (first 500 chars):', responseText.substring(0, 500));
+  if (!data.content || !data.content[0]) {
+    throw new Error(`Unexpected API response: ${JSON.stringify(data)}`);
+  }
+  
+  const responseText = data.content[0].text;
+  console.log('📝 Raw Claude response (first 500 chars):', responseText.substring(0, 500));
   
   const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
   console.log('🧹 Cleaned response (first 500 chars):', cleanedResponse.substring(0, 500));
   
   try {
     const parsed = JSON.parse(cleanedResponse);
-    console.log('✅ Successfully parsed detection JSON with Gemini');
+    console.log('✅ Successfully parsed detection JSON with Claude');
     return parsed;
   } catch (parseError) {
     console.error('❌ JSON parse error in detectClothingItems:', parseError.message);
     console.error('❌ Failed to parse (first 1000 chars):', cleanedResponse.substring(0, 1000));
-    throw new Error(`Failed to parse Gemini response: ${parseError.message}. Response: ${cleanedResponse.substring(0, 200)}...`);
+    throw new Error(`Failed to parse Claude response: ${parseError.message}. Response: ${cleanedResponse.substring(0, 200)}...`);
   }
 }
 
@@ -294,54 +307,66 @@ Provide analysis in JSON format:
 
 Respond ONLY with valid JSON.`;
 
-  console.log(`🔬 Using Gemini for detailed analysis of ${detectedItem.item_type}...`);
+  console.log(`🔬 Using Claude for detailed analysis of ${detectedItem.item_type}...`);
   
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      contents: [{
-        role: "user",
-        parts: [
-          { text: analysisPrompt },
-          {
-            inline_data: {
-              mime_type: mimeType,
-              data: base64Image
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1500,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mimeType,
+                data: base64Image
+              }
+            },
+            {
+              type: 'text',
+              text: analysisPrompt
             }
-          }
-        ]
-      }],
-      generationConfig: {
-        temperature: 0.3,
-        topK: 32,
-        topP: 0.95,
-        maxOutputTokens: 2048
-      }
+          ]
+        }
+      ]
     })
   });
 
   if (!response.ok) {
-    console.warn('Gemini analysis API error:', response.status);
+    console.warn('Claude analysis API error:', response.status);
     return getBasicItemDetails(detectedItem);
   }
 
   const data = await response.json();
 
-  if (!data.candidates || !data.candidates[0]) {
-    console.warn('Unexpected Gemini analysis response');
+  if (data.error) {
+    console.warn('Analysis API error:', data.error);
+    return getBasicItemDetails(detectedItem);
+  }
+  
+  if (!data.content || !data.content[0]) {
+    console.warn('Unexpected analysis response');
     return getBasicItemDetails(detectedItem);
   }
   
   try {
-    const responseText = data.candidates[0].content.parts[0].text;
+    const responseText = data.content[0].text;
     const cleanedResponse = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    console.log(`✅ Gemini analysis complete for ${detectedItem.item_type}`);
+    console.log(`✅ Claude analysis complete for ${detectedItem.item_type}`);
     return JSON.parse(cleanedResponse);
   } catch (error) {
-    console.warn('Failed to parse Gemini analysis, using basic details:', error);
+    console.warn('Failed to parse analysis:', error);
     return getBasicItemDetails(detectedItem);
   }
 }
