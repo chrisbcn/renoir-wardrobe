@@ -65,7 +65,7 @@ async function generateProductPhoto(detectedItem, originalImageData) {
       detectedItem.material
     ].filter(Boolean).join(', ');
     
-    const prompt = `Create a professional product photo of this ${itemDescription} displayed on an invisible ghost mannequin. The clothing should be shown in a clean, studio lighting setup with a pure white background. The garment should appear floating and properly shaped as if worn, with all details clearly visible. High-quality fashion e-commerce photography style.`;
+    const prompt = `Create a professional product photo of this ${itemDescription} displayed on an invisible ghost mannequin with a TRANSPARENT background. Remove all background completely - the output should have transparent pixels where there is no clothing. The garment should appear floating and properly shaped as if worn, with all details clearly visible. The background must be fully transparent (alpha channel). High-quality fashion e-commerce photography style with transparent background.`;
     
     console.log('🎨 Using Gemini 2.5 Flash Image via Google AI Studio API...');
     console.log('Prompt:', prompt);
