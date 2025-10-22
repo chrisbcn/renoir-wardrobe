@@ -1,5 +1,12 @@
 /* Mobile-First Design System */
 
+/* Browser page background for iPhone viewport simulation */
+body {
+  background: #e5e5e5;
+  margin: 0;
+  padding: 0;
+}
+
 /* Design tokens - 4pt grid */
 :root {
   --spacing-xs: 4px;
@@ -16,7 +23,9 @@
   --color-text: #232323;
   --color-text-secondary: #666;
   
-  --max-width-mobile: 440px;
+  /* iPhone 16 dimensions */
+  --mobile-width: 393px;
+  --mobile-height: 852px;
   --margin-page: 20px;
 }
 
@@ -59,22 +68,30 @@
   color: var(--color-text);
 }
 
-/* Layout */
+/* Layout - iPhone 16 viewport simulation */
 .mobile-app {
-  max-width: var(--max-width-mobile);
-  margin: 0 auto;
+  width: var(--mobile-width);
+  height: var(--mobile-height);
+  max-width: var(--mobile-width);
+  max-height: var(--mobile-height);
+  margin: 20px auto;
   background: var(--color-bg);
-  min-height: 100vh;
   position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.2);
+  border-radius: 20px; /* iPhone-style rounded corners */
 }
 
 .mobile-content {
   background: var(--color-bg);
-  min-height: 100vh;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
 }
 
 .mobile-container {
-  max-width: var(--max-width-mobile);
+  max-width: var(--mobile-width);
   margin: 0 auto;
   background: var(--color-bg);
   position: relative;
@@ -259,12 +276,11 @@
 
 /* Bottom Navigation */
 .bottom-nav {
-  position: fixed;
+  position: absolute;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   width: 100%;
-  max-width: var(--max-width-mobile);
   background: var(--color-bg);
   border-top: 1px solid var(--color-border);
   display: flex;
