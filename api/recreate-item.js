@@ -69,15 +69,22 @@ async function generateProductPhoto(detectedItem, originalImageData) {
       detectedItem.material
     ].filter(Boolean).join(', ');
     
-    const prompt = `Create a professional product photo of ONLY this ${itemDescription} in ghost mannequin style. 
+    const prompt = `Create a professional flat lay product photo of ONLY this ${itemDescription}. 
 
-CAMERA ANGLE: The garment MUST be photographed STRAIGHT-ON, FACE-FORWARD from the front. Absolutely NO angle, NO rotation, NO side view, NO 3/4 turn. Direct frontal view only, as if the camera is positioned directly in front of the garment at eye level.
+STYLE: Clean, minimalist flat lay photography - the garment should be neatly laid flat on the surface, naturally shaped but not overly styled. Think luxury e-commerce like Gucci or Net-a-Porter.
 
-CRITICAL: Show ONLY the clothing item itself - absolutely NO visible mannequin, NO body parts, NO torso, NO arms, NO legs, NO head forms. The garment must appear floating and naturally shaped as if worn by an invisible person. 
+CAMERA ANGLE: Photographed from directly above (overhead view), looking straight down at the garment. The camera must be perfectly perpendicular to the surface - STRAIGHT-ON, NO angle, NO rotation, NO perspective distortion.
 
-Pure white background. Clean studio lighting. The clothing should maintain its 3D shape and form but be completely isolated with nothing else visible. Professional e-commerce product photography. 
+GARMENT POSITION: 
+- Lay the garment flat and naturally on the surface
+- Show the front of the garment facing up
+- Maintain natural shape without excessive styling
+- Sleeves/straps laid naturally at sides
+- For pants: laid flat with legs together or slightly apart, natural and clean
 
-IMPORTANT: If this is pants/jeans/trousers, show ONLY the pants with no leg forms visible inside.`;
+CRITICAL: Show ONLY the clothing item itself - absolutely NO mannequin, NO body parts, NO hands, NO styling props, NO accessories unless part of the garment.
+
+Pure white background. Clean, even studio lighting with soft shadows. Professional luxury e-commerce product photography.`;
     
     console.log('🎨 Using Gemini 2.5 Flash Image via Google AI Studio API...');
     console.log('Prompt:', prompt);
