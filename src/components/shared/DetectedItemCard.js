@@ -18,7 +18,7 @@ const DetectedItemCard = ({
 
   return (
     <div className="card-compact">
-      {/* Recreated Image Preview - takes full space if available */}
+      {/* Recreated Image or Placeholder with Description */}
       {isRecreated && recreatedData ? (
         <button
           onClick={() => onViewRecreation(item)}
@@ -31,13 +31,12 @@ const DetectedItemCard = ({
           />
         </button>
       ) : (
-        <div className="item-placeholder" />
+        <div className="item-placeholder">
+          <p className="body-small item-description">
+            {truncateText(item.description || `${item.color || ''} ${item.type || ''}`.trim())}
+          </p>
+        </div>
       )}
-
-      {/* Compact Description */}
-      <p className="body-small item-description">
-        {truncateText(item.description || `${item.color || ''} ${item.type || ''}`.trim())}
-      </p>
 
       {/* Recreate Button - Compact */}
       {!isRecreated && (
