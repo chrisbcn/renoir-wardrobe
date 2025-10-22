@@ -28,10 +28,13 @@ export default async function handler(req, res) {
         keyLength: process.env.GEMINI_API_KEY?.length
       });
   
-      // Image generation using Gemini 2.5 Flash Image via Google AI Studio
-      const recreatedImage = await generateProductPhoto(detectedItem, originalImageData);
+      // Step 1: Generate product photo using Gemini 2.5 Flash Image
+      const generatedImage = await generateProductPhoto(detectedItem, originalImageData);
+      console.log(`✅ Image generation complete for ${detectedItem.type}`);
   
-      console.log(`✅ Recreation complete for ${detectedItem.type}`);
+      // Step 2: Remove background for clean extraction
+      const recreatedImage = await removeBackground(generatedImage);
+      console.log(`✅ Background removal complete for ${detectedItem.type}`);
   
       res.status(200).json({
         success: true,
@@ -40,7 +43,8 @@ export default async function handler(req, res) {
         metadata: {
           timestamp: new Date().toISOString(),
           userId: userId || 'demo',
-          model: 'gemini-2.5-flash-image'
+          model: 'gemini-2.5-flash-image',
+          backgroundRemoval: true
         }
       });
   
@@ -65,7 +69,7 @@ async function generateProductPhoto(detectedItem, originalImageData) {
       detectedItem.material
     ].filter(Boolean).join(', ');
     
-    const prompt = `Create a professional product photo of this ${itemDescription} displayed on an invisible ghost mannequin with a TRANSPARENT background. Remove all background completely - the output should have transparent pixels where there is no clothing. The garment should appear floating and properly shaped as if worn, with all details clearly visible. The background must be fully transparent (alpha channel). High-quality fashion e-commerce photography style with transparent background.`;
+    const prompt = `Create a professional product photo of this ${itemDescription} displayed on an invisible ghost mannequin. The clothing should be shown in a clean, studio lighting setup with a pure white background. The garment should appear floating and properly shaped as if worn, with all details clearly visible. High-quality fashion e-commerce photography style.`;
     
     console.log('🎨 Using Gemini 2.5 Flash Image via Google AI Studio API...');
     console.log('Prompt:', prompt);
@@ -150,5 +154,56 @@ async function generateProductPhoto(detectedItem, originalImageData) {
     console.error('❌ Error details:', error.message);
     // Re-throw the error so the main handler can return a proper error response
     throw error;
+  }
+}
+
+async function removeBackground(imageDataUrl) {
+  try {
+    console.log('🎯 Starting background removal...');
+    
+    // Check for remove.bg API key
+    if (!process.env.REMOVEBG_API_KEY) {
+      console.warn('⚠️ REMOVEBG_API_KEY not found - skipping background removal');
+      return imageDataUrl; // Return original if no API key
+    }
+
+    // Extract base64 data
+    const base64Data = imageDataUrl.replace(/^data:image\/[a-z]+;base64,/, '');
+    
+    // Call remove.bg API
+    const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+      method: 'POST',
+      headers: {
+        'X-Api-Key': process.env.REMOVEBG_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        image_file_b64: base64Data,
+        size: 'auto',
+        format: 'png',
+        type: 'product', // Optimized for product photos
+        crop: false,
+        scale: '100%'
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Remove.bg API Error:', errorText);
+      console.warn('⚠️ Background removal failed - returning original image');
+      return imageDataUrl; // Fallback to original
+    }
+
+    // Get the result as a buffer
+    const resultBuffer = await response.arrayBuffer();
+    const base64Result = Buffer.from(resultBuffer).toString('base64');
+    
+    console.log('✅ Background removed successfully');
+    return `data:image/png;base64,${base64Result}`;
+
+  } catch (error) {
+    console.error('❌ Background removal failed:', error);
+    console.warn('⚠️ Returning original image without background removal');
+    return imageDataUrl; // Fallback to original on error
   }
 }
