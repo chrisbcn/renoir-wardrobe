@@ -680,11 +680,40 @@ const analyzeSingleItem = async (item) => {
         {/* Multi-Item Detection Section */}
         {activeSection === 'multi-item' && (
           <div className="mobile-container">
+            {/* Screen Header */}
+            <div className="screen-header">
+              <button 
+                className="header-button"
+                onClick={() => {
+                  if (uploadedImagePreview && !multiItemDetectionResult) {
+                    // Go back from preview to upload
+                    setUploadedImagePreview(null);
+                    setUploadedImageFile(null);
+                  } else if (multiItemDetectionResult) {
+                    // Go back from results to preview
+                    setMultiItemDetectionResult(null);
+                  }
+                }}
+                style={{ opacity: (!uploadedImagePreview && !multiItemDetectionResult) ? 0 : 1 }}
+              >
+                {uploadedImagePreview || multiItemDetectionResult ? '← Back' : '✕'}
+              </button>
+              <h1 className="screen-title">
+                {multiItemDetectionResult ? 'Extracted garments' : 'Upload Outfit'}
+              </h1>
+              <button 
+                className="header-button header-button-invisible"
+              >
+                Next
+              </button>
+            </div>
+
             <div className="mobile-section">
-              <h2 className="heading-2 mb-md">Upload Outfit</h2>
-              <p className="body-text mb-2xl text-secondary">
-                Upload a photo to detect and recreate individual items
-              </p>
+              {!uploadedImagePreview && !multiItemDetectionResult && (
+                <p className="body-text mb-2xl text-secondary">
+                  Upload a photo to detect and recreate individual items
+                </p>
+              )}
               
               {/* Upload Button */}
               {!uploadedImagePreview && (
@@ -755,11 +784,6 @@ const analyzeSingleItem = async (item) => {
             {/* Detection Results - 2-Column Grid */}
             {multiItemDetectionResult && (
               <div className="mobile-section-compact">
-                {/* Header */}
-                <h2 className="heading-2 section-header">
-                  Extracted garments
-                </h2>
-                
                 {/* 2-Column Grid of Items */}
                 <div className="items-grid section-content">
                   {multiItemDetectionResult.detectedItems.map((item, index) => (
