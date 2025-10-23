@@ -336,6 +336,44 @@ function App() {
     }
   };
 
+  // Delete item from detection results
+  const handleDeleteItem = (item) => {
+    setMultiItemDetectionResult(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        detectedItems: prev.detectedItems.filter(i => i.id !== item.id)
+      };
+    });
+    
+    // Also remove from recreated items if it was recreated
+    setRecreatedItems(prev => {
+      const newItems = { ...prev };
+      delete newItems[item.id];
+      return newItems;
+    });
+    
+    // Remove from recreating set if it was in progress
+    setRecreatingItems(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(item.id);
+      return newSet;
+    });
+  };
+
+  // Retry recreation for an item
+  const handleRetryItem = async (item) => {
+    // Remove the existing recreation
+    setRecreatedItems(prev => {
+      const newItems = { ...prev };
+      delete newItems[item.id];
+      return newItems;
+    });
+    
+    // Recreate the item again
+    await handleRecreateItem(item);
+  };
+
   // Add item to wardrobe
   const handleAddToWardrobe = async (item, useRecreated = false) => {
     try {
@@ -880,6 +918,11 @@ const analyzeSingleItem = async (item) => {
               {/* Detection Results - 2-Column Grid */}
               {uploadFlowStep === 2 && multiItemDetectionResult && (
                 <div className="mobile-section-compact">
+                  {/* Title */}
+                  <h2 className="heading-2" style={{ marginBottom: '24px' }}>
+                    Let's get your wardrobe filled:
+                  </h2>
+                  
                   {/* 2-Column Grid of Items */}
                   <div className="items-grid section-content">
                     {multiItemDetectionResult.detectedItems.map((item, index) => (
@@ -892,6 +935,8 @@ const analyzeSingleItem = async (item) => {
                         recreatedData={recreatedItems[item.id]}
                         onRecreate={handleRecreateItem}
                         onViewRecreation={() => setDetailViewItem(item)}
+                        onDelete={handleDeleteItem}
+                        onRetry={handleRetryItem}
                       />
                     ))}
                   </div>

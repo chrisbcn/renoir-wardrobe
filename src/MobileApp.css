@@ -171,6 +171,68 @@ body {
 
 .card-compact {
   padding: 0px;
+  position: relative;
+}
+
+/* Card action buttons */
+.card-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s ease;
+}
+
+.card-delete-btn:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.card-retry-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s ease;
+}
+
+.card-retry-btn:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+/* Item icon and description layout */
+.item-icon-description {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 8px;
+  height: 100%;
+}
+
+.item-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
 }
 
 /* 2-Column Grid for Items */
