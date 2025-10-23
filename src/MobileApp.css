@@ -1,10 +1,16 @@
 /* Mobile-First Design System */
 
-/* Browser page background for iPhone viewport simulation */
+/* Browser page background - gray on desktop, white on mobile */
 body {
-  background: #e5e5e5;
+  background: var(--color-bg);
   margin: 0;
   padding: 0;
+}
+
+@media (min-width: 768px) {
+  body {
+    background: #e5e5e5;
+  }
 }
 
 /* Design tokens - 4pt grid */
@@ -24,9 +30,9 @@ body {
   --color-text-secondary: #666;
   --color-bg-gradient: linear-gradient(270deg,transparent 36.98%,transparent 68.7%,rgba(0,0,0,.02) 97.45%),linear-gradient(179.26deg,transparent 19.37%,transparent 64.08%,rgba(0,0,0,.02) 99.36%),0 0;
   
-  /* iPhone 16 dimensions */
-  --mobile-width: 393px;
-  --mobile-height: 852px;
+  /* Mobile viewport dimensions - responsive to device */
+  --max-mobile-width: 440px; /* iPhone 16 Pro Max width */
+  --max-mobile-height: 956px; /* iPhone 16 Pro Max height */
   --margin-page: 20px;
   
   /* iOS standard component heights */
@@ -74,18 +80,25 @@ body {
   color: var(--color-text);
 }
 
-/* Layout - iPhone 16 viewport simulation */
+/* Layout - Responsive mobile viewport */
 .mobile-app {
-  width: var(--mobile-width);
-  height: var(--mobile-height);
-  max-width: var(--mobile-width);
-  max-height: var(--mobile-height);
-  margin: 20px auto;
+  width: 100vw;
+  height: 100vh;
+  max-width: var(--max-mobile-width);
+  max-height: var(--max-mobile-height);
+  margin: 0 auto;
   background: var(--color-bg);
   position: relative;
   overflow: hidden;
-  /* box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.2); */
-  /* border-radius: 20px; iPhone-style rounded corners */
+}
+
+/* Desktop: Add frame styling */
+@media (min-width: 768px) {
+  .mobile-app {
+    margin: 20px auto;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.2);
+    border-radius: 20px;
+  }
 }
 
 .mobile-content {
@@ -582,10 +595,10 @@ body {
   margin: 0;
   box-shadow: none;
   border-radius: 0;
-  height: 100%;
-  width: 100%;
-  max-width: var(--mobile-width);
-  max-height: var(--mobile-height);
+  height: 100vh;
+  width: 100vw;
+  max-width: var(--max-mobile-width);
+  max-height: var(--max-mobile-height);
 }
 
 /* Responsive - extend to desktop */
