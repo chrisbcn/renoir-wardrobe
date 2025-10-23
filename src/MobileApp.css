@@ -215,10 +215,16 @@ body {
   opacity: 1;
 }
 
-/* Description section */
+/* Description section - placeholder with gradient background */
 .card-description {
-  padding: 0 12px 12px 12px;
-  flex: 1;
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-gradient);
+  padding: 16px 12px;
+  margin-bottom: 12px;
 }
 
 /* Retry button - positioned over image */
