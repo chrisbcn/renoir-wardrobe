@@ -69,6 +69,7 @@ function App() {
   const [imageFormatError, setImageFormatError] = useState(null);
   const [uploadedImagePreview, setUploadedImagePreview] = useState(null);
   const [uploadedImageFile, setUploadedImageFile] = useState(null);
+  const [uploadFlowStep, setUploadFlowStep] = useState(0); // 0: home, 1: preview, 2: results
 
   // Recreation workflow state
   const [showRecreationWorkflow, setShowRecreationWorkflow] = useState(false);
@@ -157,6 +158,7 @@ function App() {
     setUploadedImageFile(file);
     setUploadedImagePreview(URL.createObjectURL(file));
     setMultiItemDetectionResult(null); // Clear previous results
+    setUploadFlowStep(1); // Move to preview step
     e.target.value = '';
   };
 
@@ -215,6 +217,7 @@ function App() {
 
         setMultiItemDetectionResult(detectionResult);
         setRecreationOriginalImage(uploadedImagePreview);
+        setUploadFlowStep(2); // Move to results step
       } else {
         throw new Error(result.error || 'No items detected');
       }
@@ -691,34 +694,43 @@ const analyzeSingleItem = async (item) => {
               <button 
                 className="header-button"
                 onClick={() => {
-                  if (uploadedImagePreview && !multiItemDetectionResult) {
-                    // Go back from preview to upload
-                    setUploadedImagePreview(null);
-                    setUploadedImageFile(null);
-                  } else if (multiItemDetectionResult) {
-                    // Go back from results to preview
-                    setMultiItemDetectionResult(null);
+                  if (uploadFlowStep > 0) {
+                    setUploadFlowStep(uploadFlowStep - 1);
+                    if (uploadFlowStep === 1) {
+                      // Going back to home
+                      setUploadedImagePreview(null);
+                      setUploadedImageFile(null);
+                    }
                   }
                 }}
-                style={{ opacity: (!uploadedImagePreview && !multiItemDetectionResult) ? 0 : 1 }}
+                style={{ opacity: uploadFlowStep === 0 ? 0 : 1 }}
               >
-                {uploadedImagePreview || multiItemDetectionResult ? 
+                {uploadFlowStep > 0 ? 
                   <ChevronLeftIcon style={{ width: '24px', height: '24px' }} /> : 
                   <CloseIcon style={{ width: '24px', height: '24px' }} />
                 }
               </button>
               <h1 className="screen-title">
-                {multiItemDetectionResult ? 'EXTRACTED GARMENTS' : 'WARDROBE UPLOAD'}
+                {uploadFlowStep === 2 ? 'EXTRACTED GARMENTS' : 'WARDROBE UPLOAD'}
               </h1>
               <button 
                 className="header-button header-next-button"
+                onClick={() => {
+                  if (uploadFlowStep < 2 && multiItemDetectionResult) {
+                    setUploadFlowStep(uploadFlowStep + 1);
+                  }
+                }}
+                style={{ 
+                  opacity: (uploadFlowStep < 2 && multiItemDetectionResult) ? 1 : 0,
+                  pointerEvents: (uploadFlowStep < 2 && multiItemDetectionResult) ? 'auto' : 'none'
+                }}
               >
                 Next
               </button>
             </div>
 
             <div className="mobile-section">
-              {!uploadedImagePreview && !multiItemDetectionResult && (
+              {uploadFlowStep === 0 && (
                 <>
                   <h2 className="heading-2" style={{ marginBottom: '32px', width: '50%' }}>
                     Let's get your wardrobe filled:
@@ -777,7 +789,7 @@ const analyzeSingleItem = async (item) => {
               )}
 
               {/* Image Preview + Analyze Button */}
-              {uploadedImagePreview && !multiItemDetectionResult && (
+              {uploadFlowStep === 1 && (
                 <div>
                   <div className="mb-2xl image-border">
                     <img 
@@ -798,7 +810,7 @@ const analyzeSingleItem = async (item) => {
                         Analyzing...
                       </span>
                     ) : (
-                      '🔍 Analyze Outfit'
+                      'Analyze Outfit'
                     )}
                   </button>
 
@@ -830,7 +842,7 @@ const analyzeSingleItem = async (item) => {
             )}
 
             {/* Detection Results - 2-Column Grid */}
-            {multiItemDetectionResult && (
+            {uploadFlowStep === 2 && multiItemDetectionResult && (
               <div className="mobile-section-compact">
                 {/* 2-Column Grid of Items */}
                 <div className="items-grid section-content">
