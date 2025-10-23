@@ -11,6 +11,8 @@ import { ReactComponent as InvoiceIcon } from './assets/icons/invoice 1.svg';
 import { ReactComponent as HangerIcon } from './assets/icons/hanger 2.svg';
 import { ReactComponent as PinterestIcon } from './assets/icons/Social Icons-1.svg';
 import { ReactComponent as InstagramIcon } from './assets/icons/Social Icons.svg';
+import { ReactComponent as ChevronLeftIcon } from './assets/icons/chevron-left-sm 1.svg';
+import { ReactComponent as CloseIcon } from './assets/icons/xclose 1.svg';
 
 // Image format validation
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png'];
@@ -700,13 +702,16 @@ const analyzeSingleItem = async (item) => {
                 }}
                 style={{ opacity: (!uploadedImagePreview && !multiItemDetectionResult) ? 0 : 1 }}
               >
-                {uploadedImagePreview || multiItemDetectionResult ? '← Back' : '✕'}
+                {uploadedImagePreview || multiItemDetectionResult ? 
+                  <ChevronLeftIcon style={{ width: '24px', height: '24px' }} /> : 
+                  <CloseIcon style={{ width: '24px', height: '24px' }} />
+                }
               </button>
               <h1 className="screen-title">
                 {multiItemDetectionResult ? 'EXTRACTED GARMENTS' : 'WARDROBE UPLOAD'}
               </h1>
               <button 
-                className="header-button header-button-invisible"
+                className="header-button header-next-button"
               >
                 Next
               </button>

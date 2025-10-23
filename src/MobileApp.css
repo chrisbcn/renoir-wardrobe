@@ -403,6 +403,13 @@ body {
   pointer-events: none;
 }
 
+.header-next-button {
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: var(--color-text);
+}
+
 /* Button size variants */
 .btn-medium {
   padding: 12px 16px;
