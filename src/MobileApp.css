@@ -405,9 +405,9 @@ body {
 }
 
 .header-next-button {
-  font-size: 12px;
-  text-transform: uppercase;
-  font-weight: 400;
+  font-size: 14px;
+  text-transform: capitalize;
+  font-weight: 500;
   color: var(--color-text);
 }
 
