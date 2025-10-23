@@ -688,7 +688,7 @@ const analyzeSingleItem = async (item) => {
       <div className="mobile-content">
         {/* Multi-Item Detection Section */}
         {activeSection === 'multi-item' && (
-          <div className="mobile-container">
+          <>
             {/* Screen Header */}
             <div className="screen-header">
               <button 
@@ -887,8 +887,7 @@ const analyzeSingleItem = async (item) => {
                 </button>
               </div>
             )}
-            </div>
-          </div>
+          </>
         )}
 
         {/* Look Matcher Section */}
