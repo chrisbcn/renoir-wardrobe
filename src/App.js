@@ -162,6 +162,40 @@ function App() {
     e.target.value = '';
   };
 
+  // Image compression function - compresses before upload
+  const compressImage = async (file, maxWidth = 1920, maxHeight = 1920, quality = 0.85) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions while maintaining aspect ratio
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to base64 with quality compression
+          const compressedBase64 = canvas.toDataURL(file.type || 'image/jpeg', quality);
+          resolve(compressedBase64.split(',')[1]);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Analyze outfit handler - Step 2: Analyze the uploaded image
   const handleAnalyzeOutfit = async () => {
     if (!uploadedImageFile) return;
@@ -171,11 +205,9 @@ function App() {
     try {
       const validation = validateImageFile(uploadedImageFile);
       
-      const base64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.readAsDataURL(uploadedImageFile);
-      });
+      // Compress image before upload to avoid payload size errors
+      console.log('📦 Compressing image before upload...');
+      const base64 = await compressImage(uploadedImageFile);
 
       const response = await fetch('/api/multi-item-upload', {
         method: 'POST',
@@ -490,14 +522,8 @@ const handleWardrobeUpload = async (e) => {
     ));
 
     try {
-      const base64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result.split(',')[1];
-          resolve(result);
-        };
-        reader.readAsDataURL(file);
-      });
+      // Compress image before upload
+      const base64 = await compressImage(file);
 
       setUploadingItems(prev => prev.map((item, index) => 
         index === i ? { 
