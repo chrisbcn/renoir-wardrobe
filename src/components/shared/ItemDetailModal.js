@@ -1,6 +1,7 @@
 // ItemDetailModal.js - Full-screen view of recreated item
 import React, { useState, useEffect } from 'react';
 import { ReactComponent as ChevronLeftIcon } from '../../assets/icons/chevron-left-sm 1.svg';
+import BottomNav from './BottomNav';
 
 const ItemDetailModal = ({ 
   item,
@@ -67,7 +68,7 @@ const ItemDetailModal = ({
 
   return (
     <div className="modal-overlay-fullscreen">
-      <div className="mobile-app" style={{ margin: 0, boxShadow: 'none', borderRadius: 0 }}>
+      <div className="mobile-app">
         <div 
           className="mobile-content"
           onTouchStart={handleTouchStart}
@@ -172,6 +173,12 @@ const ItemDetailModal = ({
               </div>
             )}
           </div>
+
+          {/* Bottom Navigation - Consistent with app */}
+          <BottomNav 
+            activeSection="multi-item" 
+            onNavigate={() => {}} 
+          />
         </div>
       </div>
     </div>
