@@ -190,7 +190,8 @@ body {
 
 .item-placeholder .item-description {
   margin: 0;
-  text-align: center;
+  padding: 8px 12px;
+  text-align: left;
 }
 
 .item-description {
@@ -560,6 +561,18 @@ body {
   color: var(--color-text);
   text-align: center;
   line-height: 1.4;
+}
+
+/* Modal Fullscreen Overlay */
+.modal-overlay-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-bg);
+  z-index: 1000;
+  overflow: hidden;
 }
 
 /* Responsive - extend to desktop */

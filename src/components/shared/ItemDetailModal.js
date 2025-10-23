@@ -1,5 +1,6 @@
 // ItemDetailModal.js - Full-screen view of recreated item
 import React, { useState, useEffect } from 'react';
+import { ReactComponent as ChevronLeftIcon } from '../../assets/icons/chevron-left-sm 1.svg';
 
 const ItemDetailModal = ({ 
   item,
@@ -65,101 +66,112 @@ const ItemDetailModal = ({
   if (!currentItem || !currentRecreatedData) return null;
 
   return (
-    <div className="modal-overlay">
-      <div 
-        className="modal-container"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Header */}
-        <div className="modal-header">
-          <button
-            onClick={onClose}
-            className="modal-back-button"
-          >
-            ← Back
-          </button>
-          {canSwipe && (
-            <p className="body-small text-secondary">
-              {currentIndex + 1} of {allRecreatedItems.length}
-            </p>
-          )}
-        </div>
-
-        {/* Main Content - Scrollable */}
-        <div className="modal-content">
-          {/* Image */}
-          <div className="modal-image-wrapper">
-            <img 
-              src={currentRecreatedData.recreatedImageUrl}
-              alt={currentItem.type}
-              className="full-width-image image-border"
-            />
-          </div>
-
-          {/* Details */}
-          <h2 className="heading-2 mb-md">{currentItem.type}</h2>
-          
-          {currentItem.color && (
-            <p className="body-text mb-sm text-secondary">
-              Color: {currentItem.color}
-            </p>
-          )}
-          
-          {currentItem.material && (
-            <p className="body-text mb-sm text-secondary">
-              Material: {currentItem.material}
-            </p>
-          )}
-
-          {currentItem.description && (
-            <p className="body-text mt-lg">
-              {currentItem.description}
-            </p>
-          )}
-
-          <div className="modal-spacer"></div>
-        </div>
-
-        {/* Fixed Bottom Actions */}
-        <div className="modal-footer">
-          <div className="modal-button-group">
-            {onSkip && (
-              <button
-                onClick={() => {
-                  onSkip();
-                  if (canSwipe && currentIndex < allRecreatedItems.length - 1) {
-                    setCurrentIndex(currentIndex + 1);
-                  } else {
-                    onClose();
-                  }
-                }}
-                className="btn modal-button-skip"
-              >
-                Skip
-              </button>
-            )}
+    <div className="modal-overlay-fullscreen">
+      <div className="mobile-app" style={{ margin: 0, boxShadow: 'none', borderRadius: 0 }}>
+        <div 
+          className="mobile-content"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Screen Header - Consistent with app */}
+          <div className="screen-header">
             <button
-              onClick={handleAdd}
-              className="btn btn-primary modal-button-primary"
+              onClick={onClose}
+              className="header-button"
             >
-              Add to Wardrobe
+              <ChevronLeftIcon style={{ width: '24px', height: '24px' }} />
             </button>
+            <h1 className="screen-title">
+              {canSwipe ? `${currentIndex + 1} of ${allRecreatedItems.length}` : 'ITEM DETAIL'}
+            </h1>
+            <div className="header-button" style={{ opacity: 0 }}></div>
           </div>
 
-          {/* Navigation Dots */}
-          {canSwipe && (
-            <div className="modal-nav-dots">
-              {allRecreatedItems.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`modal-nav-dot ${idx === currentIndex ? 'active' : ''}`}
-                />
-              ))}
+          {/* Main Content - Scrollable */}
+          <div className="mobile-section">
+            {/* Image */}
+            <div className="mb-2xl" style={{ border: '1px solid var(--color-border)' }}>
+              <img 
+                src={currentRecreatedData.recreatedImageUrl}
+                alt={currentItem.type}
+                style={{ width: '100%', display: 'block' }}
+              />
             </div>
-          )}
+
+            {/* Details */}
+            <h2 className="heading-2 mb-md">{currentItem.type}</h2>
+            
+            {currentItem.color && (
+              <p className="body-text mb-sm text-secondary">
+                Color: {currentItem.color}
+              </p>
+            )}
+            
+            {currentItem.material && (
+              <p className="body-text mb-sm text-secondary">
+                Material: {currentItem.material}
+              </p>
+            )}
+
+            {currentItem.description && (
+              <p className="body-text" style={{ marginTop: '20px' }}>
+                {currentItem.description}
+              </p>
+            )}
+
+            {/* Actions */}
+            <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexDirection: 'column' }}>
+              <button
+                onClick={handleAdd}
+                className="btn btn-primary btn-full"
+              >
+                Add to Wardrobe
+              </button>
+              {onSkip && (
+                <button
+                  onClick={() => {
+                    onSkip();
+                    if (canSwipe && currentIndex < allRecreatedItems.length - 1) {
+                      setCurrentIndex(currentIndex + 1);
+                    } else {
+                      onClose();
+                    }
+                  }}
+                  className="btn btn-full"
+                >
+                  Skip
+                </button>
+              )}
+            </div>
+
+            {/* Navigation Dots */}
+            {canSwipe && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                gap: '8px', 
+                marginTop: '24px',
+                paddingBottom: '24px'
+              }}>
+                {allRecreatedItems.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      border: '1px solid var(--color-border)',
+                      background: idx === currentIndex ? 'var(--color-border)' : 'transparent',
+                      padding: 0,
+                      cursor: 'pointer'
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
