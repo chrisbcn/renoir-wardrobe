@@ -185,7 +185,7 @@ body {
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-gradient);
+  background: var(--color-accent);
   margin-bottom: 12px;
   position: relative;
 }
@@ -304,8 +304,8 @@ body {
   height: 100%;
   border-radius: 50%;
   border: 8px solid transparent;
-  border-top-color: var(--color-border);
-  border-right-color: var(--color-border);
+  border-top-color: #ffffff;
+  border-right-color: #ffffff;
   box-sizing: border-box;
 }
 
