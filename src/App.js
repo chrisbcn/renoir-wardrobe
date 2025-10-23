@@ -699,7 +699,7 @@ const analyzeSingleItem = async (item) => {
                 {uploadedImagePreview || multiItemDetectionResult ? '← Back' : '✕'}
               </button>
               <h1 className="screen-title">
-                {multiItemDetectionResult ? 'Extracted garments' : 'Upload Outfit'}
+                {multiItemDetectionResult ? 'EXTRACTED GARMENTS' : 'WARDROBE UPLOAD'}
               </h1>
               <button 
                 className="header-button header-button-invisible"
@@ -710,22 +710,73 @@ const analyzeSingleItem = async (item) => {
 
             <div className="mobile-section">
               {!uploadedImagePreview && !multiItemDetectionResult && (
-                <p className="body-text mb-2xl text-secondary">
-                  Upload a photo to detect and recreate individual items
-                </p>
-              )}
-              
-              {/* Upload Button */}
-              {!uploadedImagePreview && (
-                <label className="btn btn-full">
-                  <input 
-                    type="file" 
-                    accept={ACCEPT_STRING}
-                    onChange={handleMultiItemUpload}
-                    className="hidden"
-                  />
-                  📷 Choose Photo
-                </label>
+                <>
+                  <h2 className="heading-2" style={{ marginBottom: '32px' }}>
+                    Let's get your wardrobe filled:
+                  </h2>
+                  
+                  {/* Upload Options Grid */}
+                  <div className="upload-options-grid">
+                    {/* Upload from Receipts */}
+                    <button className="upload-option-card" onClick={() => {
+                      // Receipt upload handler - to be implemented
+                      alert('Receipt upload coming soon!');
+                    }}>
+                      <div className="upload-option-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                          <circle cx="12" cy="12" r="2"/>
+                          <path d="M12 14v5"/>
+                        </svg>
+                      </div>
+                      <div className="upload-option-label">Upload from<br/>receipts</div>
+                    </button>
+
+                    {/* Upload from Camera Roll */}
+                    <label className="upload-option-card">
+                      <input 
+                        type="file" 
+                        accept={ACCEPT_STRING}
+                        onChange={handleMultiItemUpload}
+                        className="hidden"
+                      />
+                      <div className="upload-option-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M6 6h4m4 0h4M6 18h4m4 0h4M8 3v4m0 10v4m8-18v4m0 10v4"/>
+                        </svg>
+                      </div>
+                      <div className="upload-option-label">Upload from<br/>camera roll</div>
+                    </label>
+
+                    {/* Upload from Pinterest */}
+                    <button className="upload-option-card" onClick={() => {
+                      // Pinterest integration handler - to be implemented
+                      alert('Pinterest integration coming soon!');
+                    }}>
+                      <div className="upload-option-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/>
+                        </svg>
+                      </div>
+                      <div className="upload-option-label">Upload from<br/>pinterest</div>
+                    </button>
+
+                    {/* Upload from Instagram */}
+                    <button className="upload-option-card" onClick={() => {
+                      // Instagram integration handler - to be implemented
+                      alert('Instagram integration coming soon!');
+                    }}>
+                      <div className="upload-option-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <rect x="2" y="2" width="20" height="20" rx="5"/>
+                          <circle cx="12" cy="12" r="4"/>
+                          <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
+                        </svg>
+                      </div>
+                      <div className="upload-option-label">Upload from<br/>instagram</div>
+                    </button>
+                  </div>
+                </>
               )}
 
               {/* Image Preview + Analyze Button */}

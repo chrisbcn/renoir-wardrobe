@@ -223,9 +223,9 @@ body {
 /* Buttons */
 .btn {
   font-family: 'sweet-sans-pro', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  padding: 16px 24px;
+  padding: 18px 24px;
   border: 1px solid var(--color-border);
   border-radius: 0;
   background: transparent;
@@ -366,17 +366,16 @@ body {
   align-items: center;
   height: var(--nav-bar-height);
   padding: 0 16px;
-  border-bottom: 1px solid var(--color-border);
   background: var(--color-bg);
   flex-shrink: 0;
 }
 
 .screen-title {
-  font-family: 'ivyora-display', serif;
-  font-size: 17px;
   font-weight: 400;
-  color: var(--color-text);
-  letter-spacing: -0.01em;
+  letter-spacing: -.01em;
+  font-size: 12px;
+  text-transform: uppercase;
+  font-family: 'sweet-sans-pro';
 }
 
 .header-button {
@@ -504,12 +503,58 @@ body {
   height: 128px;
 }
 
+/* Upload Options Grid */
+.upload-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.upload-option-card {
+  background: var(--color-accent);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 24px;
+  min-height: 160px;
+}
+
+.upload-option-card:active {
+  opacity: 0.7;
+}
+
+.upload-option-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-option-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-option-label {
+  font-family: 'sweet-sans-pro', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.4;
+}
+
 /* Responsive - extend to desktop */
 @media (min-width: 768px) {
-  .mobile-container {
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
-  }
-  
   .modal-overlay {
     background: rgba(0, 0, 0, 0.5);
   }
