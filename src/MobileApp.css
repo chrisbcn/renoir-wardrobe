@@ -58,7 +58,7 @@ body {
   color: var(--color-text);
 }
 .heading-2.half-header {
-  margin-bottom: 32px;
+  margin: 32px 0;
   width: 50%;
 }
 .heading-3 {

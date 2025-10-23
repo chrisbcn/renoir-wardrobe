@@ -89,8 +89,9 @@ const ItemDetailModal = ({
             <div className="header-button" style={{ opacity: 0 }}></div>
           </div>
 
-          {/* Main Content - Scrollable */}
-          <div className="mobile-section">
+          {/* Content Container - applies 24px horizontal padding */}
+          <div className="content-container">
+            <div className="mobile-section">
             {/* Image */}
             <div className="mb-2xl" style={{ border: '1px solid var(--color-border)' }}>
               <img 
@@ -172,6 +173,7 @@ const ItemDetailModal = ({
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
 
