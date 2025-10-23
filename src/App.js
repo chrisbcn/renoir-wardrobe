@@ -814,7 +814,7 @@ const analyzeSingleItem = async (item) => {
                     )}
                   </button>
 
-                  <button
+                  {/* <button
                     onClick={() => {
                       setUploadedImagePreview(null);
                       setUploadedImageFile(null);
@@ -822,7 +822,7 @@ const analyzeSingleItem = async (item) => {
                     className="btn btn-full"
                   >
                     Choose Different Photo
-                  </button>
+                  </button> */}
                 </div>
               )}
 
@@ -840,6 +840,7 @@ const analyzeSingleItem = async (item) => {
                 </div>
               </div>
             )}
+            </div>
 
             {/* Detection Results - 2-Column Grid */}
             {uploadFlowStep === 2 && multiItemDetectionResult && (
