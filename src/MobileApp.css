@@ -268,6 +268,74 @@ body {
   background: rgba(255, 255, 255, 1);
 }
 
+/* MAURA Loader Animation */
+.maura-loader-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.loader-container {
+  position: relative;
+  width: 134px;
+  height: 134px;
+}
+
+.loading-ring {
+  position: absolute;
+  left: 17.52px;
+  top: 17.52px;
+  width: 98.947px;
+  height: 98.947px;
+  animation: rotate 2s linear infinite;
+}
+
+.loading-ring::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 8px solid transparent;
+  border-top-color: var(--color-border);
+  border-right-color: var(--color-border);
+  box-sizing: border-box;
+}
+
+.logo-container {
+  position: absolute;
+  left: 27.1px;
+  top: 27.1px;
+  width: 79.796px;
+  height: 79.796px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 79.796px;
+}
+
+.maura-logo {
+  width: 58.958px;
+  height: 10.127px;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* 2-Column Grid for Items */
 .items-grid {
   display: grid;
