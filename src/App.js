@@ -755,118 +755,121 @@ const analyzeSingleItem = async (item) => {
               </button>
             </div>
 
-            <div className="mobile-section">
-              {uploadFlowStep === 0 && (
-                <>
-                  <h2 className="heading-2" style={{ marginBottom: '32px', width: '50%' }}>
-                    Let's get your wardrobe filled:
-                  </h2>
-                  
-                  {/* Upload Options Grid */}
-                  <div className="upload-options-grid">
-                    {/* Upload from Receipts */}
-                    <button className="upload-option-card" onClick={() => {
-                      // Receipt upload handler - to be implemented
-                      alert('Receipt upload coming soon!');
-                    }}>
-                      <div className="upload-option-icon">
-                        <InvoiceIcon />
-                      </div>
-                      <div className="upload-option-label">Upload from<br/>receipts</div>
-                    </button>
+            {/* Steps 0 and 1: Upload and Preview */}
+            {(uploadFlowStep === 0 || uploadFlowStep === 1) && (
+              <div className="mobile-section">
+                {uploadFlowStep === 0 && (
+                  <>
+                    <h2 className="heading-2" style={{ marginBottom: '32px', width: '50%' }}>
+                      Let's get your wardrobe filled:
+                    </h2>
+                    
+                    {/* Upload Options Grid */}
+                    <div className="upload-options-grid">
+                      {/* Upload from Receipts */}
+                      <button className="upload-option-card" onClick={() => {
+                        // Receipt upload handler - to be implemented
+                        alert('Receipt upload coming soon!');
+                      }}>
+                        <div className="upload-option-icon">
+                          <InvoiceIcon />
+                        </div>
+                        <div className="upload-option-label">Upload from<br/>receipts</div>
+                      </button>
 
-                    {/* Upload from Camera Roll */}
-                    <label className="upload-option-card">
-                      <input 
-                        type="file" 
-                        accept={ACCEPT_STRING}
-                        onChange={handleMultiItemUpload}
-                        className="hidden"
-                      />
-                      <div className="upload-option-icon">
-                        <HangerIcon />
-                      </div>
-                      <div className="upload-option-label">Upload from<br/>camera roll</div>
-                    </label>
+                      {/* Upload from Camera Roll */}
+                      <label className="upload-option-card">
+                        <input 
+                          type="file" 
+                          accept={ACCEPT_STRING}
+                          onChange={handleMultiItemUpload}
+                          className="hidden"
+                        />
+                        <div className="upload-option-icon">
+                          <HangerIcon />
+                        </div>
+                        <div className="upload-option-label">Upload from<br/>camera roll</div>
+                      </label>
 
-                    {/* Upload from Pinterest */}
-                    <button className="upload-option-card" onClick={() => {
-                      // Pinterest integration handler - to be implemented
-                      alert('Pinterest integration coming soon!');
-                    }}>
-                      <div className="upload-option-icon">
-                        <PinterestIcon />
-                      </div>
-                      <div className="upload-option-label">Upload from<br/>pinterest</div>
-                    </button>
+                      {/* Upload from Pinterest */}
+                      <button className="upload-option-card" onClick={() => {
+                        // Pinterest integration handler - to be implemented
+                        alert('Pinterest integration coming soon!');
+                      }}>
+                        <div className="upload-option-icon">
+                          <PinterestIcon />
+                        </div>
+                        <div className="upload-option-label">Upload from<br/>pinterest</div>
+                      </button>
 
-                    {/* Upload from Instagram */}
-                    <button className="upload-option-card" onClick={() => {
-                      // Instagram integration handler - to be implemented
-                      alert('Instagram integration coming soon!');
-                    }}>
-                      <div className="upload-option-icon">
-                        <InstagramIcon />
-                      </div>
-                      <div className="upload-option-label">Upload from<br/>instagram</div>
-                    </button>
-                  </div>
-                </>
-              )}
+                      {/* Upload from Instagram */}
+                      <button className="upload-option-card" onClick={() => {
+                        // Instagram integration handler - to be implemented
+                        alert('Instagram integration coming soon!');
+                      }}>
+                        <div className="upload-option-icon">
+                          <InstagramIcon />
+                        </div>
+                        <div className="upload-option-label">Upload from<br/>instagram</div>
+                      </button>
+                    </div>
+                  </>
+                )}
 
-              {/* Image Preview + Analyze Button */}
-              {uploadFlowStep === 1 && (
-                <div>
-                  <div className="mb-2xl image-border">
-                    <img 
-                      src={uploadedImagePreview}
-                      alt="Uploaded outfit"
-                      className="full-width-image"
-                    />
-                  </div>
-                  
-                  <button
-                    onClick={handleAnalyzeOutfit}
-                    disabled={isProcessingMultiItem}
-                    className="btn btn-primary btn-full mb-lg"
-                  >
-                    {isProcessingMultiItem ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="spinner spinner-white"></span>
-                        Analyzing...
-                      </span>
-                    ) : (
-                      'Analyze Outfit'
-                    )}
-                  </button>
-
-                  {/* <button
-                    onClick={() => {
-                      setUploadedImagePreview(null);
-                      setUploadedImageFile(null);
-                    }}
-                    className="btn btn-full"
-                  >
-                    Choose Different Photo
-                  </button> */}
-                </div>
-              )}
-
-            {/* Error Display */}
-            {imageFormatError && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-start">
-                  <svg className="w-5 h-5 text-red-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
+                {/* Image Preview + Analyze Button */}
+                {uploadFlowStep === 1 && (
                   <div>
-                    <h3 className="text-red-800 font-medium">Invalid Image Format</h3>
-                    <p className="text-red-700 text-sm mt-1">{imageFormatError.error}</p>
+                    <div className="mb-2xl image-border">
+                      <img 
+                        src={uploadedImagePreview}
+                        alt="Uploaded outfit"
+                        className="full-width-image"
+                      />
+                    </div>
+                    
+                    <button
+                      onClick={handleAnalyzeOutfit}
+                      disabled={isProcessingMultiItem}
+                      className="btn btn-primary btn-full mb-lg"
+                    >
+                      {isProcessingMultiItem ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <span className="spinner spinner-white"></span>
+                          Analyzing...
+                        </span>
+                      ) : (
+                        'Analyze Outfit'
+                      )}
+                    </button>
+
+                    {/* <button
+                      onClick={() => {
+                        setUploadedImagePreview(null);
+                        setUploadedImageFile(null);
+                      }}
+                      className="btn btn-full"
+                    >
+                      Choose Different Photo
+                    </button> */}
                   </div>
-                </div>
+                )}
+
+                {/* Error Display */}
+                {imageFormatError && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 text-red-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <h3 className="text-red-800 font-medium">Invalid Image Format</h3>
+                        <p className="text-red-700 text-sm mt-1">{imageFormatError.error}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-            </div>
 
             {/* Detection Results - 2-Column Grid */}
             {uploadFlowStep === 2 && multiItemDetectionResult && (
