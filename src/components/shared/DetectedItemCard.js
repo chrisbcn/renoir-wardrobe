@@ -116,25 +116,28 @@ const DetectedItemCard = ({
         </>
       ) : (
         <>
-          {/* Top Icons Row */}
-          <div className="card-icons-row">
-            <div className="card-icon-left">
-              <GarmentIcon style={{ width: '20px', height: '20px' }} />
-            </div>
-            <button
-              onClick={() => onDelete && onDelete(item)}
-              className="card-icon-right"
-              aria-label="Delete item"
-            >
-              <DeleteIcon style={{ width: '20px', height: '20px' }} />
-            </button>
-          </div>
-
-          {/* Description */}
+          {/* Placeholder with gradient - contains icons and description */}
           <div className="card-description">
-            <p className="body-small item-description">
-              {truncateText(item.description || `${item.color || ''} ${item.type || ''}`.trim())}
-            </p>
+            {/* Top Icons Row */}
+            <div className="card-icons-row">
+              <div className="card-icon-left">
+                <GarmentIcon style={{ width: '20px', height: '20px' }} />
+              </div>
+              <button
+                onClick={() => onDelete && onDelete(item)}
+                className="card-icon-right"
+                aria-label="Delete item"
+              >
+                <DeleteIcon style={{ width: '20px', height: '20px' }} />
+              </button>
+            </div>
+
+            {/* Description */}
+            <div className="card-description-text">
+              <p className="body-small item-description">
+                {truncateText(item.description || `${item.color || ''} ${item.type || ''}`.trim())}
+              </p>
+            </div>
           </div>
 
           {/* Button */}

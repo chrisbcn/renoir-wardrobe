@@ -804,7 +804,7 @@ const analyzeSingleItem = async (item) => {
                 <div className="mobile-section">
                 {uploadFlowStep === 0 && (
                   <>
-                    <h2 className="heading-2" style={{ marginBottom: '32px', width: '50%' }}>
+                    <h2 className="heading-2 half-header" style={{ marginBottom: '32px', width: '50%' }}>
                       Let's get your wardrobe filled:
                     </h2>
                     
@@ -919,7 +919,7 @@ const analyzeSingleItem = async (item) => {
               {uploadFlowStep === 2 && multiItemDetectionResult && (
                 <div className="mobile-section-compact">
                   {/* Title */}
-                  <h2 className="heading-2" style={{ marginBottom: '24px' }}>
+                  <h2 className="heading-2 half-header">
                     Let's get your wardrobe filled:
                   </h2>
                   

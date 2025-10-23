@@ -179,13 +179,34 @@ body {
   flex-direction: column;
 }
 
+/* Description section - placeholder with gradient background (contains icons + text) */
+.card-description {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-gradient);
+  margin-bottom: 12px;
+  position: relative;
+}
+
 /* Top icons row - garment icon left, delete icon right */
 .card-icons-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   padding: 12px;
-  padding-bottom: 8px;
+  padding-bottom: 0;
+}
+
+/* When icons row is outside card-description (recreated state), position it over the image */
+.card-compact > .card-icons-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, transparent 100%);
 }
 
 .card-icon-left {
@@ -215,16 +236,14 @@ body {
   opacity: 1;
 }
 
-/* Description section - placeholder with gradient background */
-.card-description {
-  width: 100%;
-  aspect-ratio: 1;
+/* Description text container - fills remaining space */
+.card-description-text {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-gradient);
-  padding: 16px 12px;
-  margin-bottom: 12px;
+  padding: 12px;
+  padding-top: 8px;
 }
 
 /* Retry button - positioned over image */
