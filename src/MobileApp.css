@@ -27,6 +27,11 @@ body {
   --mobile-width: 393px;
   --mobile-height: 852px;
   --margin-page: 20px;
+  
+  /* iOS standard component heights */
+  --nav-bar-height: 44px;
+  --tab-bar-height: 49px;
+  --safe-area-bottom: 34px; /* For iPhone with home indicator */
 }
 
 /* Typography */
@@ -99,12 +104,12 @@ body {
 
 .mobile-section {
   padding: 16px;
-  padding-bottom: 80px; /* Space for bottom nav */
+  padding-bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + 16px); /* Space for bottom nav + extra padding */
 }
 
 .mobile-section-compact {
   padding: 12px;
-  padding-bottom: 80px;
+  padding-bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + 12px);
 }
 
 /* Spacing utilities */
@@ -274,30 +279,37 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Bottom Navigation */
+/* Bottom Navigation - iOS Tab Bar Standard */
 .bottom-nav {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   width: 100%;
+  height: calc(var(--tab-bar-height) + var(--safe-area-bottom));
   background: var(--color-bg);
   border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: space-around;
-  padding: 12px 0;
+  align-items: flex-start;
+  padding-top: 8px;
+  padding-bottom: var(--safe-area-bottom);
   z-index: 100;
 }
 
 .bottom-nav-item {
   font-family: 'sweet-sans-pro', sans-serif;
-  font-size: 14px;
+  font-size: 10px;
   border: none;
   background: none;
   color: var(--color-text-secondary);
   cursor: pointer;
-  padding: 8px 16px;
+  padding: 4px 16px;
   transition: color 0.2s;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bottom-nav-item.active {
@@ -347,21 +359,24 @@ body {
   margin-bottom: 16px;
 }
 
-/* Screen Header */
+/* Screen Header - iOS Navigation Bar Standard */
 .screen-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-xl);
+  height: var(--nav-bar-height);
+  padding: 0 16px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg);
+  flex-shrink: 0;
 }
 
 .screen-title {
   font-family: 'ivyora-display', serif;
-  font-size: 20px;
-  font-weight: 300;
+  font-size: 17px;
+  font-weight: 400;
   color: var(--color-text);
+  letter-spacing: -0.01em;
 }
 
 .header-button {
@@ -369,11 +384,15 @@ body {
   border: none;
   cursor: pointer;
   font-family: 'sweet-sans-pro', sans-serif;
-  font-size: 16px;
+  font-size: 17px;
   color: var(--color-text);
-  padding: 8px;
-  min-width: 60px;
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .header-button:disabled {
