@@ -173,13 +173,13 @@ const ItemDetailModal = ({
               </div>
             )}
           </div>
-
-          {/* Bottom Navigation - Consistent with app */}
-          <BottomNav 
-            activeSection="multi-item" 
-            onNavigate={() => {}} 
-          />
         </div>
+
+        {/* Bottom Navigation - Fixed outside scrollable content */}
+        <BottomNav 
+          activeSection="multi-item" 
+          onNavigate={() => {}} 
+        />
       </div>
     </div>
   );
