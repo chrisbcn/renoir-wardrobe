@@ -90,6 +90,8 @@ body {
   background: var(--color-bg);
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Desktop: Add frame styling */
@@ -103,10 +105,11 @@ body {
 
 .mobile-content {
   background: var(--color-bg);
-  height: 100%;
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+  min-height: 0; /* Important for flex scrolling */
 }
 
 .mobile-container {
@@ -296,10 +299,7 @@ body {
 
 /* Bottom Navigation - iOS Tab Bar Standard */
 .bottom-nav {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   width: 100%;
   height: calc(var(--tab-bar-height) + var(--safe-area-bottom));
   background: var(--color-bg);
@@ -309,6 +309,7 @@ body {
   padding-top: 8px;
   padding-bottom: var(--safe-area-bottom);
   z-index: 100;
+  flex-shrink: 0; /* Prevent shrinking in flex layout */
 }
 
 .bottom-nav-item {
