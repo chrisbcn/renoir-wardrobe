@@ -267,16 +267,20 @@ function App() {
 
     try {
       let imageData = recreationOriginalImage;
+      
+      // Convert blob URL to File object and compress before sending
       if (imageData.startsWith('blob:')) {
         const response = await fetch(imageData);
         const blob = await response.blob();
-        imageData = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result.split(',')[1]);
-          reader.readAsDataURL(blob);
-        });
-      } else {
+        const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' });
+        
+        console.log('📦 Compressing image for recreation...');
+        imageData = await compressImage(file);
+      } else if (imageData.startsWith('data:')) {
         imageData = imageData.split(',')[1];
+      } else {
+        // Already base64
+        imageData = imageData;
       }
 
       const response = await fetch('/api/recreate-item', {

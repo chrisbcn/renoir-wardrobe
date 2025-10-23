@@ -2,6 +2,12 @@
   "functions": {
     "api/analyze-wardrobe-item.js": {
       "maxDuration": 60
+    },
+    "api/multi-item-upload.js": {
+      "maxDuration": 60
+    },
+    "api/recreate-item.js": {
+      "maxDuration": 60
     }
   }
 }
