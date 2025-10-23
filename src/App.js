@@ -715,7 +715,7 @@ const analyzeSingleItem = async (item) => {
             <div className="mobile-section">
               {!uploadedImagePreview && !multiItemDetectionResult && (
                 <>
-                  <h2 className="heading-2" style={{ marginBottom: '32px' }}>
+                  <h2 className="heading-2" style={{ marginBottom: '32px', width: '50%' }}>
                     Let's get your wardrobe filled:
                   </h2>
                   
