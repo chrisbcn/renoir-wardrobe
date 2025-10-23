@@ -76,18 +76,24 @@ const DetectedItemCard = ({
 
   return (
     <div className="card-compact">
-      {/* Delete button - top right */}
-      <button
-        onClick={() => onDelete && onDelete(item)}
-        className="card-delete-btn"
-        aria-label="Delete item"
-      >
-        <DeleteIcon style={{ width: '20px', height: '20px' }} />
-      </button>
-
-      {/* Recreated Image or Placeholder with Description */}
+      {/* Recreated Image or Placeholder */}
       {isRecreated && recreatedData ? (
-        <div style={{ position: 'relative' }}>
+        <>
+          {/* Top Icons Row */}
+          <div className="card-icons-row">
+            <div className="card-icon-left">
+              <GarmentIcon style={{ width: '20px', height: '20px' }} />
+            </div>
+            <button
+              onClick={() => onDelete && onDelete(item)}
+              className="card-icon-right"
+              aria-label="Delete item"
+            >
+              <DeleteIcon style={{ width: '20px', height: '20px' }} />
+            </button>
+          </div>
+
+          {/* Image */}
           <button
             onClick={() => onViewRecreation(item)}
             className="item-image-button"
@@ -99,7 +105,7 @@ const DetectedItemCard = ({
             />
           </button>
           
-          {/* Retry button on recreated image */}
+          {/* Retry button */}
           <button
             onClick={() => onRetry && onRetry(item)}
             className="card-retry-btn"
@@ -107,30 +113,39 @@ const DetectedItemCard = ({
           >
             <RetryIcon style={{ width: '20px', height: '20px' }} />
           </button>
-        </div>
+        </>
       ) : (
-        <div className="item-placeholder">
-          {/* Icon and description */}
-          <div className="item-icon-description">
-            <div className="item-type-icon">
-              <GarmentIcon style={{ width: '32px', height: '32px' }} />
+        <>
+          {/* Top Icons Row */}
+          <div className="card-icons-row">
+            <div className="card-icon-left">
+              <GarmentIcon style={{ width: '20px', height: '20px' }} />
             </div>
+            <button
+              onClick={() => onDelete && onDelete(item)}
+              className="card-icon-right"
+              aria-label="Delete item"
+            >
+              <DeleteIcon style={{ width: '20px', height: '20px' }} />
+            </button>
+          </div>
+
+          {/* Description */}
+          <div className="card-description">
             <p className="body-small item-description">
               {truncateText(item.description || `${item.color || ''} ${item.type || ''}`.trim())}
             </p>
           </div>
-        </div>
-      )}
 
-      {/* Recreate Button - Compact */}
-      {!isRecreated && (
-        <button
-          onClick={() => onRecreate(item)}
-          disabled={isRecreating}
-          className="btn-compact"
-        >
-          {isRecreating ? 'Recreating...' : 'Recreate'}
-        </button>
+          {/* Button */}
+          <button
+            onClick={() => onRecreate(item)}
+            disabled={isRecreating}
+            className="btn-compact"
+          >
+            {isRecreating ? 'Recreating...' : 'Recreate'}
+          </button>
+        </>
       )}
     </div>
   );

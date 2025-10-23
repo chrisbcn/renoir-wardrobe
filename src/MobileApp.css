@@ -57,7 +57,10 @@ body {
   line-height: 1.3;
   color: var(--color-text);
 }
-
+.heading-2.half-header {
+  margin-bottom: 32px;
+  width: 50%;
+}
 .heading-3 {
   font-family: 'ivyora-display', serif;
   font-size: 22px;
@@ -172,34 +175,57 @@ body {
 .card-compact {
   padding: 0px;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Card action buttons */
-.card-delete-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
+/* Top icons row - garment icon left, delete icon right */
+.card-icons-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px;
+  padding-bottom: 8px;
+}
+
+.card-icon-left {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+}
+
+.card-icon-right {
+  width: 20px;
+  height: 20px;
   border: none;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
+  background: transparent;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 10;
-  transition: background 0.2s ease;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
 }
 
-.card-delete-btn:hover {
-  background: rgba(255, 255, 255, 1);
+.card-icon-right:hover {
+  opacity: 1;
 }
 
+/* Description section */
+.card-description {
+  padding: 0 12px 12px 12px;
+  flex: 1;
+}
+
+/* Retry button - positioned over image */
 .card-retry-btn {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
+  bottom: 12px;
+  right: 12px;
   width: 32px;
   height: 32px;
   border: none;
@@ -215,24 +241,6 @@ body {
 
 .card-retry-btn:hover {
   background: rgba(255, 255, 255, 1);
-}
-
-/* Item icon and description layout */
-.item-icon-description {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 16px 8px;
-  height: 100%;
-}
-
-.item-type-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.5;
 }
 
 /* 2-Column Grid for Items */
@@ -261,27 +269,11 @@ body {
   object-position: center;
 }
 
-.item-placeholder {
-  width: 100%;
-  aspect-ratio: 1;
-  margin-bottom: 12px;
-  display: flex;
-  /* align-items: center; */
-  justify-content: center;
-  background: var(--color-bg-gradient);
-}
-
-.item-placeholder .item-description {
-  margin: 0;
-  padding: 8px 12px;
-  text-align: left;
-}
-
 .item-description {
   color: var(--color-text);
-  margin-bottom: 12px;
+  margin: 0;
   line-height: 1.4;
-  min-height: 40px;
+  text-align: left;
 }
 
 .btn-compact {
