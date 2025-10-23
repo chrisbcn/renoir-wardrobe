@@ -18,10 +18,11 @@ body {
   --spacing-3xl: 32px;
   
   --color-border: #232323;
-  --color-accent: #F6F6EF;
+  --color-accent: #F7F3ED;
   --color-bg: #fff;
   --color-text: #232323;
   --color-text-secondary: #666;
+  --color-bg-gradient: linear-gradient(270deg,transparent 36.98%,transparent 68.7%,rgba(0,0,0,.02) 97.45%),linear-gradient(179.26deg,transparent 19.37%,transparent 64.08%,rgba(0,0,0,.02) 99.36%),0 0;
   
   /* iPhone 16 dimensions */
   --mobile-width: 393px;
@@ -29,7 +30,7 @@ body {
   --margin-page: 20px;
   
   /* iOS standard component heights */
-  --nav-bar-height: 44px;
+  --nav-bar-height: 52px;
   --tab-bar-height: 49px;
   --safe-area-bottom: 34px; /* For iPhone with home indicator */
 }
@@ -68,7 +69,7 @@ body {
 
 .body-small {
   font-family: 'sweet-sans-pro', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--color-text);
 }
@@ -83,7 +84,7 @@ body {
   background: var(--color-bg);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.2);
+  /* box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.2); */
   /* border-radius: 20px; iPhone-style rounded corners */
 }
 
@@ -108,7 +109,7 @@ body {
 }
 
 .mobile-section-compact {
-  padding: 12px;
+  padding: 0;
   padding-bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + 12px);
 }
 
@@ -148,8 +149,7 @@ body {
 }
 
 .card-compact {
-  background: #F6F6EF;
-  padding: 12px;
+  padding: 0px;
 }
 
 /* 2-Column Grid for Items */
@@ -171,20 +171,21 @@ body {
 
 .item-image {
   width: 100%;
+  aspect-ratio: 1;
   display: block;
-  background: #f6f6ef;
+  background: var(--color-bg-gradient);
+  object-fit: contain;
+  object-position: center;
 }
 
 .item-placeholder {
   width: 100%;
   aspect-ratio: 1;
-  background: var(--color-accent);
   margin-bottom: 12px;
-  border: 1px solid var(--color-border);
   display: flex;
-  align-items: center;
+  /* align-items: center; */
   justify-content: center;
-  padding: 12px;
+  background: var(--color-bg-gradient);
 }
 
 .item-placeholder .item-description {
@@ -390,7 +391,6 @@ body {
   text-align: center;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
 .header-button:disabled {

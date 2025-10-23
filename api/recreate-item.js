@@ -69,22 +69,23 @@ async function generateProductPhoto(detectedItem, originalImageData) {
       detectedItem.material
     ].filter(Boolean).join(', ');
     
-    const prompt = `Create a professional flat lay product photo of ONLY this ${itemDescription}. 
+    const prompt = `Create a professional product photo of ONLY this ${itemDescription} in subtle ghost mannequin style.
 
-STYLE: Clean, minimalist flat lay photography - the garment should be neatly laid flat on the surface, naturally shaped but not overly styled. Think luxury e-commerce like Gucci or Net-a-Porter.
+STYLE: Subtle, natural ghost mannequin - the garment should appear as if worn by an invisible person, maintaining its natural shape with MINIMAL volume. Not overly inflated or puffy. Think understated luxury e-commerce like The Row or COS.
 
-CAMERA ANGLE: Photographed from directly above (overhead view), looking straight down at the garment. The camera must be perfectly perpendicular to the surface - STRAIGHT-ON, NO angle, NO rotation, NO perspective distortion.
+CAMERA ANGLE: Photographed STRAIGHT-ON from the front, looking directly at the garment. The camera must be perfectly perpendicular - FACE-FORWARD, NO angle, NO rotation, NO 3/4 turn, NO side view.
 
-GARMENT POSITION: 
-- Lay the garment flat and naturally on the surface
-- Show the front of the garment facing up
-- Maintain natural shape without excessive styling
-- Sleeves/straps laid naturally at sides
-- For pants: laid flat with legs together or slightly apart, natural and clean
+GARMENT FORM:
+- Subtle 3D shape as if naturally worn, not dramatically inflated
+- Front of garment facing directly at camera
+- Natural drape and fit, not overstuffed
+- Sleeves/straps positioned naturally at sides
+- For pants: show natural leg shape without visible leg forms inside
+- Consistent framing - garment should fill similar proportion of frame regardless of type
 
-CRITICAL: Show ONLY the clothing item itself - absolutely NO mannequin, NO body parts, NO hands, NO styling props, NO accessories unless part of the garment.
+CRITICAL: Show ONLY the clothing item itself - absolutely NO visible mannequin, NO body parts, NO torso, NO arms, NO legs, NO head forms, NO hands. The garment must appear floating with subtle, natural volume.
 
-Pure white background. Clean, even studio lighting with soft shadows. Professional luxury e-commerce product photography.`;
+Pure white background. Clean studio lighting. Professional e-commerce product photography with consistent sizing and framing.`;
     
     console.log('🎨 Using Gemini 2.5 Flash Image via Google AI Studio API...');
     console.log('Prompt:', prompt);
