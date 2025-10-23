@@ -119,13 +119,18 @@ body {
   position: relative;
 }
 
+/* Content container - applies horizontal padding once for all sections */
+.content-container {
+  padding: 0 24px; /* 24px left/right padding for all content */
+}
+
 .mobile-section {
-  padding: 24px;
+  padding-top: 24px;
   padding-bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + 16px); /* Space for bottom nav + extra padding */
 }
 
 .mobile-section-compact {
-  padding: 0 24px; /* No top padding, but maintain 24px left/right */
+  padding-top: 0; /* No top padding */
   padding-bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + 12px);
 }
 

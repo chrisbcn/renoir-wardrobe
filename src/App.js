@@ -755,9 +755,11 @@ const analyzeSingleItem = async (item) => {
               </button>
             </div>
 
-            {/* Steps 0 and 1: Upload and Preview */}
-            {(uploadFlowStep === 0 || uploadFlowStep === 1) && (
-              <div className="mobile-section">
+            {/* Content Container - applies 24px horizontal padding once */}
+            <div className="content-container">
+              {/* Steps 0 and 1: Upload and Preview */}
+              {(uploadFlowStep === 0 || uploadFlowStep === 1) && (
+                <div className="mobile-section">
                 {uploadFlowStep === 0 && (
                   <>
                     <h2 className="heading-2" style={{ marginBottom: '32px', width: '50%' }}>
@@ -868,55 +870,56 @@ const analyzeSingleItem = async (item) => {
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Detection Results - 2-Column Grid */}
-            {uploadFlowStep === 2 && multiItemDetectionResult && (
-              <div className="mobile-section-compact">
-                {/* 2-Column Grid of Items */}
-                <div className="items-grid section-content">
-                  {multiItemDetectionResult.detectedItems.map((item, index) => (
-                    <DetectedItemCard
-                      key={item.id}
-                      item={item}
-                      index={index}
-                      isRecreating={recreatingItems.has(item.id)}
-                      isRecreated={!!recreatedItems[item.id]}
-                      recreatedData={recreatedItems[item.id]}
-                      onRecreate={handleRecreateItem}
-                      onViewRecreation={() => setDetailViewItem(item)}
-                    />
-                  ))}
                 </div>
+              )}
 
-                {/* Bottom Actions */}
-                <button
-                  onClick={handleRecreateAllItems}
-                  className="btn btn-full btn-medium mb-md"
-                  disabled={multiItemDetectionResult.detectedItems.every(item => recreatedItems[item.id])}
-                >
-                  🎨 Recreate all items
-                </button>
+              {/* Detection Results - 2-Column Grid */}
+              {uploadFlowStep === 2 && multiItemDetectionResult && (
+                <div className="mobile-section-compact">
+                  {/* 2-Column Grid of Items */}
+                  <div className="items-grid section-content">
+                    {multiItemDetectionResult.detectedItems.map((item, index) => (
+                      <DetectedItemCard
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        isRecreating={recreatingItems.has(item.id)}
+                        isRecreated={!!recreatedItems[item.id]}
+                        recreatedData={recreatedItems[item.id]}
+                        onRecreate={handleRecreateItem}
+                        onViewRecreation={() => setDetailViewItem(item)}
+                      />
+                    ))}
+                  </div>
 
-                <button 
-                  onClick={() => {
-                    // Find the first recreated item, or the first item if none are recreated
-                    const firstRecreatedItem = multiItemDetectionResult.detectedItems.find(item => recreatedItems[item.id]);
-                    if (firstRecreatedItem) {
-                      setDetailViewItem(firstRecreatedItem);
-                    } else {
-                      // If no items are recreated yet, alert user
-                      alert('Please recreate at least one item first');
-                    }
-                  }}
-                  className="btn btn-full btn-medium"
-                  disabled={!multiItemDetectionResult.detectedItems.some(item => recreatedItems[item.id])}
-                >
-                  View each item
-                </button>
-              </div>
-            )}
+                  {/* Bottom Actions */}
+                  <button
+                    onClick={handleRecreateAllItems}
+                    className="btn btn-full btn-medium mb-md"
+                    disabled={multiItemDetectionResult.detectedItems.every(item => recreatedItems[item.id])}
+                  >
+                    🎨 Recreate all items
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      // Find the first recreated item, or the first item if none are recreated
+                      const firstRecreatedItem = multiItemDetectionResult.detectedItems.find(item => recreatedItems[item.id]);
+                      if (firstRecreatedItem) {
+                        setDetailViewItem(firstRecreatedItem);
+                      } else {
+                        // If no items are recreated yet, alert user
+                        alert('Please recreate at least one item first');
+                      }
+                    }}
+                    className="btn btn-full btn-medium"
+                    disabled={!multiItemDetectionResult.detectedItems.some(item => recreatedItems[item.id])}
+                  >
+                    View each item
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         )}
 
