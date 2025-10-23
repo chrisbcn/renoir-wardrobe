@@ -36,9 +36,40 @@ const validateImageFile = (file) => {
 
 const ITEMS_PER_PAGE = 20;
 
+// Loader quotes and facts - easy to add more!
+const LOADER_MESSAGES = [
+  {
+    type: 'quote',
+    text: '"Elegance is not standing out, but being remembered." — Giorgio Armani'
+  },
+  {
+    type: 'fact',
+    text: 'A single Hermès Birkin bag requires 18 hours of hand-stitching by one artisan.'
+  },
+  {
+    type: 'quote',
+    text: '"Fashion is the armor to survive the reality of everyday life." — Bill Cunningham'
+  },
+  {
+    type: 'fact',
+    text: 'In 15th century fashion, designers showcased collections on miniature dolls instead of live models.'
+  },
+  {
+    type: 'quote',
+    text: '"Clothes mean nothing until someone lives in them." — Marc Jacobs'
+  },
+  {
+    type: 'fact',
+    text: 'Quality and craftsmanship define luxury for over 65% of high-end fashion consumers.'
+  }
+];
+
 function App() {
   // Navigation state
   const [activeSection, setActiveSection] = useState('multi-item');
+  
+  // Loader message rotation
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
 
   // Core state (keep all existing state)
   const [wardrobe, setWardrobe] = useState([]);
@@ -83,6 +114,17 @@ function App() {
   useEffect(() => {
     loadWardrobeItems();
   }, []);
+
+  // Rotate loader messages while processing
+  useEffect(() => {
+    if (!isProcessingMultiItem) return;
+    
+    const interval = setInterval(() => {
+      setCurrentMessageIndex(prev => (prev + 1) % LOADER_MESSAGES.length);
+    }, 6000); // Change message every 6 seconds
+    
+    return () => clearInterval(interval);
+  }, [isProcessingMultiItem]);
 
   const loadWardrobeItems = async (offset = 0) => {
     try {
@@ -893,6 +935,11 @@ const analyzeSingleItem = async (item) => {
                                   </clipPath>
                                 </defs>
                               </svg>
+                            </div>
+                            
+                            {/* Rotating quotes/facts */}
+                            <div className={`loader-text ${LOADER_MESSAGES[currentMessageIndex].type}`}>
+                              {LOADER_MESSAGES[currentMessageIndex].text}
                             </div>
                           </div>
                         </div>

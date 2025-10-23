@@ -336,6 +336,42 @@ body {
   }
 }
 
+/* Loader quotes/facts text */
+.loader-text {
+  position: absolute;
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 400px;
+  text-align: center;
+  color: white;
+  font-family: 'sweet-sans-pro', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0;
+  animation: fadeInOut 6s ease-in-out infinite;
+}
+
+.loader-text.quote {
+  font-style: italic;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* 2-Column Grid for Items */
 .items-grid {
   display: grid;
