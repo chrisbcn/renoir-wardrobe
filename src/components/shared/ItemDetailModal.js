@@ -217,6 +217,7 @@ const ItemDetailModal = ({
             )}
           </div>
         </div>
+        </div>
 
         {/* Bottom Navigation - Fixed at bottom */}
         <BottomNav 
