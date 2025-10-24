@@ -176,17 +176,23 @@ Pure white background. Clean studio lighting. Professional e-commerce product ph
 async function removeBackground(imageDataUrl) {
   try {
     console.log('🎯 Starting background removal...');
+    console.log('📊 API Key present:', !!process.env.REMOVEBG_API_KEY);
+    console.log('📊 API Key length:', process.env.REMOVEBG_API_KEY?.length);
     
     // Check for remove.bg API key
     if (!process.env.REMOVEBG_API_KEY) {
-      console.warn('⚠️ REMOVEBG_API_KEY not found - skipping background removal');
+      console.error('❌❌❌ REMOVEBG_API_KEY NOT FOUND - SKIPPING BACKGROUND REMOVAL');
       return imageDataUrl; // Return original if no API key
     }
 
+    console.log('✅ API Key found, proceeding with background removal...');
+
     // Extract base64 data
     const base64Data = imageDataUrl.replace(/^data:image\/[a-z]+;base64,/, '');
+    console.log('📊 Base64 data length:', base64Data.length);
     
     // Call remove.bg API
+    console.log('📡 Calling remove.bg API...');
     const response = await fetch('https://api.remove.bg/v1.0/removebg', {
       method: 'POST',
       headers: {
@@ -203,22 +209,28 @@ async function removeBackground(imageDataUrl) {
       })
     });
 
+    console.log('📡 Remove.bg API response status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Remove.bg API Error:', errorText);
+      console.error('❌ Remove.bg API Error - Status:', response.status);
+      console.error('❌ Remove.bg API Error - Response:', errorText);
       console.warn('⚠️ Background removal failed - returning original image');
       return imageDataUrl; // Fallback to original
     }
 
     // Get the result as a buffer
+    console.log('📦 Parsing response buffer...');
     const resultBuffer = await response.arrayBuffer();
     const base64Result = Buffer.from(resultBuffer).toString('base64');
     
-    console.log('✅ Background removed successfully');
+    console.log('✅✅✅ Background removed successfully!');
+    console.log('📊 Result size:', base64Result.length);
     return `data:image/png;base64,${base64Result}`;
 
   } catch (error) {
-    console.error('❌ Background removal failed:', error);
+    console.error('❌❌❌ Background removal exception:', error.message);
+    console.error('❌ Full error:', error);
     console.warn('⚠️ Returning original image without background removal');
     return imageDataUrl; // Fallback to original on error
   }
