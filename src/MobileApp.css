@@ -878,6 +878,57 @@ body {
   opacity: 0.5;
 }
 
+/* Item Detail Modal - Slide-over modal */
+.item-detail-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.item-detail-modal {
+  width: 100vw;
+  height: 100vh;
+  max-width: var(--max-mobile-width);
+  max-height: var(--max-mobile-height);
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Desktop: Add frame styling */
+@media (min-width: 768px) {
+  .item-detail-modal {
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 10px 40px rgba(0,0,0,0.2);
+    border-radius: 20px;
+  }
+}
+
+.item-detail-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 24px;
+}
+
+/* Hide scrollbar for modal content */
+.item-detail-content::-webkit-scrollbar {
+  display: none;
+}
+
+.item-detail-content {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 /* Responsive - extend to desktop */
 @media (min-width: 768px) {
   .modal-overlay {
