@@ -84,29 +84,30 @@ const ItemDetailModal = ({
   if (!currentItem || !currentRecreatedData) return null;
 
   return (
-    <div className="item-detail-modal-overlay">
-      <div 
-        className="item-detail-modal"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Screen Header - Consistent with app */}
-        <div className="screen-header">
-          <button
-            onClick={onClose}
-            className="header-button"
-          >
-            <ChevronLeftIcon style={{ width: '24px', height: '24px' }} />
-          </button>
-          <h1 className="screen-title">
-            {canSwipe ? `${currentIndex + 1} of ${allRecreatedItems.length}` : 'ITEM DETAIL'}
-          </h1>
-          <div className="header-button" style={{ opacity: 0 }}></div>
-        </div>
+    <div className="modal-overlay-fullscreen">
+      <div className="mobile-app">
+        <div 
+          className="mobile-content"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Screen Header - Consistent with app */}
+          <div className="screen-header">
+            <button
+              onClick={onClose}
+              className="header-button"
+            >
+              <ChevronLeftIcon style={{ width: '24px', height: '24px' }} />
+            </button>
+            <h1 className="screen-title">
+              {canSwipe ? `${currentIndex + 1} of ${allRecreatedItems.length}` : 'ITEM DETAIL'}
+            </h1>
+            <div className="header-button" style={{ opacity: 0 }}></div>
+          </div>
 
-        {/* Scrollable Content Container */}
-        <div className="item-detail-content">
+          {/* Content Container - applies 24px horizontal padding */}
+          <div className="content-container">
             <div className="mobile-section">
             {/* Image */}
             <div className="mb-2xl" style={{ border: '1px solid var(--color-border)' }}>
@@ -214,8 +215,15 @@ const ItemDetailModal = ({
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
+
+        {/* Bottom Navigation - Fixed outside scrollable content */}
+        <BottomNav 
+          activeSection="multi-item" 
+          onNavigate={() => {}} 
+        />
       </div>
     </div>
   );
