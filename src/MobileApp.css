@@ -392,7 +392,7 @@ body {
 
 /* MAURA Fullscreen Loader (for wardrobe loading) */
 .maura-loader-fullscreen {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -405,7 +405,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 10000;
+  z-index: 100;
 }
 
 .maura-loader-fullscreen::before {
