@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gucci Layout Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f7f3ed;
+      padding: 20px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    /* Gucci's Grid Structure */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .product-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+    }
+
+    /* Gucci's Media Container - KEY PART */
+    .media-container {
+      align-items: center;
+      display: flex;
+      justify-content: center;
+      aspect-ratio: 3 / 4; /* THIS IS WHAT GUCCI USES */
+      box-sizing: border-box;
+      position: relative;
+      width: 100%;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    /* Image styling */
+    .media-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    /* Product info */
+    .product-info {
+      padding-top: 12px;
+      text-align: center;
+    }
+
+    .product-name {
+      font-size: 13px;
+      font-weight: 400;
+      margin-bottom: 4px;
+      color: #000;
+    }
+
+    .product-badge {
+      font-size: 11px;
+      color: #9333ea;
+    }
+
+    /* Test with different image sizes */
+    .test-note {
+      background: #fff;
+      padding: 16px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .test-note strong {
+      color: #9333ea;
+    }
+  </style>
+</head>
+<body>
+  
+  <h1>GUCCI LAYOUT TEST</h1>
+  
+  <div class="test-note">
+    <strong>Testing Gucci's approach:</strong><br>
+    • aspect-ratio: 3 / 4 on container<br>
+    • object-fit: cover on images<br>
+    • All images will be uniform size<br><br>
+    <strong>Replace the src attributes below with your wardrobe image URLs to test</strong>
+  </div>
+
+  <div class="product-grid">
+    
+    <!-- Item 1 - Replace with your image -->
+    <div class="product-card">
+      <div class="media-container">
+        <img src="https://via.placeholder.com/300x400/90EE90/000000?text=Vest" alt="vest">
+      </div>
+      <div class="product-info">
+        <div class="product-name">vest</div>
+        <div class="product-badge">Recreated</div>
+      </div>
+    </div>
+
+    <!-- Item 2 - Replace with your image -->
+    <div class="product-card">
+      <div class="media-container">
+        <img src="https://via.placeholder.com/300x500/FFE4B5/000000?text=Sweater" alt="sweater">
+      </div>
+      <div class="product-info">
+        <div class="product-name">sweater</div>
+        <div class="product-badge">Recreated</div>
+      </div>
+    </div>
+
+    <!-- Item 3 - Replace with your image -->
+    <div class="product-card">
+      <div class="media-container">
+        <img src="https://via.placeholder.com/400x400/F0E68C/000000?text=Sweatshirt" alt="sweatshirt">
+      </div>
+      <div class="product-info">
+        <div class="product-name">sweatshirt</div>
+        <div class="product-badge">Recreated</div>
+      </div>
+    </div>
+
+    <!-- Item 4 - Replace with your image -->
+    <div class="product-card">
+      <div class="media-container">
+        <img src="https://via.placeholder.com/300x600/D3D3D3/000000?text=Pants" alt="pants">
+      </div>
+      <div class="product-info">
+        <div class="product-name">pants</div>
+        <div class="product-badge">Recreated</div>
+      </div>
+    </div>
+
+    <!-- Item 5 - Tall image test -->
+    <div class="product-card">
+      <div class="media-container">
+        <img src="https://via.placeholder.com/200x800/FF6347/000000?text=Long+Coat" alt="coat">
+      </div>
+      <div class="product-info">
+        <div class="product-name">long coat</div>
+        <div class="product-badge">Recreated</div>
+      </div>
+    </div>
+
+    <!-- Item 6 - Wide image test -->
+    <div class="product-card">
+      <div class="media-container">
+        <img src="https://via.placeholder.com/600x300/87CEEB/000000?text=Wide+Shirt" alt="shirt">
+      </div>
+      <div class="product-info">
+        <div class="product-name">shirt</div>
+        <div class="product-badge">Recreated</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="test-note" style="margin-top: 20px;">
+    <strong>Instructions:</strong><br>
+    1. Open this file in a browser<br>
+    2. Replace the placeholder image URLs with your actual wardrobe image URLs<br>
+    3. See if all images display uniformly<br>
+    4. If this works, we'll apply the same CSS to your app!
+  </div>
+
+</body>
+</html>
+
