@@ -199,7 +199,7 @@ body {
 /* Description section - placeholder with gradient background (contains icons + text) */
 .card-description {
   width: 100%;
-  aspect-ratio: 3 / 4; /* Portrait ratio - consistent with wardrobe */
+  aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   background: var(--color-accent);
@@ -229,19 +229,10 @@ body {
 .card-icon-left {
   width: 20px;
   height: 20px;
-  border: none;
-  background: transparent;
-  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   opacity: 0.5;
-  transition: opacity 0.2s ease;
-}
-
-.card-icon-left:hover {
-  opacity: 1;
 }
 
 .card-icon-right {
@@ -401,7 +392,7 @@ body {
 
 /* MAURA Fullscreen Loader (for wardrobe loading) */
 .maura-loader-fullscreen {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -414,7 +405,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 100;
+  z-index: 10000;
 }
 
 .maura-loader-fullscreen::before {
@@ -463,10 +454,10 @@ body {
 
 .item-image {
   width: 100%;
-  aspect-ratio: 3 / 4; /* Portrait ratio - consistent with wardrobe */
+  aspect-ratio: 1;
   display: block;
   background: var(--color-accent);
-  object-fit: cover; /* Fill container like luxury brand product shots */
+  object-fit: contain;
   object-position: center;
 }
 

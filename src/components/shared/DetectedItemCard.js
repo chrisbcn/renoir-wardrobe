@@ -79,15 +79,11 @@ const DetectedItemCard = ({
       {/* Recreated Image or Placeholder */}
       {isRecreated && recreatedData ? (
         <>
-          {/* Top Icons Row - Retry (left) and Delete (right) */}
+          {/* Top Icons Row */}
           <div className="card-icons-row">
-            <button
-              onClick={() => onRetry && onRetry(item)}
-              className="card-icon-left"
-              aria-label="Retry recreation"
-            >
-              <RetryIcon style={{ width: '20px', height: '20px' }} />
-            </button>
+            <div className="card-icon-left">
+              <GarmentIcon style={{ width: '20px', height: '20px' }} />
+            </div>
             <button
               onClick={() => onDelete && onDelete(item)}
               className="card-icon-right"
@@ -107,6 +103,15 @@ const DetectedItemCard = ({
               alt={`Recreated ${item.type}`}
               className="item-image"
             />
+          </button>
+          
+          {/* Retry button */}
+          <button
+            onClick={() => onRetry && onRetry(item)}
+            className="card-retry-btn"
+            aria-label="Retry recreation"
+          >
+            <RetryIcon style={{ width: '20px', height: '20px' }} />
           </button>
         </>
       ) : (
