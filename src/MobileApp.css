@@ -336,14 +336,14 @@ body {
   }
 }
 
-/* Loader quotes/facts text */
+/* Loader quotes/facts text - positioned relative to overlay, not container */
 .loader-text {
   position: absolute;
-  bottom: -80px;
+  bottom: 120px; /* Position above center */
   left: 50%;
   transform: translateX(-50%);
-  width: 80%;
-  max-width: 400px;
+  width: 85%;
+  max-width: 360px; /* Wider for better readability */
   text-align: center;
   color: white;
   font-family: 'sweet-sans-pro', sans-serif;
@@ -351,6 +351,7 @@ body {
   line-height: 1.6;
   opacity: 0;
   animation: fadeInOut 6s ease-in-out infinite;
+  padding: 0 20px; /* Extra padding to prevent edge cutoff */
 }
 
 .loader-text.quote {

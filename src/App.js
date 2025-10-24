@@ -936,11 +936,11 @@ const analyzeSingleItem = async (item) => {
                                 </defs>
                               </svg>
                             </div>
-                            
-                            {/* Rotating quotes/facts */}
-                            <div className={`loader-text ${LOADER_MESSAGES[currentMessageIndex].type}`}>
-                              {LOADER_MESSAGES[currentMessageIndex].text}
-                            </div>
+                          </div>
+                          
+                          {/* Rotating quotes/facts - outside loader-container for more width */}
+                          <div className={`loader-text ${LOADER_MESSAGES[currentMessageIndex].type}`}>
+                            {LOADER_MESSAGES[currentMessageIndex].text}
                           </div>
                         </div>
                       )}

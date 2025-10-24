@@ -85,7 +85,7 @@ GARMENT FORM:
 
 CRITICAL: Show ONLY the clothing item itself - absolutely NO visible mannequin, NO body parts, NO torso, NO arms, NO legs, NO head forms, NO hands. The garment must appear floating with subtle, natural volume.
 
-Pure white background. Clean studio lighting. Professional e-commerce product photography with consistent sizing and framing.`;
+Background color: #F7F3ED (warm cream/off-white). Clean studio lighting. Professional e-commerce product photography with consistent sizing and framing.`;
     
     console.log('🎨 Using Gemini 2.5 Flash Image via Google AI Studio API...');
     console.log('Prompt:', prompt);
