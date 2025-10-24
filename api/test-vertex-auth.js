@@ -67,11 +67,12 @@ export default async function handler(req, res) {
     });
 
     const tokenResponse = await auth.getAccessToken();
-    const accessToken = tokenResponse.token;
+    const accessToken = tokenResponse.token || tokenResponse;
     
     log('   ✅ Token generated successfully');
-    log(`   Token length: ${accessToken.length} characters`);
-    log(`   Token prefix: ${accessToken.substring(0, 20)}...`);
+    log(`   Token type: ${typeof accessToken}`);
+    log(`   Token length: ${accessToken?.length || 'unknown'} characters`);
+    log(`   Token prefix: ${accessToken?.substring ? accessToken.substring(0, 20) + '...' : 'N/A'}`);
     log(`   Service account: ${process.env.GOOGLE_CLIENT_EMAIL}`);
     
     // Step 3: Test token with a simple API call
@@ -84,6 +85,11 @@ export default async function handler(req, res) {
     
     log(`   Project: ${process.env.GOOGLE_CLOUD_PROJECT_ID}`);
     log(`   Endpoint: ${endpoint}`);
+    log(`   Using token: ${accessToken ? 'Yes' : 'No (this is the problem!)'}`);
+    
+    if (!accessToken) {
+      throw new Error('Access token is undefined - token generation failed');
+    }
     
     const response = await fetch(endpoint, {
       method: 'POST',
