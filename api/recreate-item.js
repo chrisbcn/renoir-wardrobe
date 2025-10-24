@@ -24,11 +24,11 @@ export default async function handler(req, res) {
 
       // Check environment variables
       console.log('Environment check:', {
-        hasGeminiKey: !!process.env.GEMINI_API_KEY,
-        keyLength: process.env.GEMINI_API_KEY?.length
+        hasProjectId: !!process.env.GOOGLE_CLOUD_PROJECT_ID,
+        hasCredentials: !!(process.env.GOOGLE_PRIVATE_KEY && process.env.GOOGLE_CLIENT_EMAIL),
       });
   
-      // Step 1: Generate product photo using Gemini 2.5 Flash Image
+      // Step 1: Generate product photo using Gemini 2.5 Flash Image via Vertex AI
       const generatedImage = await generateProductPhoto(detectedItem, originalImageData);
       console.log(`✅ Image generation complete for ${detectedItem.type}`);
   
@@ -44,6 +44,7 @@ export default async function handler(req, res) {
           timestamp: new Date().toISOString(),
           userId: userId || 'demo',
           model: 'gemini-2.5-flash-image',
+          provider: 'vertex-ai',
           backgroundRemoval: true
         }
       });
@@ -57,7 +58,28 @@ export default async function handler(req, res) {
       });
     }
   }
+
+// OAuth token generation - EXACT code from successful diagnostic test
+async function getAccessToken() {
+  const { GoogleAuth } = require('google-auth-library');
   
+  const auth = new GoogleAuth({
+    credentials: {
+      type: 'service_account',
+      project_id: process.env.GOOGLE_CLOUD_PROJECT_ID,
+      private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+      token_uri: 'https://oauth2.googleapis.com/token',
+    },
+    scopes: ['https://www.googleapis.com/auth/cloud-platform']
+  });
+
+  const tokenResponse = await auth.getAccessToken();
+  return tokenResponse.token || tokenResponse;
+}
 
 async function generateProductPhoto(detectedItem, originalImageData) {
   try {
@@ -87,18 +109,22 @@ CRITICAL: Show ONLY the clothing item itself - absolutely NO visible mannequin, 
 
 Background color: #F7F3ED (warm cream/off-white). Clean studio lighting. Professional e-commerce product photography with consistent sizing and framing.`;
     
-    console.log('🎨 Using Gemini 2.5 Flash Image via Google AI Studio API...');
+    console.log('🎨 Using Gemini 2.5 Flash Image via Vertex AI (enterprise)...');
     console.log('Prompt:', prompt);
     console.log('Item details:', itemDescription);
+    
+    const accessToken = await getAccessToken();
+    console.log('✅ OAuth token generated for Vertex AI');
     
     // Clean the base64 data
     const cleanImageData = originalImageData.replace(/^data:image\/[a-z]+;base64,/, '');
     
-    // Use Gemini 2.5 Flash Image via Google AI Studio API (same as test-gemini-direct.js)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    // Use Gemini 2.5 Flash Image via Vertex AI (verified working by diagnostic test)
+    const response = await fetch(`https://us-central1-aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_CLOUD_PROJECT_ID}/locations/us-central1/publishers/google/models/gemini-2.5-flash-image:generateContent`, {
       method: 'POST',
       headers: { 
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify({
         contents: [{
