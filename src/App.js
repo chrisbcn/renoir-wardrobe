@@ -67,7 +67,7 @@ const LOADER_MESSAGES = [
 
 function App() {
   // Navigation state
-  const [activeSection, setActiveSection] = useState('multi-item');
+  const [activeSection, setActiveSection] = useState('wardrobe');
   
   // Loader message rotation
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
