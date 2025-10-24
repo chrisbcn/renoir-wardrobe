@@ -791,11 +791,11 @@ body {
   max-height: var(--max-mobile-height);
 }
 
-/* Wardrobe Grid - 4 columns, clean design */
+/* Wardrobe Grid - 2 columns, Gucci-style */
 .wardrobe-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
 .wardrobe-item {
@@ -809,10 +809,10 @@ body {
 
 .wardrobe-item-image {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4; /* Taller images like Gucci - portrait ratio */
   background: var(--color-accent);
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .wardrobe-item-image img {
@@ -828,18 +828,21 @@ body {
 
 .wardrobe-item-name {
   font-family: 'sweet-sans-pro', sans-serif;
-  font-size: 11px;
-  line-height: 1.3;
+  font-size: 13px;
+  line-height: 1.4;
   color: var(--color-text);
   margin: 0 0 4px 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
 }
 
 .wardrobe-item-badge {
   font-family: 'sweet-sans-pro', sans-serif;
-  font-size: 9px;
+  font-size: 11px;
   color: #9333ea;
   margin: 0;
 }
