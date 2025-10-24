@@ -794,13 +794,9 @@ const analyzeSingleItem = async (item) => {
 
   return (
     <div className="mobile-app">
-      {/* Main Content */}
-      <div className="mobile-content">
-        {/* Multi-Item Detection Section */}
-        {activeSection === 'multi-item' && (
-          <>
-            {/* Screen Header */}
-            <div className="screen-header">
+      {/* Fixed Headers - Outside scrollable content */}
+      {activeSection === 'multi-item' && (
+        <div className="screen-header">
               <button 
                 className="header-button"
                 onClick={() => {
@@ -837,8 +833,38 @@ const analyzeSingleItem = async (item) => {
               >
                 Next
               </button>
-            </div>
+        </div>
+      )}
 
+      {activeSection === 'wardrobe' && (
+        <div className="screen-header">
+          <div className="header-button" style={{ opacity: 0 }}></div>
+          <h1 className="screen-title">MY WARDROBE</h1>
+          <label className="header-button" style={{ cursor: isUploading ? 'not-allowed' : 'pointer' }}>
+            <input 
+              type="file" 
+              multiple 
+              accept={ACCEPT_STRING}
+              onChange={handleWardrobeUpload}
+              className="hidden"
+              disabled={isUploading}
+            />
+            {isUploading ? (
+              <div className="spinner" style={{ width: '20px', height: '20px' }}></div>
+            ) : (
+              <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            )}
+          </label>
+        </div>
+      )}
+
+      {/* Scrollable Content */}
+      <div className="mobile-content">
+        {/* Multi-Item Detection Section */}
+        {activeSection === 'multi-item' && (
+          <>
             {/* Content Container - applies 24px horizontal padding once */}
             <div className="content-container">
               {/* Steps 0 and 1: Upload and Preview */}
@@ -1113,29 +1139,6 @@ const analyzeSingleItem = async (item) => {
         {/* Wardrobe Section */}
         {activeSection === 'wardrobe' && (
           <>
-            {/* Screen Header - Consistent with mobile design */}
-            <div className="screen-header">
-              <div className="header-button" style={{ opacity: 0 }}></div>
-              <h1 className="screen-title">MY WARDROBE</h1>
-              <label className="header-button" style={{ cursor: isUploading ? 'not-allowed' : 'pointer' }}>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept={ACCEPT_STRING}
-                  onChange={handleWardrobeUpload}
-                  className="hidden"
-                  disabled={isUploading}
-                />
-                {isUploading ? (
-                  <div className="spinner" style={{ width: '20px', height: '20px' }}></div>
-                ) : (
-                  <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                )}
-              </label>
-            </div>
-
             {/* Content Container - 24px padding */}
             <div className="content-container">
               <div className="mobile-section">

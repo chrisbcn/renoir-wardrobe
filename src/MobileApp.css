@@ -115,6 +115,23 @@ body {
   min-height: 0; /* Important for flex scrolling */
 }
 
+/* Hide scrollbar for clean look */
+.mobile-content::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-content {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Screen Header - Fixed at top, outside scrollable content */
+.mobile-app > .screen-header {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
 .mobile-container {
   max-width: var(--mobile-width);
   margin: 0 auto;
