@@ -86,14 +86,8 @@ const ItemDetailModal = ({
   return (
     <div className="modal-overlay-fullscreen">
       <div className="mobile-app">
-        <div 
-          className="mobile-content"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          {/* Screen Header - Consistent with app */}
-          <div className="screen-header">
+        {/* Screen Header - Fixed at top */}
+        <div className="screen-header">
             <button
               onClick={onClose}
               className="header-button"
@@ -104,9 +98,15 @@ const ItemDetailModal = ({
               {canSwipe ? `${currentIndex + 1} of ${allRecreatedItems.length}` : 'ITEM DETAIL'}
             </h1>
             <div className="header-button" style={{ opacity: 0 }}></div>
-          </div>
+        </div>
 
-          {/* Content Container - applies 24px horizontal padding */}
+        {/* Scrollable Content */}
+        <div 
+          className="mobile-content"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="content-container">
             <div className="mobile-section">
             {/* Image */}
@@ -215,11 +215,10 @@ const ItemDetailModal = ({
                 ))}
               </div>
             )}
-            </div>
           </div>
         </div>
 
-        {/* Bottom Navigation - Fixed outside scrollable content */}
+        {/* Bottom Navigation - Fixed at bottom */}
         <BottomNav 
           activeSection="multi-item" 
           onNavigate={() => {}} 
