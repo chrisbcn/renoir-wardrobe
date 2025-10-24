@@ -7,12 +7,14 @@ import ItemRecreationWorkflow from './ItemRecreationWorkflow';
 import BottomNav from './components/shared/BottomNav';
 import DetectedItemCard from './components/shared/DetectedItemCard';
 import ItemDetailModal from './components/shared/ItemDetailModal';
+import MauraLoader from './components/shared/MauraLoader';
 import { ReactComponent as InvoiceIcon } from './assets/icons/invoice 1.svg';
 import { ReactComponent as HangerIcon } from './assets/icons/hanger 2.svg';
 import { ReactComponent as PinterestIcon } from './assets/icons/Social Icons-1.svg';
 import { ReactComponent as InstagramIcon } from './assets/icons/Social Icons.svg';
 import { ReactComponent as ChevronLeftIcon } from './assets/icons/chevron-left-sm 1.svg';
 import { ReactComponent as CloseIcon } from './assets/icons/xclose 1.svg';
+import wardrobeBackground from './assets/img/walk-in-wardrobe.png';
 
 // Image format validation
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png'];
@@ -1142,8 +1144,15 @@ const analyzeSingleItem = async (item) => {
             {/* Content Container - 24px padding */}
             <div className="content-container">
               <div className="mobile-section">
-                {/* Wardrobe Grid - 4 columns, accent background, no rounded corners */}
-                {wardrobe.length > 0 ? (
+                {/* Show MAURA loader while initially loading */}
+                {isInitialLoading ? (
+                  <MauraLoader 
+                    message="Loading your wardrobe"
+                    showBackground={true}
+                    backgroundImage={wardrobeBackground}
+                  />
+                ) : wardrobe.length > 0 ? (
+                  /* Wardrobe Grid - 4 columns, accent background, no rounded corners */
                   <div className="wardrobe-grid">
                     {wardrobe.map(item => (
                       <div 
