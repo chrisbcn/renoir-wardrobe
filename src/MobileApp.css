@@ -392,18 +392,16 @@ body {
 
 /* MAURA Fullscreen Loader (for wardrobe loading) */
 .maura-loader-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  width: 100%;
+  min-height: 500px;
   background-size: cover;
   background-position: center;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  border-radius: 0;
 }
 
 .loader-message {
