@@ -1112,14 +1112,12 @@ const analyzeSingleItem = async (item) => {
 
         {/* Wardrobe Section */}
         {activeSection === 'wardrobe' && (
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-800">My Wardrobe</h2>
-                <p className="text-gray-600 mt-1">Manage your clothing collection</p>
-              </div>
-              
-              <label className="btn-primary">
+          <>
+            {/* Screen Header - Consistent with mobile design */}
+            <div className="screen-header">
+              <div className="header-button" style={{ opacity: 0 }}></div>
+              <h1 className="screen-title">MY WARDROBE</h1>
+              <label className="header-button" style={{ cursor: isUploading ? 'not-allowed' : 'pointer' }}>
                 <input 
                   type="file" 
                   multiple 
@@ -1128,78 +1126,56 @@ const analyzeSingleItem = async (item) => {
                   className="hidden"
                   disabled={isUploading}
                 />
-                <span className="flex items-center gap-2">
-                  {isUploading ? (
-                    <>
-                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Images
-                    </>
-                  )}
-                </span>
+                {isUploading ? (
+                  <div className="spinner" style={{ width: '20px', height: '20px' }}></div>
+                ) : (
+                  <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                )}
               </label>
             </div>
 
-            {/* Progress indicator */}
-            {isUploading && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-blue-900">Processing Images</span>
-                  <span className="text-sm text-blue-700">{Math.round(uploadProgress)}%</span>
-                </div>
-                <div className="w-full bg-blue-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
-
-            {/* Wardrobe Grid */}
-            {wardrobe.length > 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {wardrobe.map(item => (
-                    <div 
-                      key={item.id}
-                      className="group cursor-pointer"
-                      onClick={() => setSelectedItem(item)}
-                    >
-                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                        <img 
-                          src={item.imageUrl} 
-                          alt={item.name}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                          loading="lazy"
-                        />
+            {/* Content Container - 24px padding */}
+            <div className="content-container">
+              <div className="mobile-section">
+                {/* Wardrobe Grid - 4 columns, accent background, no rounded corners */}
+                {wardrobe.length > 0 ? (
+                  <div className="wardrobe-grid">
+                    {wardrobe.map(item => (
+                      <div 
+                        key={item.id}
+                        className="wardrobe-item"
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        <div className="wardrobe-item-image">
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.name}
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className="wardrobe-item-details">
+                          <p className="wardrobe-item-name">{item.name}</p>
+                          {item.isRecreated && (
+                            <p className="wardrobe-item-badge">Recreated</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="mt-2">
-                        <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                        {item.isRecreated && (
-                          <p className="text-xs text-purple-600">✨ Recreated</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="wardrobe-empty">
+                    <svg className="wardrobe-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <p className="body-text" style={{ fontWeight: 500 }}>Your wardrobe is empty</p>
+                    <p className="body-small text-secondary">Tap + to add images</p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-12 bg-white rounded-lg border">
-                <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                <p className="text-gray-500 font-medium">Your wardrobe is empty</p>
-                <p className="text-sm text-gray-400 mt-1">Upload some images to get started</p>
-              </div>
-            )}
-          </div>
+            </div>
+          </>
         )}
 
       {/* Item Detail Modal */}
