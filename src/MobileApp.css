@@ -392,16 +392,37 @@ body {
 
 /* MAURA Fullscreen Loader (for wardrobe loading) */
 .maura-loader-fullscreen {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
-  min-height: 500px;
+  height: 100%;
   background-size: cover;
   background-position: center;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 0;
+  z-index: 10000;
+}
+
+.maura-loader-fullscreen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1;
+}
+
+.maura-loader-fullscreen .loader-container,
+.maura-loader-fullscreen .loader-message {
+  position: relative;
+  z-index: 2;
 }
 
 .loader-message {
