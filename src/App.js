@@ -1181,86 +1181,38 @@ const analyzeSingleItem = async (item) => {
           </>
         )}
 
-      {/* Item Detail Modal */}
+      {/* Wardrobe Item Detail Modal - Using same component as recreation flow */}
       {selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold">{selectedItem.name}</h2>
-                <button
-                  onClick={() => setSelectedItem(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <img 
-                    src={selectedItem.imageUrl} 
-                    alt={selectedItem.name}
-                    className="w-full h-96 object-cover rounded-lg"
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  {selectedItem.analysis && !selectedItem.analysis.error ? (
-                    <>
-                      <div>
-                        <h3 className="font-semibold mb-2">Item Details</h3>
-                        <div className="space-y-2 text-sm">
-                          <p><span className="font-medium">Type:</span> {selectedItem.analysis.type}</p>
-                          {selectedItem.analysis.brand && selectedItem.analysis.brand !== 'Unknown' && (
-                            <p><span className="font-medium">Brand:</span> {selectedItem.analysis.brand}</p>
-                          )}
-                          {selectedItem.analysis.color && (
-                            <p><span className="font-medium">Color:</span> {selectedItem.analysis.color}</p>
-                          )}
-                          {selectedItem.analysis.material && (
-                            <p><span className="font-medium">Material:</span> {selectedItem.analysis.material}</p>
-                          )}
-                          {selectedItem.analysis.colors && selectedItem.analysis.colors.length > 1 && (
-                            <p><span className="font-medium">All Colors:</span> {selectedItem.analysis.colors.join(', ')}</p>
-                          )}
-                          {selectedItem.analysis.fabrics && selectedItem.analysis.fabrics.length > 1 && (
-                            <p><span className="font-medium">All Materials:</span> {selectedItem.analysis.fabrics.join(', ')}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {selectedItem.analysis.overallAssessment && (
-                        <div>
-                          <h3 className="font-semibold mb-2">Quality Assessment</h3>
-                          <div className="space-y-2 text-sm">
-                            <p><span className="font-medium">Tier:</span> {selectedItem.analysis.overallAssessment.tier}</p>
-                            <p><span className="font-medium">Score:</span> {selectedItem.analysis.overallAssessment.score}/10</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {selectedItem.analysis.details && (
-                        <div>
-                          <h3 className="font-semibold mb-2">Detailed Analysis</h3>
-                          <div className="text-sm text-gray-700 max-h-64 overflow-y-auto bg-gray-50 p-3 rounded border">
-                            <pre className="whitespace-pre-wrap font-sans">{selectedItem.analysis.details}</pre>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
-                      <p className="text-yellow-800">No analysis available for this item.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ItemDetailModal
+          item={{
+            id: selectedItem.id,
+            type: selectedItem.analysis?.type || selectedItem.name,
+            color: selectedItem.analysis?.color || '',
+            material: selectedItem.analysis?.material || '',
+            description: selectedItem.name,
+            imageData: selectedItem.imageUrl
+          }}
+          recreatedData={{
+            [selectedItem.id]: {
+              recreatedImageUrl: selectedItem.imageUrl,
+              metadata: selectedItem.analysis || {}
+            }
+          }}
+          allRecreatedItems={[{
+            id: selectedItem.id,
+            type: selectedItem.analysis?.type || selectedItem.name,
+            color: selectedItem.analysis?.color || '',
+            material: selectedItem.analysis?.material || '',
+            description: selectedItem.name,
+            imageData: selectedItem.imageUrl
+          }]}
+          onClose={() => setSelectedItem(null)}
+          onAddToWardrobe={() => {
+            // Already in wardrobe, just close
+            setSelectedItem(null);
+          }}
+          onSkip={() => setSelectedItem(null)}
+        />
       )}
       </div>
 
