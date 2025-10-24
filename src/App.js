@@ -1211,7 +1211,7 @@ const analyzeSingleItem = async (item) => {
             // Already in wardrobe, just close
             setSelectedItem(null);
           }}
-          onSkip={() => setSelectedItem(null)}
+          isWardrobeContext={true}
         />
       )}
       </div>

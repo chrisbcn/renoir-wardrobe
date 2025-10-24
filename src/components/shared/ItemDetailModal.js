@@ -9,11 +9,14 @@ const ItemDetailModal = ({
   allRecreatedItems, // Array of all recreated items for swiping
   onClose,
   onAddToWardrobe,
-  onSkip
+  onSkip,
+  onRecreate, // Optional: for recreating non-recreated items
+  isWardrobeContext // Optional: true if viewing from wardrobe
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [isRecreating, setIsRecreating] = useState(false);
 
   // Find current item index in all recreated items
   useEffect(() => {
@@ -26,7 +29,21 @@ const ItemDetailModal = ({
   const currentItem = allRecreatedItems[currentIndex];
   const currentRecreatedData = currentItem ? recreatedData[currentItem.id] : null;
   
+  // Check if this is truly a recreated item or just showing original
+  const isActuallyRecreated = currentRecreatedData && 
+    currentRecreatedData.recreatedImageUrl !== currentItem.imageData;
+  
   const canSwipe = allRecreatedItems && allRecreatedItems.length > 1;
+  
+  const handleRecreate = async () => {
+    if (!onRecreate || !currentItem) return;
+    setIsRecreating(true);
+    try {
+      await onRecreate(currentItem);
+    } finally {
+      setIsRecreating(false);
+    }
+  };
 
   // Swipe handlers
   const handleTouchStart = (e) => {
@@ -124,13 +141,38 @@ const ItemDetailModal = ({
 
             {/* Actions */}
             <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexDirection: 'column' }}>
-              <button
-                onClick={handleAdd}
-                className="btn btn-primary btn-full"
-              >
-                Add to Wardrobe
-              </button>
-              {onSkip && (
+              {/* Show Recreate button if not recreated and onRecreate is provided */}
+              {!isActuallyRecreated && onRecreate ? (
+                <button
+                  onClick={handleRecreate}
+                  className="btn btn-primary btn-full"
+                  disabled={isRecreating}
+                >
+                  {isRecreating ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <span className="spinner" style={{ width: '16px', height: '16px' }}></span>
+                      Recreating...
+                    </span>
+                  ) : (
+                    'Recreate Item'
+                  )}
+                </button>
+              ) : isWardrobeContext ? (
+                <button
+                  onClick={onClose}
+                  className="btn btn-primary btn-full"
+                >
+                  Close
+                </button>
+              ) : (
+                <button
+                  onClick={handleAdd}
+                  className="btn btn-primary btn-full"
+                >
+                  Add to Wardrobe
+                </button>
+              )}
+              {onSkip && !isWardrobeContext && (
                 <button
                   onClick={() => {
                     onSkip();
