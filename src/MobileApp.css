@@ -199,7 +199,7 @@ body {
 /* Description section - placeholder with gradient background (contains icons + text) */
 .card-description {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4; /* Portrait ratio - consistent with wardrobe */
   display: flex;
   flex-direction: column;
   background: var(--color-accent);
@@ -463,10 +463,10 @@ body {
 
 .item-image {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4; /* Portrait ratio - consistent with wardrobe */
   display: block;
   background: var(--color-accent);
-  object-fit: contain;
+  object-fit: cover; /* Fill container like luxury brand product shots */
   object-position: center;
 }
 
