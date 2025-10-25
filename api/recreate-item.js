@@ -103,11 +103,16 @@ GARMENT FORM:
 - Natural drape and fit, not overstuffed
 - Sleeves/straps positioned naturally at sides
 - For pants: show natural leg shape without visible leg forms inside
-- Consistent framing - garment should fill similar proportion of frame regardless of type
+- Garment should fill 60-70% of frame height, centered vertically
+
+IMAGE FORMAT:
+- Generate image with 3:4 aspect ratio (portrait orientation)
+- Consistent framing for all garment types (tops, bottoms, outerwear)
+- Garment centered in frame with balanced negative space
 
 CRITICAL: Show ONLY the clothing item itself - absolutely NO visible mannequin, NO body parts, NO torso, NO arms, NO legs, NO head forms, NO hands. The garment must appear floating with subtle, natural volume.
 
-Background color: #F7F3ED (warm cream/off-white). Clean studio lighting. Professional e-commerce product photography with consistent sizing and framing.`;
+Background color: #F7F3ED (warm cream/off-white). Clean studio lighting. Professional e-commerce product photography.`;
     
     console.log('🎨 Using Gemini 2.5 Flash Image via Vertex AI (enterprise)...');
     console.log('Prompt:', prompt);

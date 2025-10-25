@@ -198,13 +198,13 @@ body {
 
 /* Description section - placeholder with gradient background (contains icons + text) */
 .card-description {
+  position: relative;
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4; /* Match AI-generated image ratio */
   display: flex;
   flex-direction: column;
   background: var(--color-accent);
   margin-bottom: 12px;
-  position: relative;
 }
 
 /* Top icons row - garment icon left, delete icon right */
@@ -444,20 +444,25 @@ body {
 
 /* Item Card Components */
 .item-image-button {
+  position: relative;
   width: 100%;
   padding: 0;
+  aspect-ratio: 3 / 4; /* Match AI-generated image ratio */
   border: none;
-  background: none;
+  background: var(--color-accent);
   cursor: pointer;
   margin-bottom: 12px;
+  overflow: hidden;
 }
 
 .item-image {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  aspect-ratio: 1;
+  height: 100%;
   display: block;
-  background: var(--color-accent);
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
 }
 
@@ -870,17 +875,22 @@ body {
 }
 
 .wardrobe-item-image {
+  position: relative;
   width: 100%;
-  aspect-ratio: 3 / 4; /* Taller images like Gucci - portrait ratio */
+  aspect-ratio: 3 / 4; /* Match AI-generated image ratio */
   background: var(--color-accent);
   overflow: hidden;
   margin-bottom: 12px;
 }
 
 .wardrobe-item-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 
