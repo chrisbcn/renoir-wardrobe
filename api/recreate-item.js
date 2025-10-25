@@ -91,28 +91,49 @@ async function generateProductPhoto(detectedItem, originalImageData) {
       detectedItem.material
     ].filter(Boolean).join(', ');
     
-    const prompt = `Create a professional product photo of ONLY this ${itemDescription} in subtle ghost mannequin style.
+    const prompt = `Create a professional product photo of ONLY this ${itemDescription} in clean ghost mannequin style.
 
-STYLE: Subtle, natural ghost mannequin - the garment should appear as if worn by an invisible person, maintaining its natural shape with MINIMAL volume. Not overly inflated or puffy. Think understated luxury e-commerce like The Row or COS.
+CRITICAL DIMENSIONAL CONSTRAINTS:
+- Output image: EXACTLY 3:4 aspect ratio (portrait orientation) - e.g., 1200x1600 pixels
+- Garment MUST be perfectly centered both horizontally AND vertically
+- Garment should occupy 65-75% of the VERTICAL frame height regardless of garment type
+- All garment types (jackets, pants, skirts, tops) MUST fill the same vertical space
+- Maintain consistent scale: photograph from the SAME DISTANCE for all items
 
-CAMERA ANGLE: Photographed STRAIGHT-ON from the front, looking directly at the garment. The camera must be perfectly perpendicular - FACE-FORWARD, NO angle, NO rotation, NO 3/4 turn, NO side view.
+COMPOSITION & FRAMING:
+- Garment positioned in exact center of frame
+- Equal negative space on left and right sides
+- Top of garment at approximately 15-20% from top edge
+- Bottom of garment at approximately 80-85% from top edge
+- For pants/trousers: full length visible, waistband to hem
+- For tops/jackets: collar to hem, full garment visible
+- For skirts: waistband to hem
 
-GARMENT FORM:
-- Subtle 3D shape as if naturally worn, not dramatically inflated
-- Front of garment facing directly at camera
-- Natural drape and fit, not overstuffed
+STYLE & PRESENTATION:
+- Clean ghost mannequin style - garment appears floating with natural 3D shape
+- Minimal volume, not inflated or puffy
+- Natural drape as if worn by invisible person
+- Front view ONLY - straight-on, perpendicular to camera
+- NO rotation, NO angle, NO 3/4 turn
+
+GARMENT DETAILS:
 - Sleeves/straps positioned naturally at sides
-- For pants: show natural leg shape without visible leg forms inside
-- Garment should fill 60-70% of frame height, centered vertically
+- All details (pockets, buttons, seams) clearly visible
+- Natural fabric drape and texture
 
-IMAGE FORMAT:
-- Generate image with 3:4 aspect ratio (portrait orientation)
-- Consistent framing for all garment types (tops, bottoms, outerwear)
-- Garment centered in frame with balanced negative space
+CRITICAL RESTRICTIONS:
+- NO visible mannequin parts
+- NO body parts (arms, legs, torso, head)
+- NO hands, NO skin
+- ONLY the garment itself
 
-CRITICAL: Show ONLY the clothing item itself - absolutely NO visible mannequin, NO body parts, NO torso, NO arms, NO legs, NO head forms, NO hands. The garment must appear floating with subtle, natural volume.
+BACKGROUND & LIGHTING:
+- Background: Solid gradient gray (#D0D0D0 to #E8E8E8)
+- Clean, even studio lighting
+- Soft shadows for depth
+- Professional e-commerce product photography quality
 
-Background color: #F7F3ED (warm cream/off-white). Clean studio lighting. Professional e-commerce product photography.`;
+Generate the image with these EXACT specifications to ensure all garments display with identical sizing and positioning.`;
     
     console.log('🎨 Using Gemini 2.5 Flash Image via Vertex AI (enterprise)...');
     console.log('Prompt:', prompt);
