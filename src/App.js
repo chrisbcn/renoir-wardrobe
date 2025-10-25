@@ -841,23 +841,15 @@ const analyzeSingleItem = async (item) => {
         <div className="screen-header">
           <div className="header-button" style={{ opacity: 0 }}></div>
           <h1 className="screen-title">MY WARDROBE</h1>
-          <label className="header-button" style={{ cursor: isUploading ? 'not-allowed' : 'pointer' }}>
-            <input 
-              type="file" 
-              multiple 
-              accept={ACCEPT_STRING}
-              onChange={handleWardrobeUpload}
-              className="hidden"
-              disabled={isUploading}
-            />
-            {isUploading ? (
-              <div className="spinner" style={{ width: '20px', height: '20px' }}></div>
-            ) : (
-              <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            )}
-          </label>
+          <button 
+            className="header-button" 
+            onClick={() => setActiveSection('multi-item')}
+            style={{ cursor: 'pointer' }}
+          >
+            <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
         </div>
       )}
 
