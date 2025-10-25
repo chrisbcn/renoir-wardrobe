@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gucci Layout - Clean Version (HTML/CSS Only)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #fff;
+            padding: 20px;
+            max-width: 440px; /* Mobile width */
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 16px;
+            font-weight: 400;
+            text-align: center;
+            margin-bottom: 24px;
+            letter-spacing: 0.05em;
+        }
+
+        /* GUCCI'S ACTUAL GRID STRUCTURE */
+        .products__grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 columns */
+            gap: 16px; /* Spacing between items */
+            padding: 0;
+            list-style: none;
+        }
+
+        /* Product Card */
+        .product_card_link {
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* CRITICAL: Gucci's actual aspect ratio container */
+        .media-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3 / 4; /* Gucci's exact ratio */
+            background-color: #f5f5f5;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .media-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Fill container while maintaining ratio */
+            object-position: center;
+            display: block;
+        }
+
+        /* Product Info */
+        .product-info {
+            padding: 0 4px;
+        }
+
+        .product-name {
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.4;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .product-price {
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        /* Test images with different natural sizes */
+        .test-tall {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .test-wide {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .test-square {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .note {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f9f9f9;
+            border-left: 3px solid #333;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .note strong {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .note code {
+            background: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>GUCCI PRODUCT GRID - CLEAN VERSION</h1>
+
+    <ul class="products__grid">
+        <!-- Product 1 - Tall Image -->
+        <li>
+            <a href="#" class="product_card_link">
+                <div class="media-container test-tall">
+                    <img src="https://media.gucci.com/style/DarkGray_Center_0_0_490x653/1734637638/834024_XKEVL_1073_001_100_0000_Light-Rib-felted-wool-top-with-Web.jpg" 
+                         alt="Rib felted wool top">
+                </div>
+                <div class="product-info">
+                    <p class="product-name">Rib felted wool top with Web</p>
+                    <p class="product-price">$1,300</p>
+                </div>
+            </a>
+        </li>
+
+        <!-- Product 2 - Wide Image -->
+        <li>
+            <a href="#" class="product_card_link">
+                <div class="media-container test-wide">
+                    <img src="https://media.gucci.com/style/DarkGray_Center_0_0_490x653/1734023915/832044_XKFST_6265_001_100_0000_Light-Wool-mohair-cardigan-jacket.jpg" 
+                         alt="Wool mohair cardigan">
+                </div>
+                <div class="product-info">
+                    <p class="product-name">Wool mohair cardigan jacket</p>
+                    <p class="product-price">$2,800</p>
+                </div>
+            </a>
+        </li>
+
+        <!-- Product 3 - Square Image -->
+        <li>
+            <a href="#" class="product_card_link">
+                <div class="media-container test-square">
+                    <img src="https://media.gucci.com/style/DarkGray_Center_0_0_490x653/1735582821/818262_XADCX_1027_001_100_0000_Light-Cotton-fleece-zip-sweatshirt-with-GG.jpg" 
+                         alt="Cotton fleece sweatshirt">
+                </div>
+                <div class="product-info">
+                    <p class="product-name">Cotton fleece zip sweatshirt</p>
+                    <p class="product-price">$1,550</p>
+                </div>
+            </a>
+        </li>
+
+        <!-- Product 4 - Different Size -->
+        <li>
+            <a href="#" class="product_card_link">
+                <div class="media-container test-tall">
+                    <img src="https://media.gucci.com/style/DarkGray_Center_0_0_490x653/1733424800/821090_XK2CL_1073_001_100_0000_Light-Wool-knit-top-with-Web.jpg" 
+                         alt="Wool knit top">
+                </div>
+                <div class="product-info">
+                    <p class="product-name">Wool knit top with Web</p>
+                    <p class="product-price">$1,200</p>
+                </div>
+            </a>
+        </li>
+
+        <!-- Product 5 - Placeholder -->
+        <li>
+            <a href="#" class="product_card_link">
+                <div class="media-container test-wide">
+                    <!-- No image - just colored background -->
+                </div>
+                <div class="product-info">
+                    <p class="product-name">Test: No Image (Different natural size)</p>
+                    <p class="product-price">$999</p>
+                </div>
+            </a>
+        </li>
+
+        <!-- Product 6 - Placeholder -->
+        <li>
+            <a href="#" class="product_card_link">
+                <div class="media-container test-square">
+                    <!-- No image - just colored background -->
+                </div>
+                <div class="product-info">
+                    <p class="product-name">Test: Square aspect (Different natural size)</p>
+                    <p class="product-price">$888</p>
+                </div>
+            </a>
+        </li>
+    </ul>
+
+    <div class="note">
+        <strong>🔑 KEY GUCCI CSS:</strong>
+        Container: <code>aspect-ratio: 3 / 4</code> + <code>position: relative</code><br>
+        Image: <code>position: absolute</code> + <code>width: 100%</code> + <code>height: 100%</code> + <code>object-fit: cover</code>
+        <br><br>
+        <strong>Result:</strong> No matter what size image you throw at it, the container forces it to 3:4 and <code>object-fit: cover</code> makes it fill perfectly.
+        <br><br>
+        <strong>Try it:</strong> Right-click → Inspect → Change the image URLs to your wardrobe images and see how they behave!
+    </div>
+</body>
+</html>
+
