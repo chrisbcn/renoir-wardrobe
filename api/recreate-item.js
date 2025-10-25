@@ -32,20 +32,19 @@ export default async function handler(req, res) {
       const generatedImage = await generateProductPhoto(detectedItem, originalImageData);
       console.log(`✅ Image generation complete for ${detectedItem.type}`);
   
-      // Step 2: Remove background for clean extraction
-      const recreatedImage = await removeBackground(generatedImage);
-      console.log(`✅ Background removal complete for ${detectedItem.type}`);
+      // Note: No background removal - AI generates with proper gray gradient background and padding
+      // This preserves the negative space needed for proper positioning in the UI
   
       res.status(200).json({
         success: true,
         originalItem: detectedItem,
-        recreatedImageUrl: recreatedImage,
+        recreatedImageUrl: generatedImage,
         metadata: {
           timestamp: new Date().toISOString(),
           userId: userId || 'demo',
           model: 'gemini-2.5-flash-image',
           provider: 'vertex-ai',
-          backgroundRemoval: true
+          backgroundRemoval: false
         }
       });
   
@@ -225,65 +224,6 @@ Generate the image with these EXACT specifications to ensure all garments displa
   }
 }
 
-async function removeBackground(imageDataUrl) {
-  try {
-    console.log('🎯 Starting background removal...');
-    console.log('📊 API Key present:', !!process.env.REMOVEBG_API_KEY);
-    console.log('📊 API Key length:', process.env.REMOVEBG_API_KEY?.length);
-    
-    // Check for remove.bg API key
-    if (!process.env.REMOVEBG_API_KEY) {
-      console.error('❌❌❌ REMOVEBG_API_KEY NOT FOUND - SKIPPING BACKGROUND REMOVAL');
-      return imageDataUrl; // Return original if no API key
-    }
-
-    console.log('✅ API Key found, proceeding with background removal...');
-
-    // Extract base64 data
-    const base64Data = imageDataUrl.replace(/^data:image\/[a-z]+;base64,/, '');
-    console.log('📊 Base64 data length:', base64Data.length);
-    
-    // Call remove.bg API
-    console.log('📡 Calling remove.bg API...');
-    const response = await fetch('https://api.remove.bg/v1.0/removebg', {
-      method: 'POST',
-      headers: {
-        'X-Api-Key': process.env.REMOVEBG_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        image_file_b64: base64Data,
-        size: 'auto',
-        format: 'png',
-        type: 'product', // Optimized for product photos
-        crop: false,
-        scale: '100%'
-      })
-    });
-
-    console.log('📡 Remove.bg API response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Remove.bg API Error - Status:', response.status);
-      console.error('❌ Remove.bg API Error - Response:', errorText);
-      console.warn('⚠️ Background removal failed - returning original image');
-      return imageDataUrl; // Fallback to original
-    }
-
-    // Get the result as a buffer
-    console.log('📦 Parsing response buffer...');
-    const resultBuffer = await response.arrayBuffer();
-    const base64Result = Buffer.from(resultBuffer).toString('base64');
-    
-    console.log('✅✅✅ Background removed successfully!');
-    console.log('📊 Result size:', base64Result.length);
-    return `data:image/png;base64,${base64Result}`;
-
-  } catch (error) {
-    console.error('❌❌❌ Background removal exception:', error.message);
-    console.error('❌ Full error:', error);
-    console.warn('⚠️ Returning original image without background removal');
-    return imageDataUrl; // Fallback to original on error
-  }
-}
+// removeBackground function removed - no longer needed
+// AI now generates images with proper gray gradient background and padding
+// This preserves the negative space required for consistent UI positioning
