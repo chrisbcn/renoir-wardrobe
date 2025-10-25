@@ -681,6 +681,28 @@ body {
   color: var(--color-text);
 }
 
+/* Header Icons */
+.header-icon {
+  width: 24px;
+  height: 24px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline-block;
+}
+
+.header-icon-back {
+  background-image: url('./assets/icons/chevron-left-sm 1.svg');
+}
+
+.header-icon-close {
+  background-image: url('./assets/icons/xclose 1.svg');
+}
+
+.header-icon-plus {
+  background-image: url('./assets/icons/24-circle-plus.svg');
+}
+
 /* Button size variants */
 .btn-medium {
   padding: 12px 16px;

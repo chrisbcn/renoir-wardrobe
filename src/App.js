@@ -11,8 +11,6 @@ import { ReactComponent as InvoiceIcon } from './assets/icons/invoice 1.svg';
 import { ReactComponent as HangerIcon } from './assets/icons/hanger 2.svg';
 import { ReactComponent as PinterestIcon } from './assets/icons/Social Icons-1.svg';
 import { ReactComponent as InstagramIcon } from './assets/icons/Social Icons.svg';
-import { ReactComponent as ChevronLeftIcon } from './assets/icons/chevron-left-sm 1.svg';
-import { ReactComponent as CloseIcon } from './assets/icons/xclose 1.svg';
 import wardrobeBackground from './assets/img/walk-in-wardrobe.png';
 
 // Image format validation
@@ -68,6 +66,7 @@ const LOADER_MESSAGES = [
 function App() {
   // Navigation state
   const [activeSection, setActiveSection] = useState('wardrobe');
+  const [previousSection, setPreviousSection] = useState(null);
   
   // Loader message rotation
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
@@ -126,6 +125,12 @@ function App() {
     
     return () => clearInterval(interval);
   }, [isProcessingMultiItem]);
+
+  // Navigation helper - tracks where we came from
+  const navigateToSection = (newSection) => {
+    setPreviousSection(activeSection);
+    setActiveSection(newSection);
+  };
 
   const loadWardrobeItems = async (offset = 0) => {
     try {
@@ -801,21 +806,23 @@ const analyzeSingleItem = async (item) => {
               <button 
                 className="header-button"
                 onClick={() => {
-                  if (uploadFlowStep > 0) {
+                  if (uploadFlowStep === 0 && previousSection) {
+                    // At step 0 and came from another section - go back
+                    setActiveSection(previousSection);
+                    setPreviousSection(null);
+                  } else if (uploadFlowStep > 0) {
+                    // In the flow - go back one step
                     setUploadFlowStep(uploadFlowStep - 1);
                     if (uploadFlowStep === 1) {
-                      // Going back to home
+                      // Going back to upload screen
                       setUploadedImagePreview(null);
                       setUploadedImageFile(null);
                     }
                   }
                 }}
-                style={{ opacity: uploadFlowStep === 0 ? 0 : 1 }}
+                style={{ opacity: (uploadFlowStep === 0 && !previousSection) ? 0 : 1 }}
               >
-                {uploadFlowStep > 0 ? 
-                  <ChevronLeftIcon style={{ width: '24px', height: '24px' }} /> : 
-                  <CloseIcon style={{ width: '24px', height: '24px' }} />
-                }
+                <span className={`header-icon ${uploadFlowStep > 0 ? 'header-icon-back' : 'header-icon-close'}`}></span>
               </button>
               <h1 className="screen-title">
                 {uploadFlowStep === 2 ? 'EXTRACTED GARMENTS' : 'WARDROBE UPLOAD'}
@@ -843,12 +850,10 @@ const analyzeSingleItem = async (item) => {
           <h1 className="screen-title">MY WARDROBE</h1>
           <button 
             className="header-button" 
-            onClick={() => setActiveSection('multi-item')}
+            onClick={() => navigateToSection('multi-item')}
             style={{ cursor: 'pointer' }}
           >
-            <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <span className="header-icon header-icon-plus"></span>
           </button>
         </div>
       )}
@@ -1260,7 +1265,7 @@ const analyzeSingleItem = async (item) => {
       {/* Bottom Navigation */}
       <BottomNav 
         activeSection={activeSection}
-        onNavigate={setActiveSection}
+        onNavigate={navigateToSection}
       />
     </div>
   );
