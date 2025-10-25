@@ -109,9 +109,9 @@ COMPOSITION & FRAMING:
 - For skirts: waistband to hem
 
 STYLE & PRESENTATION:
-- Clean ghost mannequin style - garment appears floating with natural 3D shape
-- Minimal volume, not inflated or puffy
-- Natural drape as if worn by invisible person
+- Subtle ghost mannequin style - garment appears laid flat with very minimal 3D shape
+- VERY subtle volume - nearly flat presentation, not puffy or inflated
+- Natural drape as if gently laid out
 - Front view ONLY - straight-on, perpendicular to camera
 - NO rotation, NO angle, NO 3/4 turn
 
@@ -127,9 +127,9 @@ CRITICAL RESTRICTIONS:
 - ONLY the garment itself
 
 BACKGROUND & LIGHTING:
-- Background: Solid gradient gray (#D0D0D0 to #E8E8E8)
-- Clean, even studio lighting
-- Soft shadows for depth
+- Background: Solid light neutral gray (#E5E5E5)
+- Clean, flat even lighting
+- NO shadows - completely flat lighting
 - Professional e-commerce product photography quality
 
 Generate the image with these EXACT specifications to ensure all garments display with identical sizing and positioning.`;
